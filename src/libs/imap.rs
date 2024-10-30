@@ -1,0 +1,224 @@
+use crate::libs::{config::Config, error::Error, filter::Filter};
+use imap::types::NameAttribute;
+use native_tls::TlsStream;
+use serde::Serialize;
+use std::{
+    collections::{BTreeMap, HashSet},
+    fmt::Debug,
+    net::TcpStream,
+};
+
+#[derive(Clone, Debug)]
+pub struct ListResult<T>
+where
+    T: Clone + Debug,
+{
+    pub extra: Option<T>,
+}
+
+#[derive(Debug)]
+pub struct Imap<T>
+where
+    T: Clone + Debug + Serialize,
+{
+    pub session: imap::Session<TlsStream<TcpStream>>,
+    config: Config<T>,
+}
+
+impl<T> Drop for Imap<T>
+where
+    T: Clone + Debug + Serialize,
+{
+    fn drop(&mut self) {
+        if let Err(e) = self.session.logout() {
+            eprintln!("error disconnecting: {e}");
+        }
+    }
+}
+
+impl<T> Imap<T>
+where
+    T: Clone + Debug + Serialize,
+{
+    /// Connect to the server and login with the given credentials.
+    /// # Errors
+    /// Many errors can happen
+    pub fn connect(config: &Config<T>) -> Result<Self, Error> {
+        let tls = native_tls::TlsConnector::builder().build()?;
+
+        let server = config
+            .server
+            .as_ref()
+            .ok_or_else(|| Error::config("Missing server"))?;
+
+        let mut client = imap::connect_starttls((server.as_str(), 143), server, &tls)?;
+
+        if config.debug {
+            client.debug = true;
+        }
+
+        let session = client.login(
+            config
+                .username
+                .as_ref()
+                .ok_or_else(|| Error::config("Missing username"))?,
+            config.password()?,
+        )?;
+
+        Ok(Self {
+            session,
+            config: config.clone(),
+        })
+    }
+
+    /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is
+    /// sorted and stable.
+    ///
+    /// We use a map to be able to have generic filters at the beginning of the
+    /// configuration that are overwritten by more specific filters afterwards.
+    ///
+    /// # Errors
+    /// Many errors can happen
+    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, Error> {
+        let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
+
+        for filter in self.config.filters.clone().unwrap_or_else(||
+            // If we don't have a filter, provide an empty one matching everything
+            vec![Filter::default()])
+        {
+            let mut found = false;
+
+            for mailbox in self
+                .session
+                .list(filter.reference.as_deref(), filter.pattern.as_deref())
+                .map_err(|e| Error::config(format!("Imap error {e} for {filter:?}")))?
+                .iter()
+                // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
+                .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
+                // If we have an include regex, keep folders that match it
+                // Otherwise, keep everything
+                .filter(|mbx| {
+                    filter
+                        .include_re
+                        .as_ref()
+                        .map_or(true, |re| re.is_match(mbx.name()))
+                })
+                // If we have an exclude regex, filter out folders that match it
+                // Otherwise, keep everything
+                .filter(|mbx| {
+                    filter
+                        .exclude_re
+                        .as_ref()
+                        .map_or(true, |re| !re.is_match(mbx.name()))
+                })
+            {
+                found = true;
+                mailboxes.insert(
+                    mailbox.name().to_string(),
+                    ListResult {
+                        extra: filter.extra.clone().or_else(|| self.config.extra.clone()),
+                    },
+                );
+            }
+            if !found {
+                return Err(Error::config(format!(
+                    "This filter did not return anything {filter:?}"
+                )));
+            }
+        }
+
+        Ok(mailboxes)
+    }
+}
+
+pub fn ids_list_to_collapsed_sequence(ids: &HashSet<u32>) -> String {
+    if ids.is_empty() {
+        todo!("nothing in there"); // TODO: do something ?
+    }
+
+    // Collect and sort the IDs
+    let mut sorted_ids: Vec<u32> = ids.iter().copied().collect();
+    sorted_ids.sort_unstable();
+
+    // Collect ranges from the sorted list
+    let mut result = Vec::new();
+    let mut start = sorted_ids.first().copied();
+    let mut end = start;
+
+    for &id in &sorted_ids[1..] {
+        match (end, start) {
+            (Some(e), Some(_s)) if id == e + 1 => end = Some(id),
+            _ => {
+                // Push the previous range
+                if let (Some(s), Some(e)) = (start, end) {
+                    result.push(if s == e {
+                        s.to_string()
+                    } else {
+                        format!("{s}:{e}")
+                    });
+                }
+                start = Some(id);
+                end = start;
+            }
+        }
+    }
+
+    // Push the last range
+    if let (Some(s), Some(e)) = (start, end) {
+        result.push(if s == e {
+            s.to_string()
+        } else {
+            format!("{s}:{e}")
+        });
+    }
+
+    result.join(",")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ids_list_to_collapsed_sequence;
+    use std::collections::HashSet; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
+
+    #[test]
+    #[should_panic(expected = "not yet implemented: nothing in there")]
+    fn test_empty_set() {
+        let ids: HashSet<u32> = HashSet::new();
+        // Assuming `ids_list_to_collapsed_sequence` returns an empty string for an empty set
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "");
+    }
+
+    #[test]
+    fn test_single_id() {
+        let mut ids = HashSet::new();
+        ids.insert(5);
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "5");
+    }
+
+    #[test]
+    fn test_continuous_range() {
+        let ids: HashSet<u32> = [1, 2, 3, 4, 5].iter().copied().collect();
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:5");
+    }
+
+    #[test]
+    fn test_multiple_disjoint_ranges() {
+        let ids: HashSet<u32> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:3,7:8,10:11");
+    }
+
+    #[test]
+    fn test_mixed_ranges_and_single_ids() {
+        let ids: HashSet<u32> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "1,3:4,6:7,10,12");
+    }
+
+    #[test]
+    fn test_unsorted_input() {
+        let ids: HashSet<u32> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
+            .iter()
+            .copied()
+            .collect();
+        assert_eq!(ids_list_to_collapsed_sequence(&ids), "1,4:6,10,12,22:24,31");
+    }
+}

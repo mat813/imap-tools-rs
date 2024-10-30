@@ -1,0 +1,22 @@
+[package]
+name = "imap-tools"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+description = "A collection of tools to manipulate IMAP mailboxes"
+readme = "README.md"
+keywords = ["IMAP"]
+homepage = "https://gitlab.com/mat813/imap-tools-rs"
+repository = "https://gitlab.com/mat813/imap-tools-rs"
+
+[dependencies]
+chrono = "0.4.38"
+clap = { version = "4.5.20", features = ["derive"] }
+imap = "2.4.1"
+native-tls = "0.2.12"
+regex = "1.11.1"
+serde = { version = "1.0.214", features = ["derive", "serde_derive"] }
+serde-value = "0.7.0"
+serde_any = { version = "0.5.0", default-features = false, features = ["json", "toml", "yaml"] }
+shell-words = "1.1.0"
+size = { version = "0.5.0-preview2", features = ["serde"] }
