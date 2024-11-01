@@ -102,3 +102,24 @@ It helps you figure out your filters without actually doing anything.
 ### finddup
 
 This tool will go over all the mailboxes from an imap server, find messages with duplicate message ids, and remove duplicates.
+
+### clean
+
+This tool will go over the mailboxes and cleanup old messages according to simples rules.
+
+The rules are added to a filter using the extra parameter.
+For example:
+
+```toml
+[[filters]]
+  reference = ""
+  name = "*"
+
+  [filters.extra]
+    0MB = 105
+    5MB = 85
+    10MB = 55
+```
+
+The reference and name are the same as for other tools. `extra` is a map of mailbox size in MB to days of messages that should be kept.
+In this example, messages are kept up to 105 days, unless the mailbox is larger than 5MB, and oldest message is newer than 105 days, then messages are kept up to 85 days, unless the mailbox is more than 10MB and the oldest message is less than 55 days old.
