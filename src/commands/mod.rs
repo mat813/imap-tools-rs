@@ -1,3 +1,4 @@
+mod archive;
 mod clean;
 #[expect(clippy::module_inception)]
 mod commands;

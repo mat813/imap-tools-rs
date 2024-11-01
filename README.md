@@ -123,3 +123,39 @@ For example:
 
 The reference and name are the same as for other tools. `extra` is a map of mailbox size in MB to days of messages that should be kept.
 In this example, messages are kept up to 105 days, unless the mailbox is larger than 5MB, and oldest message is newer than 105 days, then messages are kept up to 85 days, unless the mailbox is more than 10MB and the oldest message is less than 55 days old.
+
+### archive
+
+This tool will "archive", aka move, old emails from mailboxes into archive mailboxes.
+Its extra parameter contains a number of days and a string format for the archive mailbox location.
+The string format can contain is passed through [strftime](https://docs.rs/chrono/latest/chrono/format/strftime/index.html#specifiers) so all its specifiers can be used.
+The strftime calls are made based on the date on which each email was received. (Called the internaldate in IMAP terms).
+The string format can also contain `%%MBX` (yes, with two %) that will be replaced with the full mailbox name.
+For example:
+
+```toml
+[[filters]]
+  reference = ""
+  name = "*"
+
+  [filters.extra]
+    days   = 200
+    format = "Archive/%Y/%%MBX"
+```
+
+Will move messages older than 200 days into the archive mailbox.
+If the mailbox is `INBOX/bob`, and the email is from 2024, it will be moved into `Archive/2024/INBOX/bob`.
+
+Another example could be:
+
+```toml
+[[filters]]
+  reference = ""
+  name = "*"
+
+  [filters.extra]
+    days   = 200
+    format = "%%MBX/old/%Y/%m"
+```
+
+If the mailbox is `INBOX/bob`, and the email is from september 2024, it will be moved into `INBOX/bob/old/2024/09`.

@@ -1,8 +1,11 @@
-use crate::commands::{clean::Clean, find_dups::FindDups, list::List};
+use crate::commands::{archive::Archive, clean::Clean, find_dups::FindDups, list::List};
 use clap::Subcommand;
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
+    #[command(aliases = &["move"])]
+    Archive(Archive),
+
     #[command(aliases = &["cleanup"])]
     Clean(Clean),
 
