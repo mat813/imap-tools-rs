@@ -98,3 +98,7 @@ $ imap-tools list -c config.toml
 
 This tool will list the mailboxes that would be processed by other tools.
 It helps you figure out your filters without actually doing anything.
+
+### finddup
+
+This tool will go over all the mailboxes from an imap server, find messages with duplicate message ids, and remove duplicates.
