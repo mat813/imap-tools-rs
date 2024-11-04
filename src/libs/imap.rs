@@ -66,11 +66,17 @@ where
             config.password()?,
         )?;
 
-        Ok(Self {
+        let mut ret = Self {
             session,
             config: config.clone(),
             cached_capabilities: HashMap::new(),
-        })
+        };
+
+        if !ret.has_capability("UIDPLUS")? {
+            return Err(Error::Uidplus);
+        }
+
+        Ok(ret)
     }
 
     /// Check if the imap server has some capability

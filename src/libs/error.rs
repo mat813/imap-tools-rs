@@ -9,6 +9,7 @@ pub enum Error {
 
     // Internal errors
     Config(String),
+    Uidplus,
 }
 
 impl Error {
@@ -31,6 +32,10 @@ impl std::fmt::Display for Error {
             Self::Serde(e) => write!(f, "TOML De Error: {e}"),
             Self::ShellWords(e) => write!(f, "Command parse error: {e}"),
             Self::Config(e) => write!(f, "Configuration error: {e}"),
+            Self::Uidplus => write!(
+                f,
+                "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety",
+            ),
         }
     }
 }
