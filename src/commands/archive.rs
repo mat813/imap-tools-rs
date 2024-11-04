@@ -73,26 +73,6 @@ impl Archive {
 
         // Only delete if the rule applies based on mailbox size and message age
         if !uids_to_move.is_empty() {
-            let messages_to_move = imap.session.uid_fetch(
-                ids_list_to_collapsed_sequence(&uids_to_move),
-                "INTERNALDATE",
-            )?;
-
-            let mut uids_by_mailbox = BTreeMap::<String, HashSet<u32>>::new();
-
-            for message in &messages_to_move {
-                let mbx = archive_mbx(
-                    mailbox,
-                    &extra.format,
-                    message.internal_date().unwrap_or_default(),
-                );
-
-                uids_by_mailbox
-                    .entry(mbx)
-                    .or_default()
-                    .insert(message.uid.unwrap());
-            }
-
             if self.config.dry_run {
                 println!(
                     "{mailbox:<42} | {cur_msgs:>5} | {moving_msgs:>5} | {cutoff_str:>11} | {all:?}",
@@ -101,6 +81,26 @@ impl Archive {
                     all = ids_list_to_collapsed_sequence(&uids_to_move),
                 );
             } else {
+                let messages_to_move = imap.session.uid_fetch(
+                    ids_list_to_collapsed_sequence(&uids_to_move),
+                    "INTERNALDATE",
+                )?;
+
+                let mut uids_by_mailbox = BTreeMap::<String, HashSet<u32>>::new();
+
+                for message in &messages_to_move {
+                    let mbx = archive_mbx(
+                        mailbox,
+                        &extra.format,
+                        message.internal_date().unwrap_or_default(),
+                    );
+
+                    uids_by_mailbox
+                        .entry(mbx)
+                        .or_default()
+                        .insert(message.uid.unwrap());
+                }
+
                 imap.session.select(mailbox)?;
 
                 for (archive_mailbox, uids) in uids_by_mailbox {
