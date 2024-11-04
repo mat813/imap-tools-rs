@@ -106,13 +106,23 @@ impl Archive {
                 for (archive_mailbox, uids) in uids_by_mailbox {
                     let sequence = ids_list_to_collapsed_sequence(&uids);
 
+                    let quoted_mailbox =
+                        if archive_mailbox.contains(' ') || archive_mailbox.contains('"') {
+                            &format!(
+                                "\"{}\"",
+                                archive_mailbox.replace('\\', r"\\").replace('"', "\\\"")
+                            )
+                        } else {
+                            &archive_mailbox
+                        };
+
                     // If archive mailbox does not exist, create it
-                    if imap.session.list(None, Some(&archive_mailbox))?.is_empty() {
+                    if imap.session.list(None, Some(quoted_mailbox))?.is_empty() {
                         imap.session.create(&archive_mailbox)?;
                     }
 
                     // MV does COPY / MARK \Deleted / EXPUNGE all in one go
-                    imap.session.uid_mv(&sequence, &archive_mailbox)?;
+                    imap.session.uid_mv(&sequence, quoted_mailbox)?;
 
                     println!(
                         "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
