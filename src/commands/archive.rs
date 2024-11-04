@@ -115,7 +115,8 @@ impl Archive {
                     imap.session.uid_mv(&sequence, &archive_mailbox)?;
 
                     println!(
-                        "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<42} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
+                        "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
+                        archive_mailbox = archive_mailbox.replace(mailbox, "%MBX"),
                         cur_msgs = mbx.exists,
                         moving_msgs = uids.len(),
                     );
