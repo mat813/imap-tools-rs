@@ -121,8 +121,14 @@ impl Archive {
                         imap.session.create(&archive_mailbox)?;
                     }
 
-                    // MV does COPY / MARK \Deleted / EXPUNGE all in one go
-                    imap.session.uid_mv(&sequence, quoted_mailbox)?;
+                    if imap.has_capability("MOVE")? {
+                        // MV does COPY / MARK \Deleted / EXPUNGE all in one go
+                        imap.session.uid_mv(&sequence, quoted_mailbox)?;
+                    } else {
+                        // If we don't have MV, do it the old fashion way.
+                        imap.session.uid_copy(&sequence, quoted_mailbox)?;
+                        imap.session.uid_store(&sequence, "+FLAGS (\\Deleted)")?;
+                    }
 
                     println!(
                         "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
