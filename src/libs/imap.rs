@@ -3,7 +3,7 @@ use imap::types::NameAttribute;
 use native_tls::TlsStream;
 use serde::Serialize;
 use std::{
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
     net::TcpStream,
 };
@@ -23,6 +23,7 @@ where
 {
     pub session: imap::Session<TlsStream<TcpStream>>,
     config: Config<T>,
+    cached_capabilities: HashMap<String, bool>,
 }
 
 impl<T> Drop for Imap<T>
@@ -68,7 +69,27 @@ where
         Ok(Self {
             session,
             config: config.clone(),
+            cached_capabilities: HashMap::new(),
         })
+    }
+
+    /// Check if the imap server has some capability
+    /// # Errors
+    /// Imap errors can happen
+    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool, Error> {
+        if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
+            return Ok(cached_result);
+        }
+
+        // We can't cache the result of .capabilities() because it returns some
+        // strange structure with very limited lifetime, so we ask once each
+        // time we need a new capability and cache the result.
+        let has_capability = self.session.capabilities()?.has_str(cap.as_ref());
+
+        self.cached_capabilities
+            .insert(cap.as_ref().to_string(), has_capability);
+
+        Ok(has_capability)
     }
 
     /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is
