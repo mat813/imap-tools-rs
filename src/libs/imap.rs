@@ -1,4 +1,4 @@
-use crate::libs::{config::Config, error::Error, filter::Filter};
+use crate::libs::{config::Config, error::OurError, filter::Filter};
 use imap::types::NameAttribute;
 use native_tls::TlsStream;
 use serde::Serialize;
@@ -44,13 +44,13 @@ where
     /// Connect to the server and login with the given credentials.
     /// # Errors
     /// Many errors can happen
-    pub fn connect(config: &Config<T>) -> Result<Self, Error> {
+    pub fn connect(config: &Config<T>) -> Result<Self, OurError> {
         let tls = native_tls::TlsConnector::builder().build()?;
 
         let server = config
             .server
             .as_ref()
-            .ok_or_else(|| Error::config("Missing server"))?;
+            .ok_or_else(|| OurError::config("Missing server"))?;
 
         let mut client = imap::connect_starttls((server.as_str(), 143), server, &tls)?;
 
@@ -62,7 +62,7 @@ where
             config
                 .username
                 .as_ref()
-                .ok_or_else(|| Error::config("Missing username"))?,
+                .ok_or_else(|| OurError::config("Missing username"))?,
             config.password()?,
         )?;
 
@@ -73,7 +73,7 @@ where
         };
 
         if !ret.has_capability("UIDPLUS")? {
-            return Err(Error::Uidplus);
+            return Err(OurError::Uidplus);
         }
 
         Ok(ret)
@@ -82,7 +82,7 @@ where
     /// Check if the imap server has some capability
     /// # Errors
     /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool, Error> {
+    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool, OurError> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
@@ -106,7 +106,7 @@ where
     ///
     /// # Errors
     /// Many errors can happen
-    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, Error> {
+    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, OurError> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
         for filter in self.config.filters.clone().unwrap_or_else(||
@@ -118,7 +118,7 @@ where
             for mailbox in self
                 .session
                 .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .map_err(|e| Error::config(format!("Imap error {e} for {filter:?}")))?
+                .map_err(|e| OurError::config(format!("Imap error {e} for {filter:?}")))?
                 .iter()
                 // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -148,7 +148,7 @@ where
                 );
             }
             if !found {
-                return Err(Error::config(format!(
+                return Err(OurError::config(format!(
                     "This filter did not return anything {filter:?}"
                 )));
             }

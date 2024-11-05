@@ -1,7 +1,7 @@
 use crate::libs::{
     args,
     config::Config,
-    error::Error,
+    error::OurError,
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use clap::Args;
@@ -28,7 +28,7 @@ pub struct FindDups {
 type MyExtra = serde_value::Value;
 
 impl FindDups {
-    pub fn execute(&self) -> Result<(), Error> {
+    pub fn execute(&self) -> Result<(), OurError> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
@@ -40,7 +40,7 @@ impl FindDups {
         Ok(())
     }
 
-    fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> Result<(), Error> {
+    fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> Result<(), OurError> {
         print!("[{mailbox}] ");
         io::stdout().flush().unwrap(); // Ensure immediate print to terminal
 

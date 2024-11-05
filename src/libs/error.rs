@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum Error {
+pub enum OurError {
     // External errors
     Imap(imap::Error),
     NativeTls(native_tls::Error),
@@ -12,7 +12,9 @@ pub enum Error {
     Uidplus,
 }
 
-impl Error {
+impl std::error::Error for OurError {}
+
+impl OurError {
     // Constructor for Config variant that takes any AsRef<str>
     pub fn config<S>(message: S) -> Self
     where
@@ -23,7 +25,7 @@ impl Error {
 }
 
 // Implement Display if you need to format the error message
-impl std::fmt::Display for Error {
+impl std::fmt::Display for OurError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Imap(e) => write!(f, "IMAP Error: {e}"),
@@ -41,25 +43,25 @@ impl std::fmt::Display for Error {
 }
 
 // Implement the conversion from std::io::Error
-impl From<std::io::Error> for Error {
+impl From<std::io::Error> for OurError {
     fn from(err: std::io::Error) -> Self {
         Self::StdIo(err)
     }
 }
 
-impl From<serde_any::Error> for Error {
+impl From<serde_any::Error> for OurError {
     fn from(err: serde_any::Error) -> Self {
         Self::Serde(err)
     }
 }
 
-impl From<shell_words::ParseError> for Error {
+impl From<shell_words::ParseError> for OurError {
     fn from(err: shell_words::ParseError) -> Self {
         Self::ShellWords(err)
     }
 }
 
-impl From<imap::Error> for Error {
+impl From<imap::Error> for OurError {
     fn from(err: imap::Error) -> Self {
         Self::Imap(err)
     }
@@ -69,7 +71,7 @@ impl
     From<(
         imap::Error,
         imap::Client<native_tls::TlsStream<std::net::TcpStream>>,
-    )> for Error
+    )> for OurError
 {
     fn from(
         err: (
@@ -81,7 +83,7 @@ impl
     }
 }
 
-impl From<native_tls::Error> for Error {
+impl From<native_tls::Error> for OurError {
     fn from(err: native_tls::Error) -> Self {
         Self::NativeTls(err)
     }

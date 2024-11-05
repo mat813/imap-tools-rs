@@ -1,4 +1,4 @@
-use crate::libs::{args::Generic, error::Error, filters::Filters};
+use crate::libs::{args::Generic, error::OurError, filters::Filters};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -36,7 +36,7 @@ where
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
-    pub fn new_with_args(args: &Generic) -> Result<Self, Error> {
+    pub fn new_with_args(args: &Generic) -> Result<Self, OurError> {
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)?
         } else {
@@ -77,15 +77,15 @@ where
         }
 
         if config.server.is_none() {
-            return Err(Error::config("The server must be set"));
+            return Err(OurError::config("The server must be set"));
         }
 
         if config.username.is_none() {
-            return Err(Error::config("The username must be set"));
+            return Err(OurError::config("The username must be set"));
         }
 
         if config.password.is_none() && config.password_command.is_none() {
-            return Err(Error::config(
+            return Err(OurError::config(
                 "The password or password command must be set",
             ));
         }
@@ -101,18 +101,18 @@ where
     /// Figure out the password from literal or command
     /// # Errors
     /// Many errors can happen
-    pub fn password(&self) -> Result<String, Error> {
+    pub fn password(&self) -> Result<String, OurError> {
         if let Some(ref pass) = self.password {
             Ok(pass.clone())
         } else if let Some(ref command) = self.password_command {
             let args = split(command)?;
             let (exe, args) = args
                 .split_first()
-                .ok_or_else(|| Error::config("password command is empty"))?;
+                .ok_or_else(|| OurError::config("password command is empty"))?;
             let output = Command::new(exe).args(args).output()?;
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         } else {
-            Err(Error::config(
+            Err(OurError::config(
                 "the password or password command must be set",
             ))
         }
