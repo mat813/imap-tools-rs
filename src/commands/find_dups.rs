@@ -1,7 +1,7 @@
 use crate::libs::{
     args,
     config::Config,
-    error::OurError,
+    error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use clap::Args;
@@ -28,7 +28,7 @@ pub struct FindDups {
 type MyExtra = serde_value::Value;
 
 impl FindDups {
-    pub fn execute(&self) -> Result<(), OurError> {
+    pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
@@ -40,7 +40,7 @@ impl FindDups {
         Ok(())
     }
 
-    fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> Result<(), OurError> {
+    fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> OurResult<()> {
         print!("[{mailbox}] ");
         io::stdout().flush()?; // Ensure immediate print to terminal
 
@@ -88,7 +88,7 @@ impl FindDups {
 
 fn find_duplicates(
     messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>,
-) -> Result<HashSet<u32>, OurError> {
+) -> OurResult<HashSet<u32>> {
     let mut message_ids: HashMap<String, Vec<u32>> = HashMap::new();
 
     // Collect message IDs with sequence numbers

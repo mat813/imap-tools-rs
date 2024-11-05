@@ -1,7 +1,7 @@
 use crate::libs::{
     args,
     config::Config,
-    error::OurError,
+    error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use chrono::{DateTime, Duration, FixedOffset, Utc};
@@ -28,7 +28,7 @@ struct MyExtra {
 }
 
 impl Archive {
-    pub fn execute(&self) -> Result<(), OurError> {
+    pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
@@ -49,12 +49,7 @@ impl Archive {
         Ok(())
     }
 
-    fn archive(
-        &self,
-        imap: &mut Imap<MyExtra>,
-        mailbox: &str,
-        extra: &MyExtra,
-    ) -> Result<(), OurError> {
+    fn archive(&self, imap: &mut Imap<MyExtra>, mailbox: &str, extra: &MyExtra) -> OurResult<()> {
         let mbx = imap.session.examine(mailbox)?;
 
         // If there are no messages, skip

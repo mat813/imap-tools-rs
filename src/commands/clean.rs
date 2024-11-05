@@ -1,7 +1,7 @@
 use crate::libs::{
     args,
     config::Config,
-    error::OurError,
+    error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use chrono::{Duration, Utc};
@@ -24,7 +24,7 @@ pub struct Clean {
 type MyExtra = BTreeMap<Size, u64>;
 
 impl Clean {
-    pub fn execute(&self) -> Result<(), OurError> {
+    pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
@@ -50,7 +50,7 @@ impl Clean {
         imap: &mut Imap<MyExtra>,
         mailbox: &str,
         extra: &MyExtra,
-    ) -> Result<(), OurError> {
+    ) -> OurResult<()> {
         let mbx = imap.session.examine(mailbox)?;
 
         // If there are not enough messages, skip

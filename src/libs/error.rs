@@ -12,6 +12,8 @@ pub enum OurError {
     Uidplus,
 }
 
+pub type OurResult<T> = std::result::Result<T, OurError>;
+
 impl std::error::Error for OurError {}
 
 impl OurError {

@@ -1,4 +1,8 @@
-use crate::libs::{args::Generic, error::OurError, filters::Filters};
+use crate::libs::{
+    args::Generic,
+    error::{OurError, OurResult},
+    filters::Filters,
+};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -36,7 +40,7 @@ where
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
-    pub fn new_with_args(args: &Generic) -> Result<Self, OurError> {
+    pub fn new_with_args(args: &Generic) -> OurResult<Self> {
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)?
         } else {
@@ -101,7 +105,7 @@ where
     /// Figure out the password from literal or command
     /// # Errors
     /// Many errors can happen
-    pub fn password(&self) -> Result<String, OurError> {
+    pub fn password(&self) -> OurResult<String> {
         if let Some(ref pass) = self.password {
             Ok(pass.clone())
         } else if let Some(ref command) = self.password_command {

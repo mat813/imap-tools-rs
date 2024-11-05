@@ -1,4 +1,8 @@
-use crate::libs::{config::Config, error::OurError, filter::Filter};
+use crate::libs::{
+    config::Config,
+    error::{OurError, OurResult},
+    filter::Filter,
+};
 use imap::types::NameAttribute;
 use native_tls::TlsStream;
 use serde::Serialize;
@@ -44,7 +48,7 @@ where
     /// Connect to the server and login with the given credentials.
     /// # Errors
     /// Many errors can happen
-    pub fn connect(config: &Config<T>) -> Result<Self, OurError> {
+    pub fn connect(config: &Config<T>) -> OurResult<Self> {
         let tls = native_tls::TlsConnector::builder().build()?;
 
         let server = config
@@ -82,7 +86,7 @@ where
     /// Check if the imap server has some capability
     /// # Errors
     /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool, OurError> {
+    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> OurResult<bool> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
@@ -106,7 +110,7 @@ where
     ///
     /// # Errors
     /// Many errors can happen
-    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, OurError> {
+    pub fn list(&mut self) -> OurResult<BTreeMap<String, ListResult<T>>> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
         for filter in self.config.filters.clone().unwrap_or_else(||
