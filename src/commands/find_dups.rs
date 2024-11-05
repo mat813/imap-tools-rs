@@ -121,7 +121,10 @@ fn find_duplicates(
 // Define the regex as a static global variable
 static MESSAGE_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
     // Regular expression to capture Message-ID values across line breaks
-    Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)").unwrap()
+    Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)")
+        // We cannot bubble up the error here, so we unwrap(), but it's ok because
+        // we wrote it and we know it is valid.
+        .unwrap()
 });
 
 // Parses a Message-ID from the header

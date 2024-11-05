@@ -43,7 +43,12 @@ where
 {
     fn from(v: Vec<T>) -> Self {
         if v.len() == 1 {
-            Self::Single(v.into_iter().next().unwrap())
+            Self::Single(
+                v.into_iter()
+                    .next()
+                    // We can unwrap() here because we know there is one entry, so next() is not None.
+                    .unwrap(),
+            )
         } else {
             Self::Array(v)
         }
