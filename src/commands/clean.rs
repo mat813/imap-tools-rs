@@ -58,7 +58,9 @@ impl Clean {
             return Ok(());
         }
 
-        let messages = imap.session.fetch("1:*", "(RFC822.SIZE INTERNALDATE)")?;
+        let messages = imap
+            .session
+            .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")?;
 
         let total_size = messages
             .iter()
