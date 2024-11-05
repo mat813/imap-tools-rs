@@ -19,7 +19,7 @@ Next, these arguments can be either set on the command line or in the config fil
 - `-P` - `--password_command` - A command to use to get the password.
 - `-s` - `--server` - The imap server, defaults to localhost.
 - `-d` - `--debug` - Dump all the imap dialogue.
-- `-D` - `--dry-run` - Don't change anything on the server.
+- `-n` - `--dry-run` - Don't change anything on the server.
 
 So a configuration file may start with:
 
