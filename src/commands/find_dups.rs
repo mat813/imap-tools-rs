@@ -42,7 +42,7 @@ impl FindDups {
 
     fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> Result<(), OurError> {
         print!("[{mailbox}] ");
-        io::stdout().flush().unwrap(); // Ensure immediate print to terminal
+        io::stdout().flush()?; // Ensure immediate print to terminal
 
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
@@ -58,12 +58,12 @@ impl FindDups {
         let messages = imap
             .session
             .uid_fetch("1:*", "(BODY[HEADER.FIELDS (MESSAGE-ID)])")?;
-        let duplicates = find_duplicates(&messages);
+        let duplicates = find_duplicates(&messages)?;
 
         // Delete duplicate messages
         if duplicates.is_empty() {
             print!("\r\x1B[2K"); // `\x1B[2K` clears the entire line
-            io::stdout().flush().unwrap(); // Ensure immediate print to terminal
+            io::stdout().flush()?; // Ensure immediate print to terminal
         } else {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
@@ -86,7 +86,9 @@ impl FindDups {
     }
 }
 
-fn find_duplicates(messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>) -> HashSet<u32> {
+fn find_duplicates(
+    messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>,
+) -> Result<HashSet<u32>, OurError> {
     let mut message_ids: HashMap<String, Vec<u32>> = HashMap::new();
 
     // Collect message IDs with sequence numbers
@@ -97,7 +99,7 @@ fn find_duplicates(messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>) ->
                     message_ids
                         .entry(id)
                         .or_default()
-                        .push(message.uid.unwrap());
+                        .push(message.uid.ok_or(OurError::Uidplus)?);
                 }
             }
         }
@@ -113,7 +115,7 @@ fn find_duplicates(messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>) ->
         }
     }
 
-    duplicates
+    Ok(duplicates)
 }
 
 // Define the regex as a static global variable

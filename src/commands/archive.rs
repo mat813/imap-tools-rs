@@ -98,7 +98,7 @@ impl Archive {
                     uids_by_mailbox
                         .entry(mbx)
                         .or_default()
-                        .insert(message.uid.unwrap());
+                        .insert(message.uid.ok_or(OurError::Uidplus)?);
                 }
 
                 imap.session.select(mailbox)?;
