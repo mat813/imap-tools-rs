@@ -9,7 +9,7 @@ pub enum Commands {
     #[command(aliases = &["cleanup"])]
     Clean(Clean),
 
-    #[command(aliases = &["find-dup", "findDup", "findDups"])]
+    #[command(aliases = &["find-dup", "findDup", "findDups", "finddup", "finddups"])]
     FindDups(FindDups),
 
     #[command(aliases = &["ls"])]
