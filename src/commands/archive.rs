@@ -69,39 +69,25 @@ impl Archive {
 
         // Only delete if the rule applies based on mailbox size and message age
         if !uids_to_move.is_empty() {
+            let uids_and_sequence_by_mailbox = Self::compute_destinations(
+                imap,
+                mailbox,
+                extra,
+                ids_list_to_collapsed_sequence(&uids_to_move),
+            )?;
+
             if self.config.dry_run {
-                println!(
-                    "{mailbox:<42} | {cur_msgs:>5} | {moving_msgs:>5} | {cutoff_str:>11} | {all:?}",
-                    cur_msgs = mbx.exists,
-                    moving_msgs = uids_to_move.len(),
-                    all = ids_list_to_collapsed_sequence(&uids_to_move),
-                );
-            } else {
-                let messages_to_move = imap.session.uid_fetch(
-                    ids_list_to_collapsed_sequence(&uids_to_move),
-                    "INTERNALDATE",
-                )?;
-
-                let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
-
-                for message in &messages_to_move {
-                    let mbx = archive_mbx(
-                        mailbox,
-                        &extra.format,
-                        message.internal_date().unwrap_or_default(),
+                for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
+                    println!(
+                        "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
+                        archive_mailbox = archive_mailbox.replace(mailbox, "%MBX"),
+                        cur_msgs = mbx.exists,
                     );
-
-                    uids_by_mailbox
-                        .entry(mbx)
-                        .or_default()
-                        .insert(message.uid.ok_or(OurError::Uidplus)?);
                 }
-
+            } else {
                 imap.session.select(mailbox)?;
 
-                for (archive_mailbox, uids) in uids_by_mailbox {
-                    let sequence = ids_list_to_collapsed_sequence(&uids);
-
+                for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
                     let quoted_mailbox =
                         if archive_mailbox.contains(' ') || archive_mailbox.contains('"') {
                             &format!(
@@ -130,7 +116,6 @@ impl Archive {
                         "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
                         archive_mailbox = archive_mailbox.replace(mailbox, "%MBX"),
                         cur_msgs = mbx.exists,
-                        moving_msgs = uids.len(),
                     );
                 }
 
@@ -141,8 +126,43 @@ impl Archive {
 
         Ok(())
     }
-}
 
-fn archive_mbx(mailbox: &str, format_str: &str, date: DateTime<FixedOffset>) -> String {
-    date.format(format_str).to_string().replace("%MBX", mailbox)
+    fn compute_destinations(
+        imap: &mut Imap<MyExtra>,
+        mailbox: &str,
+        extra: &MyExtra,
+        uid_set: String,
+    ) -> OurResult<BTreeMap<String, (String, usize)>> {
+        let messages_to_move = imap.session.uid_fetch(uid_set, "INTERNALDATE")?;
+
+        // First group uids by archive mailbox
+        let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
+
+        for message in &messages_to_move {
+            let mbx = Self::archive_mbx(
+                mailbox,
+                &extra.format,
+                message.internal_date().unwrap_or_default(),
+            );
+
+            uids_by_mailbox
+                .entry(mbx)
+                .or_default()
+                .insert(message.uid.ok_or(OurError::Uidplus)?);
+        }
+
+        // Then compute the emails sequence and length
+        let mut uids_and_sequence_by_mailbox = BTreeMap::new();
+
+        for (mailbox, uids) in uids_by_mailbox {
+            uids_and_sequence_by_mailbox
+                .insert(mailbox, (ids_list_to_collapsed_sequence(&uids), uids.len()));
+        }
+
+        Ok(uids_and_sequence_by_mailbox)
+    }
+
+    fn archive_mbx(mailbox: &str, format_str: &str, date: DateTime<FixedOffset>) -> String {
+        date.format(format_str).to_string().replace("%MBX", mailbox)
+    }
 }
