@@ -89,6 +89,7 @@ where
 }
 
 mod internal {
+    use super::Filter as RealFilter;
     use crate::libs::single_or_array::SingleOrArray;
     use regex::{escape, Error as RegexError, Regex};
     use serde::{Deserialize, Serialize};
@@ -152,11 +153,11 @@ mod internal {
         }
     }
 
-    impl<T> From<&super::Filter<T>> for Filter<T>
+    impl<T> From<&RealFilter<T>> for Filter<T>
     where
         T: Clone + Debug + Serialize,
     {
-        fn from(filter: &super::Filter<T>) -> Self {
+        fn from(filter: &RealFilter<T>) -> Self {
             Self {
                 reference: filter.reference.clone(),
                 pattern: filter.pattern.clone(),

@@ -5,6 +5,7 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use clap::Args;
+use imap::types::{Fetch, Uid, ZeroCopy};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{
@@ -57,7 +58,7 @@ impl FindDups {
         // Fetch message headers to find duplicates
         let messages = imap
             .session
-            .uid_fetch("1:*", "(BODY[HEADER.FIELDS (MESSAGE-ID)])")?;
+            .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")?;
         let duplicates = find_duplicates(&messages)?;
 
         // Delete duplicate messages
@@ -86,10 +87,8 @@ impl FindDups {
     }
 }
 
-fn find_duplicates(
-    messages: &imap::types::ZeroCopy<Vec<imap::types::Fetch>>,
-) -> OurResult<HashSet<u32>> {
-    let mut message_ids: HashMap<String, Vec<u32>> = HashMap::new();
+fn find_duplicates(messages: &ZeroCopy<Vec<Fetch>>) -> OurResult<HashSet<Uid>> {
+    let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
     // Collect message IDs with sequence numbers
     for message in messages {
@@ -106,7 +105,7 @@ fn find_duplicates(
     }
 
     // Identify duplicates
-    let mut duplicates = HashSet::<u32>::new();
+    let mut duplicates = HashSet::<Uid>::new();
 
     for ids in message_ids.values() {
         if ids.len() > 1 {

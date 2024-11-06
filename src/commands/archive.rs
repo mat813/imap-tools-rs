@@ -6,6 +6,7 @@ use crate::libs::{
 };
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
+use imap::types::Uid;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 
@@ -81,7 +82,7 @@ impl Archive {
                     "INTERNALDATE",
                 )?;
 
-                let mut uids_by_mailbox = BTreeMap::<String, HashSet<u32>>::new();
+                let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
 
                 for message in &messages_to_move {
                     let mbx = archive_mbx(

@@ -3,7 +3,7 @@ use crate::libs::{
     error::{OurError, OurResult},
     filter::Filter,
 };
-use imap::types::NameAttribute;
+use imap::types::{NameAttribute, Uid};
 use native_tls::TlsStream;
 use serde::Serialize;
 use std::{
@@ -162,13 +162,13 @@ where
     }
 }
 
-pub fn ids_list_to_collapsed_sequence(ids: &HashSet<u32>) -> String {
+pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
     if ids.is_empty() {
         todo!("nothing in there"); // TODO: do something ?
     }
 
     // Collect and sort the IDs
-    let mut sorted_ids: Vec<u32> = ids.iter().copied().collect();
+    let mut sorted_ids: Vec<Uid> = ids.iter().copied().collect();
     sorted_ids.sort_unstable();
 
     // Collect ranges from the sorted list
@@ -209,12 +209,13 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<u32>) -> String {
 #[cfg(test)]
 mod tests {
     use super::ids_list_to_collapsed_sequence;
+    use imap::types::Uid;
     use std::collections::HashSet; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
 
     #[test]
     #[should_panic(expected = "not yet implemented: nothing in there")]
     fn test_empty_set() {
-        let ids: HashSet<u32> = HashSet::new();
+        let ids: HashSet<Uid> = HashSet::new();
         // Assuming `ids_list_to_collapsed_sequence` returns an empty string for an empty set
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "");
     }
@@ -228,25 +229,25 @@ mod tests {
 
     #[test]
     fn test_continuous_range() {
-        let ids: HashSet<u32> = [1, 2, 3, 4, 5].iter().copied().collect();
+        let ids: HashSet<Uid> = [1, 2, 3, 4, 5].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:5");
     }
 
     #[test]
     fn test_multiple_disjoint_ranges() {
-        let ids: HashSet<u32> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
+        let ids: HashSet<Uid> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:3,7:8,10:11");
     }
 
     #[test]
     fn test_mixed_ranges_and_single_ids() {
-        let ids: HashSet<u32> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
+        let ids: HashSet<Uid> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1,3:4,6:7,10,12");
     }
 
     #[test]
     fn test_unsorted_input() {
-        let ids: HashSet<u32> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
+        let ids: HashSet<Uid> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
             .iter()
             .copied()
             .collect();
