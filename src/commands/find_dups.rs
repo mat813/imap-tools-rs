@@ -28,6 +28,15 @@ pub struct FindDups {
 
 type MyExtra = serde_value::Value;
 
+// Define the regex as a static global variable
+static MESSAGE_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
+    // Regular expression to capture Message-ID values across line breaks
+    Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)")
+        // We cannot bubble up the error here, so we unwrap(), but it's ok because
+        // we wrote it and we know it is valid.
+        .unwrap()
+});
+
 impl FindDups {
     pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
@@ -59,7 +68,7 @@ impl FindDups {
         let messages = imap
             .session
             .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")?;
-        let duplicates = find_duplicates(&messages)?;
+        let duplicates = Self::find_duplicates(&messages)?;
 
         // Delete duplicate messages
         if duplicates.is_empty() {
@@ -85,56 +94,45 @@ impl FindDups {
 
         Ok(())
     }
-}
 
-fn find_duplicates(messages: &ZeroCopy<Vec<Fetch>>) -> OurResult<HashSet<Uid>> {
-    let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
+    fn find_duplicates(messages: &ZeroCopy<Vec<Fetch>>) -> OurResult<HashSet<Uid>> {
+        let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
-    // Collect message IDs with sequence numbers
-    for message in messages {
-        if let Some(header) = message.header() {
-            if let Ok(header_text) = std::str::from_utf8(header) {
-                if let Some(id) = parse_message_id(header_text) {
-                    message_ids
-                        .entry(id)
-                        .or_default()
-                        .push(message.uid.ok_or(OurError::Uidplus)?);
-                }
+        // Collect message IDs with sequence numbers
+        for message in messages {
+            if let Some(id) = Self::parse_message_id(message.header()) {
+                message_ids
+                    .entry(id)
+                    .or_default()
+                    .push(message.uid.ok_or(OurError::Uidplus)?);
             }
         }
-    }
 
-    // Identify duplicates
-    let mut duplicates = HashSet::<Uid>::new();
+        // Identify duplicates
+        let mut duplicates = HashSet::<Uid>::new();
 
-    for ids in message_ids.values() {
-        if ids.len() > 1 {
-            // Keep the first message and mark the rest as duplicates
-            duplicates.extend(&ids[1..]);
+        for ids in message_ids.values() {
+            if ids.len() > 1 {
+                // Keep the first message and mark the rest as duplicates
+                duplicates.extend(&ids[1..]);
+            }
         }
+
+        Ok(duplicates)
     }
 
-    Ok(duplicates)
-}
+    // Parses a Message-ID from the header
+    fn parse_message_id(header: Option<&[u8]>) -> Option<String> {
+        let header_text = std::str::from_utf8(header?).ok()?;
 
-// Define the regex as a static global variable
-static MESSAGE_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
-    // Regular expression to capture Message-ID values across line breaks
-    Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)")
-        // We cannot bubble up the error here, so we unwrap(), but it's ok because
-        // we wrote it and we know it is valid.
-        .unwrap()
-});
+        // Clean the input by replacing any line breaks followed by whitespace with a single space
+        let cleaned_headers = header_text; //.replace("\r\n ", " ").replace("\n ", " ");
 
-// Parses a Message-ID from the header
-fn parse_message_id(header: &str) -> Option<String> {
-    // Clean the input by replacing any line breaks followed by whitespace with a single space
-    let cleaned_headers = header; //.replace("\r\n ", " ").replace("\n ", " ");
-
-    // Find and capture the Message-ID using the regex
-    MESSAGE_ID_REGEX
-        .captures(cleaned_headers)
-        .and_then(|cap| cap.get(1).map(|m| m.as_str().to_string()))
-        // If the length of the message id is too short, say it's None
-        .and_then(|s| (s.len() > 4).then_some(s))
+        // Find and capture the Message-ID using the regex
+        MESSAGE_ID_REGEX
+            .captures(cleaned_headers)
+            .and_then(|cap| cap.get(1).map(|m| m.as_str().to_string()))
+            // If the length of the message id is too short, say it's None
+            .and_then(|s| (s.len() > 4).then_some(s))
+    }
 }
