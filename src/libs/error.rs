@@ -2,7 +2,6 @@
 pub enum OurError {
     // External errors
     Imap(imap::Error),
-    NativeTls(native_tls::Error),
     ShellWords(shell_words::ParseError),
     StdIo(std::io::Error),
     Serde(serde_any::Error),
@@ -31,7 +30,6 @@ impl std::fmt::Display for OurError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Imap(e) => write!(f, "IMAP Error: {e}"),
-            Self::NativeTls(e) => write!(f, "NativeTls: {e}"),
             Self::StdIo(e) => write!(f, "IO Error: {e}"),
             Self::Serde(e) => write!(f, "TOML De Error: {e}"),
             Self::ShellWords(e) => write!(f, "Command parse error: {e}"),
@@ -69,24 +67,8 @@ impl From<imap::Error> for OurError {
     }
 }
 
-impl
-    From<(
-        imap::Error,
-        imap::Client<native_tls::TlsStream<std::net::TcpStream>>,
-    )> for OurError
-{
-    fn from(
-        err: (
-            imap::Error,
-            imap::Client<native_tls::TlsStream<std::net::TcpStream>>,
-        ),
-    ) -> Self {
+impl From<(imap::Error, imap::Client<Box<dyn imap::ImapConnection>>)> for OurError {
+    fn from(err: (imap::Error, imap::Client<Box<dyn imap::ImapConnection>>)) -> Self {
         Self::Imap(err.0)
-    }
-}
-
-impl From<native_tls::Error> for OurError {
-    fn from(err: native_tls::Error) -> Self {
-        Self::NativeTls(err)
     }
 }

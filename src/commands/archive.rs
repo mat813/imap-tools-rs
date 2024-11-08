@@ -138,7 +138,7 @@ impl Archive {
         // First group uids by archive mailbox
         let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
 
-        for message in &messages_to_move {
+        for message in messages_to_move.iter() {
             let mbx = Self::archive_mbx(
                 mailbox,
                 &extra.format,

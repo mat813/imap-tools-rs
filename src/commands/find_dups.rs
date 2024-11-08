@@ -5,7 +5,7 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use clap::Args;
-use imap::types::{Fetch, Uid, ZeroCopy};
+use imap::types::{Fetches, Uid};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::{
@@ -95,11 +95,11 @@ impl FindDups {
         Ok(())
     }
 
-    fn find_duplicates(messages: &ZeroCopy<Vec<Fetch>>) -> OurResult<HashSet<Uid>> {
+    fn find_duplicates(messages: &Fetches) -> OurResult<HashSet<Uid>> {
         let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
         // Collect message IDs with sequence numbers
-        for message in messages {
+        for message in messages.iter() {
             if let Some(id) = Self::parse_message_id(message.header()) {
                 message_ids
                     .entry(id)

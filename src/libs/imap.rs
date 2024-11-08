@@ -3,13 +3,12 @@ use crate::libs::{
     error::{OurError, OurResult},
     filter::Filter,
 };
-use imap::types::{NameAttribute, Uid};
-use native_tls::TlsStream;
+use imap::{types::Uid, ImapConnection, Session};
+use imap_proto::NameAttribute;
 use serde::Serialize;
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
-    net::TcpStream,
 };
 
 #[derive(Clone, Debug)]
@@ -25,7 +24,7 @@ pub struct Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
-    pub session: imap::Session<TlsStream<TcpStream>>,
+    pub session: Session<Box<dyn ImapConnection>>,
     config: Config<T>,
     cached_capabilities: HashMap<String, bool>,
 }
@@ -49,14 +48,12 @@ where
     /// # Errors
     /// Many errors can happen
     pub fn connect(config: &Config<T>) -> OurResult<Self> {
-        let tls = native_tls::TlsConnector::builder().build()?;
-
         let server = config
             .server
             .as_ref()
             .ok_or_else(|| OurError::config("Missing server"))?;
 
-        let mut client = imap::connect_starttls((server.as_str(), 143), server, &tls)?;
+        let mut client = imap::ClientBuilder::new(server.as_str(), 143).connect()?;
 
         if config.debug {
             client.debug = true;

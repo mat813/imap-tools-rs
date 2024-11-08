@@ -67,7 +67,14 @@ impl Clean {
             .map(|m| i64::from(m.size.unwrap_or(0)))
             .sum::<i64>();
 
-        let first_date = messages[0].internal_date().unwrap_or_default();
+        let first_date = messages
+            .iter()
+            .next()
+            .ok_or_else(|| {
+                OurError::config("Could not find the first message where there should be one")
+            })?
+            .internal_date()
+            .unwrap_or_default();
 
         // If size is less than a MB, skip
         if total_size <= 1_000_000 {
