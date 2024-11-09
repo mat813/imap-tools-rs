@@ -8,10 +8,7 @@ use clap::Args;
 use imap::types::{Fetches, Uid};
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::{
-    collections::{HashMap, HashSet},
-    io::{self, Write},
-};
+use std::collections::{HashMap, HashSet};
 
 #[derive(Args, Debug, Clone)]
 #[command(
@@ -51,9 +48,6 @@ impl FindDups {
     }
 
     fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> OurResult<()> {
-        print!("[{mailbox}] ");
-        io::stdout().flush()?; // Ensure immediate print to terminal
-
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
         let mbx = imap.session.examine(mailbox)?;
@@ -71,14 +65,11 @@ impl FindDups {
         let duplicates = Self::find_duplicates(&messages)?;
 
         // Delete duplicate messages
-        if duplicates.is_empty() {
-            print!("\r\x1B[2K"); // `\x1B[2K` clears the entire line
-            io::stdout().flush()?; // Ensure immediate print to terminal
-        } else {
+        if !duplicates.is_empty() {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
             if self.config.dry_run {
-                println!("dry: {} {duplicate_set}", duplicates.len());
+                println!("dry: [{mailbox}] {} {duplicate_set}", duplicates.len());
             } else {
                 // Re-open the mailbox in read-write mode
                 imap.session.select(mailbox)?;
@@ -88,7 +79,7 @@ impl FindDups {
 
                 imap.session.close()?;
 
-                println!("{} {duplicate_set}", duplicates.len(),);
+                println!("[{mailbox}] {} {duplicate_set}", duplicates.len(),);
             }
         }
 
