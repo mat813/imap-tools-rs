@@ -112,3 +112,186 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+
+    // Helper to create temporary config files with given content.
+    // We have to return the directory too otherwise it goes out of scope, gets
+    // destroyed, and the directory is deleteda.
+    fn write_temp_config(content: &str) -> (tempfile::TempDir, std::path::PathBuf) {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_file_path = temp_dir.path().join("config.toml");
+        let mut file = File::create(&temp_file_path).unwrap();
+        file.write_all(content.as_bytes()).unwrap();
+        (temp_dir, temp_file_path)
+    }
+
+    #[test]
+    fn test_new_with_args_minimal_config() {
+        // Create a minimal args with required fields only
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: Some("password123".to_string()),
+            password_command: None,
+            debug: true,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        assert_eq!(config.server, Some("imap.example.com".to_string()));
+        assert_eq!(config.username, Some("user@example.com".to_string()));
+        assert_eq!(config.password, Some("password123".to_string()));
+        assert!(config.debug);
+        assert!(!config.dry_run);
+    }
+
+    #[test]
+    fn test_new_with_args_missing_server_error() {
+        let args = Generic {
+            config: None,
+            server: None,
+            username: Some("user@example.com".to_string()),
+            password: Some("password123".to_string()),
+            password_command: None,
+            debug: false,
+            dry_run: false,
+        };
+
+        let result: OurResult<Config<()>> = Config::new_with_args(&args);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Configuration error: The server must be set"
+        );
+    }
+
+    #[test]
+    fn test_new_with_args_missing_username_error() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: None,
+            password: Some("password123".to_string()),
+            password_command: None,
+            debug: false,
+            dry_run: false,
+        };
+
+        let result: OurResult<Config<()>> = Config::new_with_args(&args);
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "Configuration error: The username must be set"
+        );
+    }
+
+    #[test]
+    fn test_password_command_execution() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: None,
+            password_command: Some("echo secret_password".to_string()),
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        // Mock the command execution with a fake password output
+        let password = config.password().unwrap();
+        assert_eq!(password.trim(), "secret_password");
+    }
+
+    #[test]
+    fn test_password_error_when_missing() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: None,
+            password_command: None,
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: OurResult<Config<()>> = Config::new_with_args(&args);
+
+        assert!(config.is_err());
+        assert_eq!(
+            config.unwrap_err().to_string(),
+            "Configuration error: The password or password command must be set"
+        );
+    }
+
+    #[test]
+    fn test_config_loading_from_file() {
+        let config_content = r#"
+        server = "imap.example.com"
+        username = "user@example.com"
+        password = "password123"
+        debug = true
+        dry-run = true
+    "#;
+
+        let (_temp_dir, config_path) = write_temp_config(config_content);
+
+        let args = Generic {
+            config: Some(config_path),
+            server: None,
+            username: None,
+            password: None,
+            password_command: None,
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        assert_eq!(config.server, Some("imap.example.com".to_string()));
+        assert_eq!(config.username, Some("user@example.com".to_string()));
+        assert_eq!(config.password, Some("password123".to_string()));
+        assert!(config.debug);
+        assert!(config.dry_run);
+    }
+
+    #[test]
+    fn test_arg_overrides_file_config() {
+        let config_content = r#"
+        server = "imap.example.com"
+        username = "user@example.com"
+        password = "password123"
+        debug = false
+        dry-run = false
+    "#;
+
+        let (_temp_dir, config_path) = write_temp_config(config_content);
+
+        let args = Generic {
+            config: Some(config_path),
+            server: Some("override.example.com".to_string()),
+            username: Some("override_user@example.com".to_string()),
+            password: Some("override_password".to_string()),
+            password_command: None,
+            debug: true,
+            dry_run: true,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        assert_eq!(config.server, Some("override.example.com".to_string()));
+        assert_eq!(
+            config.username,
+            Some("override_user@example.com".to_string())
+        );
+        assert_eq!(config.password, Some("override_password".to_string()));
+        assert!(config.debug);
+        assert!(config.dry_run);
+    }
+}

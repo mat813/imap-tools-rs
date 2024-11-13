@@ -170,3 +170,124 @@ mod internal {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::libs::filter::Filter;
+    use regex::Regex;
+    use serde::{Deserialize, Serialize};
+    use serde_any::{from_str, to_string, Format};
+
+    #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+    struct ExtraConfig {
+        additional_info: String,
+    }
+
+    /// Test deserialization and internal regex creation
+    #[test]
+    fn test_filter_deserialization_and_regex_creation() {
+        let json_data = r#"
+    {
+        "reference": "test_ref",
+        "pattern": "*",
+        "include": ["include_this", "also_this"],
+        "include-re": ["^include_pattern.*"],
+        "exclude": ["exclude_this"],
+        "exclude-re": ["^exclude_pattern.*"],
+        "extra": {"additional_info": "test info"}
+    }"#;
+
+        let filter: Filter<ExtraConfig> = from_str(json_data, Format::Json).unwrap();
+        assert_eq!(filter.reference, Some("test_ref".to_string()));
+        assert_eq!(filter.pattern, Some("*".to_string()));
+
+        // Test regex patterns created in include_re and exclude_re
+        assert!(filter.include_re.is_some());
+        let include_re = filter.include_re.as_ref().unwrap();
+        assert!(include_re.is_match("include_this"));
+        assert!(include_re.is_match("include_pattern123"));
+        assert!(!include_re.is_match("exclude_this"));
+
+        assert!(filter.exclude_re.is_some());
+        let exclude_re = filter.exclude_re.as_ref().unwrap();
+        assert!(exclude_re.is_match("exclude_this"));
+        assert!(exclude_re.is_match("exclude_pattern123"));
+        assert!(!exclude_re.is_match("include_this"));
+
+        // Check additional information in extra field
+        assert_eq!(
+            filter.extra,
+            Some(ExtraConfig {
+                additional_info: "test info".to_string()
+            })
+        );
+    }
+
+    /// Test serialization, ensuring expected fields are present
+    #[test]
+    fn test_filter_serialization() {
+        let filter = Filter::<ExtraConfig> {
+            reference: Some("test_ref".to_string()),
+            pattern: Some("*".to_string()),
+            include_re: Some(Regex::new("include_this|^include_pattern.*").unwrap()),
+            exclude_re: Some(Regex::new("exclude_this|^exclude_pattern.*").unwrap()),
+            extra: Some(ExtraConfig {
+                additional_info: "test info".to_string(),
+            }),
+            priv_include: Some(vec!["include_this".to_string(), "also_this".to_string()]),
+            priv_include_re: Some(vec!["^include_pattern.*".to_string()]),
+            priv_exclude: Some(vec!["exclude_this".to_string()]),
+            priv_exclude_re: Some(vec!["^exclude_pattern.*".to_string()]),
+        };
+
+        let json = to_string(&filter, Format::Json).unwrap();
+        assert!(json.contains(r#""reference":"test_ref""#));
+        assert!(json.contains(r#""pattern":"*""#));
+        assert!(json.contains(r#""include":["include_this","also_this"]"#));
+        assert!(json.contains(r#""include-re":"^include_pattern.*""#));
+        assert!(json.contains(r#""exclude":"exclude_this""#));
+        assert!(json.contains(r#""exclude-re":"^exclude_pattern.*""#));
+        assert!(json.contains(r#""additional_info":"test info""#));
+    }
+
+    /// Test default values
+    #[test]
+    fn test_filter_default() {
+        let filter: Filter<()> = Filter::default();
+        assert!(filter.reference.is_none());
+        assert_eq!(filter.pattern, Some("*".to_string()));
+        assert!(filter.include_re.is_none());
+        assert!(filter.exclude_re.is_none());
+        assert!(filter.extra.is_none());
+        assert!(filter.priv_include.is_none());
+        assert!(filter.priv_include_re.is_none());
+        assert!(filter.priv_exclude.is_none());
+        assert!(filter.priv_exclude_re.is_none());
+    }
+
+    /// Test regex creation with empty include/exclude to confirm None is returned
+    #[test]
+    fn test_filter_no_regex_created() {
+        let json_data = r#"
+    {
+        "pattern": "*"
+    }"#;
+
+        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
+        assert!(filter.include_re.is_none());
+        assert!(filter.exclude_re.is_none());
+    }
+
+    /// Test error handling for invalid regex patterns
+    #[test]
+    fn test_filter_invalid_regex() {
+        let json_data = r#"
+    {
+        "pattern": "*",
+        "include-re": ["["]
+    }"#;
+
+        let result: Result<Filter<()>, _> = from_str(json_data, Format::Json);
+        assert!(result.is_err());
+    }
+}

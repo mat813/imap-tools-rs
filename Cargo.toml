@@ -33,3 +33,6 @@ serde-value = "0.7.0"
 serde_any = { version = "0.5.0", default-features = false, features = ["json", "toml", "yaml"] }
 shell-words = "1.1.0"
 size = { version = "0.5.0-preview2", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3.14.0"
