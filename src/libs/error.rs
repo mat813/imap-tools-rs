@@ -14,7 +14,17 @@ pub enum OurError {
 
 pub type OurResult<T> = std::result::Result<T, OurError>;
 
-impl std::error::Error for OurError {}
+impl std::error::Error for OurError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Imap(e) => Some(e),
+            Self::StdIo(e) => Some(e),
+            Self::Serde(_e) => None, /* Some(e), */
+            Self::ShellWords(e) => Some(e),
+            Self::Config(_) | Self::Uidplus => None,
+        }
+    }
+}
 
 // Implement Display if you need to format the error message
 impl std::fmt::Display for OurError {
