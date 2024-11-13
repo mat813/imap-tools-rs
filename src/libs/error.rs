@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[expect(clippy::module_name_repetitions)]
 pub enum OurError {
     // External errors
     Imap(imap::Error),
