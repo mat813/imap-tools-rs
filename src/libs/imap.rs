@@ -48,10 +48,7 @@ where
     /// # Errors
     /// Many errors can happen
     pub fn connect(config: &Config<T>) -> OurResult<Self> {
-        let server = config
-            .server
-            .as_ref()
-            .ok_or_else(|| OurError::config("Missing server"))?;
+        let server = config.server.as_ref().ok_or("Missing server")?;
 
         let mut client = imap::ClientBuilder::new(server.as_str(), 143).connect()?;
 
@@ -60,10 +57,7 @@ where
         }
 
         let session = client.login(
-            config
-                .username
-                .as_ref()
-                .ok_or_else(|| OurError::config("Missing username"))?,
+            config.username.as_ref().ok_or("Missing username")?,
             config.password()?,
         )?;
 
@@ -119,7 +113,7 @@ where
             for mailbox in self
                 .session
                 .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .map_err(|e| OurError::config(format!("Imap error {e} for {filter:?}")))?
+                .map_err(|e| format!("Imap error {e} for {filter:?}"))?
                 .iter()
                 // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -149,9 +143,7 @@ where
                 );
             }
             if !found {
-                return Err(OurError::config(format!(
-                    "This filter did not return anything {filter:?}"
-                )));
+                Err(format!("This filter did not return anything {filter:?}"))?;
             }
         }
 

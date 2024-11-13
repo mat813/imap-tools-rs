@@ -39,11 +39,9 @@ impl Archive {
                 Some(ref extra) => {
                     self.archive(&mut imap, &mailbox, extra)?;
                 }
-                None => {
-                    return Err(OurError::config(format!(
-                        "Mailbox {mailbox} does not have an extra parameter"
-                    )))
-                }
+                None => Err(format!(
+                    "Mailbox {mailbox} does not have an extra parameter"
+                ))?,
             }
         }
 

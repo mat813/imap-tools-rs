@@ -16,16 +16,6 @@ pub type OurResult<T> = std::result::Result<T, OurError>;
 
 impl std::error::Error for OurError {}
 
-impl OurError {
-    // Constructor for Config variant that takes any AsRef<str>
-    pub fn config<S>(message: S) -> Self
-    where
-        S: AsRef<str>,
-    {
-        Self::Config(message.as_ref().to_string())
-    }
-}
-
 // Implement Display if you need to format the error message
 impl std::fmt::Display for OurError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -40,6 +30,18 @@ impl std::fmt::Display for OurError {
                 "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety",
             ),
         }
+    }
+}
+
+impl From<String> for OurError {
+    fn from(err: String) -> Self {
+        Self::Config(err)
+    }
+}
+
+impl From<&str> for OurError {
+    fn from(err: &str) -> Self {
+        Self::Config(err.to_string())
     }
 }
 

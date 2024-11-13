@@ -1,7 +1,7 @@
 use crate::libs::{
     args,
     config::Config,
-    error::{OurError, OurResult},
+    error::OurResult,
     imap::{ids_list_to_collapsed_sequence, Imap},
 };
 use chrono::{Duration, Utc};
@@ -34,11 +34,9 @@ impl Clean {
                 Some(ref extra) => {
                     self.cleanup_mailbox(&mut imap, &mailbox, extra)?;
                 }
-                None => {
-                    return Err(OurError::config(format!(
-                        "Mailbox {mailbox} does not have an extra parameter"
-                    )))
-                }
+                None => Err(format!(
+                    "Mailbox {mailbox} does not have an extra parameter"
+                ))?,
             }
         }
 
@@ -70,9 +68,7 @@ impl Clean {
         let first_date = messages
             .iter()
             .next()
-            .ok_or_else(|| {
-                OurError::config("Could not find the first message where there should be one")
-            })?
+            .ok_or("Could not find the first message where there should be one")?
             .internal_date()
             .unwrap_or_default();
 

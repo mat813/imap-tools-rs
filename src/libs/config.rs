@@ -1,8 +1,4 @@
-use crate::libs::{
-    args::Generic,
-    error::{OurError, OurResult},
-    filters::Filters,
-};
+use crate::libs::{args::Generic, error::OurResult, filters::Filters};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -81,17 +77,15 @@ where
         }
 
         if config.server.is_none() {
-            return Err(OurError::config("The server must be set"));
+            Err("The server must be set")?;
         }
 
         if config.username.is_none() {
-            return Err(OurError::config("The username must be set"));
+            Err("The username must be set")?;
         }
 
         if config.password.is_none() && config.password_command.is_none() {
-            return Err(OurError::config(
-                "The password or password command must be set",
-            ));
+            Err("The password or password command must be set")?;
         }
 
         Ok(config)
@@ -110,15 +104,11 @@ where
             Ok(pass.clone())
         } else if let Some(ref command) = self.password_command {
             let args = split(command)?;
-            let (exe, args) = args
-                .split_first()
-                .ok_or_else(|| OurError::config("password command is empty"))?;
+            let (exe, args) = args.split_first().ok_or("password command is empty")?;
             let output = Command::new(exe).args(args).output()?;
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         } else {
-            Err(OurError::config(
-                "the password or password command must be set",
-            ))
+            Err("the password or password command must be set")?
         }
     }
 }
