@@ -1,3 +1,5 @@
-fn main() {
-    imap_tools::run();
+use imap_tools::OurResult;
+
+fn main() -> OurResult<()> {
+    imap_tools::run()
 }

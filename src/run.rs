@@ -1,4 +1,5 @@
 use crate::commands::Commands;
+pub use crate::libs::error::{OurError, OurResult};
 use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
@@ -15,15 +16,16 @@ struct MainArgs {
     command: Commands,
 }
 
-pub fn run() {
+/// Dispatch-run our commands
+/// # Errors
+/// forwards the errors from the commands to `main()`
+pub fn run() -> OurResult<()> {
     let cli = MainArgs::parse();
 
-    if let Err(error) = match cli.command {
+    match cli.command {
         Commands::Archive(archive) => archive.execute(),
         Commands::Clean(clean) => clean.execute(),
         Commands::FindDups(find_dups) => find_dups.execute(),
         Commands::List(list) => list.execute(),
-    } {
-        eprintln!("{error}");
     }
 }
