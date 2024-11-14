@@ -6,6 +6,8 @@ pub enum OurError {
     ShellWords(shell_words::ParseError),
     StdIo(std::io::Error),
     Serde(serde_any::Error),
+    Strfmt(strfmt::FmtError),
+    TryFromInt(std::num::TryFromIntError),
 
     // Internal errors
     Config(String),
@@ -21,6 +23,8 @@ impl std::error::Error for OurError {
             Self::StdIo(e) => Some(e),
             Self::Serde(_e) => None, /* Some(e), */
             Self::ShellWords(e) => Some(e),
+            Self::Strfmt(e) => Some(e),
+            Self::TryFromInt(e) => Some(e),
             Self::Config(_) | Self::Uidplus => None,
         }
     }
@@ -34,6 +38,8 @@ impl std::fmt::Display for OurError {
             Self::StdIo(e) => write!(f, "IO Error: {e}"),
             Self::Serde(e) => write!(f, "TOML De Error: {e}"),
             Self::ShellWords(e) => write!(f, "Command parse error: {e}"),
+            Self::Strfmt(e) => write!(f, "Format error: {e}"),
+            Self::TryFromInt(e) => write!(f, "Int conversion error: {e}"),
             Self::Config(e) => write!(f, "Configuration error: {e}"),
             Self::Uidplus => write!(
                 f,
@@ -74,9 +80,21 @@ impl From<shell_words::ParseError> for OurError {
     }
 }
 
+impl From<strfmt::FmtError> for OurError {
+    fn from(err: strfmt::FmtError) -> Self {
+        Self::Strfmt(err)
+    }
+}
+
 impl From<imap::Error> for OurError {
     fn from(err: imap::Error) -> Self {
         Self::Imap(err)
+    }
+}
+
+impl From<std::num::TryFromIntError> for OurError {
+    fn from(err: std::num::TryFromIntError) -> Self {
+        Self::TryFromInt(err)
     }
 }
 
