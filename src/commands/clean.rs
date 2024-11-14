@@ -3,6 +3,7 @@ use crate::libs::{
     config::Config,
     error::OurResult,
     imap::{ids_list_to_collapsed_sequence, Imap},
+    render::{new_renderer, Renderer},
 };
 use chrono::{Duration, Utc};
 use clap::Args;
@@ -29,10 +30,29 @@ impl Clean {
 
         let mut imap = Imap::connect(&config)?;
 
+        let mut renderer = new_renderer(
+            if config.dry_run {
+                "Mailbox Cleaner DRY-RUN"
+            } else {
+                "Mailbox Cleaner"
+            },
+            "{0:<42} | {1:>5} | {2:>10} | {3:>4} | {4:>11} | {5:>11} | {6:>4} | {7}",
+            &[
+                "Mailbox",
+                "Msgs",
+                "Size",
+                "Del",
+                "First date",
+                "Cutoff date",
+                "Days",
+                "Sequence",
+            ],
+        )?;
+
         for (mailbox, result) in imap.list()? {
             match result.extra {
                 Some(ref extra) => {
-                    self.cleanup_mailbox(&mut imap, &mailbox, extra)?;
+                    self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)?;
                 }
                 None => Err(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
@@ -46,6 +66,7 @@ impl Clean {
     fn cleanup_mailbox(
         &self,
         imap: &mut Imap<MyExtra>,
+        renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
     ) -> OurResult<()> {
@@ -94,9 +115,7 @@ impl Clean {
 
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
-                if self.config.dry_run {
-                    print!("dry | ");
-                } else {
+                if !self.config.dry_run {
                     imap.session.select(mailbox)?;
 
                     imap.session.uid_store(&sequence, "+FLAGS (\\Deleted)")?;
@@ -105,15 +124,16 @@ impl Clean {
                     imap.session.close()?;
                 }
 
-                println!(
-                    "{mailbox:<42} | {:>5} | {:>10} | {:>4} | {:>11} | {:>11} | {:>4} | {sequence}",
-                    mbx.exists,
-                    Size::from_bytes(total_size).format().to_string(),
-                    uids_to_delete.len(),
-                    first_date.format("%d-%b-%Y"),
-                    cutoff_str,
-                    cutoff_date.signed_duration_since(first_date).num_days(),
-                );
+                renderer.add_row(&[
+                    &mailbox,
+                    &mbx.exists,
+                    &Size::from_bytes(total_size).format(),
+                    &uids_to_delete.len(),
+                    &first_date.format("%d-%b-%Y"),
+                    &cutoff_str,
+                    &cutoff_date.signed_duration_since(first_date).num_days(),
+                    &sequence,
+                ])?;
 
                 break;
             }
