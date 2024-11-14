@@ -1,4 +1,4 @@
-use crate::libs::{args, config::Config, error::OurResult, imap::Imap};
+use crate::libs::{args, config::Config, error::OurResult, imap::Imap, render::new_renderer};
 use clap::Args;
 
 #[derive(Args, Debug, Clone)]
@@ -22,12 +22,11 @@ impl List {
 
         let mut imap = Imap::connect(&config)?;
 
+        let mut renderer =
+            new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Mailbox extra"])?;
+
         for (mailbox, result) in imap.list()? {
-            if self.config.dry_run {
-                println!("Mailbox: {mailbox} {result:?}");
-            } else {
-                println!("Mailbox: {mailbox}");
-            }
+            renderer.add_row(&[&mailbox, &format!("{:?}", result.extra)])?;
         }
 
         Ok(())
