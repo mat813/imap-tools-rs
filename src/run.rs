@@ -1,5 +1,4 @@
-use crate::commands::Commands;
-pub use crate::libs::error::{OurError, OurResult};
+use crate::{commands::Commands, libs::error::OurResult};
 use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]

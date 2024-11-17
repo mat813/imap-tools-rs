@@ -1,5 +1,7 @@
-use imap_tools::OurResult;
+mod commands;
+mod libs;
+mod run;
 
-fn main() -> OurResult<()> {
-    imap_tools::run()
+fn main() -> libs::error::OurResult<()> {
+    run::run()
 }
