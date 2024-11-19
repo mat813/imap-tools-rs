@@ -168,7 +168,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
-            "Configuration error: The server must be set"
+            "Internal error: The server must be set"
         );
     }
 
@@ -188,7 +188,7 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
-            "Configuration error: The username must be set"
+            "Internal error: The username must be set"
         );
     }
 
@@ -228,7 +228,7 @@ mod tests {
         assert!(config.is_err());
         assert_eq!(
             config.unwrap_err().to_string(),
-            "Configuration error: The password or password command must be set"
+            "Internal error: The password or password command must be set"
         );
     }
 

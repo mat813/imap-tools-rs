@@ -10,7 +10,7 @@ pub enum OurError {
     TryFromInt(std::num::TryFromIntError),
 
     // Internal errors
-    Config(String),
+    Internal(String),
     Uidplus,
 }
 
@@ -25,7 +25,7 @@ impl std::error::Error for OurError {
             Self::ShellWords(e) => Some(e),
             Self::Strfmt(e) => Some(e),
             Self::TryFromInt(e) => Some(e),
-            Self::Config(_) | Self::Uidplus => None,
+            Self::Internal(_) | Self::Uidplus => None,
         }
     }
 }
@@ -40,7 +40,7 @@ impl std::fmt::Display for OurError {
             Self::ShellWords(e) => write!(f, "Command parse error: {e}"),
             Self::Strfmt(e) => write!(f, "Format error: {e}"),
             Self::TryFromInt(e) => write!(f, "Int conversion error: {e}"),
-            Self::Config(e) => write!(f, "Configuration error: {e}"),
+            Self::Internal(e) => write!(f, "Internal error: {e}"),
             Self::Uidplus => write!(
                 f,
                 "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety",
@@ -49,58 +49,33 @@ impl std::fmt::Display for OurError {
     }
 }
 
-impl From<String> for OurError {
-    fn from(err: String) -> Self {
-        Self::Config(err)
-    }
+macro_rules! impl_error_conversions {
+    ($enum_type:ident, $( ($variant:ident, $from_type:ty) ),* $(,)?) => {
+        $(
+            impl From<$from_type> for $enum_type {
+                fn from(err: $from_type) -> Self {
+                    Self::$variant(err.into())
+                }
+            }
+        )*
+    };
 }
 
-impl From<&str> for OurError {
-    fn from(err: &str) -> Self {
-        Self::Config(err.to_string())
-    }
-}
-
-// Implement the conversion from std::io::Error
-impl From<std::io::Error> for OurError {
-    fn from(err: std::io::Error) -> Self {
-        Self::StdIo(err)
-    }
-}
-
-impl From<serde_any::Error> for OurError {
-    fn from(err: serde_any::Error) -> Self {
-        Self::Serde(err)
-    }
-}
-
-impl From<shell_words::ParseError> for OurError {
-    fn from(err: shell_words::ParseError) -> Self {
-        Self::ShellWords(err)
-    }
-}
-
-impl From<strfmt::FmtError> for OurError {
-    fn from(err: strfmt::FmtError) -> Self {
-        Self::Strfmt(err)
-    }
-}
-
-impl From<imap::Error> for OurError {
-    fn from(err: imap::Error) -> Self {
-        Self::Imap(err)
-    }
-}
-
-impl From<std::num::TryFromIntError> for OurError {
-    fn from(err: std::num::TryFromIntError) -> Self {
-        Self::TryFromInt(err)
-    }
-}
+impl_error_conversions!(
+    OurError,
+    (Internal, String),
+    (Internal, &str),
+    (StdIo, std::io::Error),
+    (Serde, serde_any::Error),
+    (ShellWords, shell_words::ParseError),
+    (Strfmt, strfmt::FmtError),
+    (Imap, imap::Error),
+    (TryFromInt, std::num::TryFromIntError),
+);
 
 impl From<(imap::Error, imap::Client<Box<dyn imap::ImapConnection>>)> for OurError {
-    fn from(err: (imap::Error, imap::Client<Box<dyn imap::ImapConnection>>)) -> Self {
-        Self::Imap(err.0)
+    fn from((err, _): (imap::Error, imap::Client<Box<dyn imap::ImapConnection>>)) -> Self {
+        Self::Imap(err)
     }
 }
 
@@ -157,7 +132,7 @@ mod tests {
         let config_error = String::from("config error");
         let our_error: OurError = config_error.into();
         match our_error {
-            OurError::Config(e) => assert_eq!(e, "config error"),
+            OurError::Internal(e) => assert_eq!(e, "config error"),
             _ => panic!("Expected Config variant"),
         }
     }
@@ -167,7 +142,7 @@ mod tests {
         let config_error = "config error";
         let our_error: OurError = config_error.into();
         match our_error {
-            OurError::Config(e) => assert_eq!(e, "config error"),
+            OurError::Internal(e) => assert_eq!(e, "config error"),
             _ => panic!("Expected Config variant"),
         }
     }
@@ -208,8 +183,8 @@ mod tests {
 
     #[test]
     fn test_display_config() {
-        let our_error = OurError::Config("config error".to_string());
-        assert_eq!(our_error.to_string(), "Configuration error: config error");
+        let our_error = OurError::Internal("config error".to_string());
+        assert_eq!(our_error.to_string(), "Internal error: config error");
     }
 
     #[test]
@@ -237,7 +212,7 @@ mod tests {
         assert!(our_error.source().is_some());
 
         // Config and Uidplus errors have no source
-        let config_error = OurError::Config("config error".to_string());
+        let config_error = OurError::Internal("config error".to_string());
         assert!(config_error.source().is_none());
 
         let uidplus_error = OurError::Uidplus;
