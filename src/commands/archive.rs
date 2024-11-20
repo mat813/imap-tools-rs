@@ -3,6 +3,7 @@ use crate::libs::{
     config::Config,
     error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
+    render::{new_renderer, Renderer},
 };
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
@@ -32,12 +33,29 @@ impl Archive {
     pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
+        let mut renderer = new_renderer(
+            if config.dry_run {
+                "Mailbox Archiving DRY-RUN"
+            } else {
+                "Mailbox Archiving"
+            },
+            "{0:<42} | {1:>5} | {2:<25} | {3:>5} | {4:>11} | {5}",
+            &[
+                "Mailbox",
+                "Msgs",
+                "Archive mbx",
+                "Arc",
+                "Cutoff date",
+                "Sequence",
+            ],
+        )?;
+
         let mut imap = Imap::connect(&config)?;
 
         for (mailbox, result) in imap.list()? {
             match result.extra {
                 Some(ref extra) => {
-                    self.archive(&mut imap, &mailbox, extra)?;
+                    self.archive(&mut imap, &mut renderer, &mailbox, extra)?;
                 }
                 None => Err(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
@@ -48,7 +66,13 @@ impl Archive {
         Ok(())
     }
 
-    fn archive(&self, imap: &mut Imap<MyExtra>, mailbox: &str, extra: &MyExtra) -> OurResult<()> {
+    fn archive(
+        &self,
+        imap: &mut Imap<MyExtra>,
+        renderer: &mut Box<dyn Renderer>,
+        mailbox: &str,
+        extra: &MyExtra,
+    ) -> OurResult<()> {
         let mbx = imap.session.examine(mailbox)?;
 
         // If there are no messages, skip
@@ -76,11 +100,14 @@ impl Archive {
 
             if self.config.dry_run {
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
-                    println!(
-                        "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
-                        archive_mailbox = archive_mailbox.replace(mailbox, "%MBX"),
-                        cur_msgs = mbx.exists,
-                    );
+                    renderer.add_row(&[
+                        &mailbox,
+                        &mbx.exists,
+                        &archive_mailbox.replace(mailbox, "%MBX"),
+                        &moving_msgs,
+                        &cutoff_str,
+                        &sequence,
+                    ])?;
                 }
             } else {
                 imap.session.select(mailbox)?;
@@ -110,11 +137,14 @@ impl Archive {
                         imap.session.uid_store(&sequence, "+FLAGS (\\Deleted)")?;
                     }
 
-                    println!(
-                        "{mailbox:<42} | {cur_msgs:>5} | {archive_mailbox:<25} | {moving_msgs:>5} | {cutoff_str:>11} | {sequence}",
-                        archive_mailbox = archive_mailbox.replace(mailbox, "%MBX"),
-                        cur_msgs = mbx.exists,
-                    );
+                    renderer.add_row(&[
+                        &mailbox,
+                        &mbx.exists,
+                        &archive_mailbox.replace(mailbox, "%MBX"),
+                        &moving_msgs,
+                        &cutoff_str,
+                        &sequence,
+                    ])?;
                 }
 
                 // Close the moved messages
