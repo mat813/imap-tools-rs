@@ -3,6 +3,7 @@ use crate::libs::{
     config::Config,
     error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
+    render::{new_renderer, Renderer},
 };
 use clap::Args;
 use imap::types::{Fetches, Uid};
@@ -38,16 +39,31 @@ impl FindDups {
     pub fn execute(&self) -> OurResult<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
+        let mut renderer = new_renderer(
+            if config.dry_run {
+                "Mailbox Deduplication DRY-RUN"
+            } else {
+                "Mailbox Deduplication"
+            },
+            "[{0}] {1} {2}",
+            &["Mailbox", "Dups", "Sequence"],
+        )?;
+
         let mut imap = Imap::connect(&config)?;
 
         for (mailbox, _result) in imap.list()? {
-            self.process(&mut imap, &mailbox)?;
+            self.process(&mut imap, &mut renderer, &mailbox)?;
         }
 
         Ok(())
     }
 
-    fn process(&self, imap: &mut Imap<MyExtra>, mailbox: &str) -> OurResult<()> {
+    fn process(
+        &self,
+        imap: &mut Imap<MyExtra>,
+        renderer: &mut Box<dyn Renderer>,
+        mailbox: &str,
+    ) -> OurResult<()> {
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
         let mbx = imap.session.examine(mailbox)?;
@@ -68,9 +84,7 @@ impl FindDups {
         if !duplicates.is_empty() {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
-            if self.config.dry_run {
-                println!("dry: [{mailbox}] {} {duplicate_set}", duplicates.len());
-            } else {
+            if !self.config.dry_run {
                 // Re-open the mailbox in read-write mode
                 imap.session.select(mailbox)?;
 
@@ -78,9 +92,9 @@ impl FindDups {
                     .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")?;
 
                 imap.session.close()?;
-
-                println!("[{mailbox}] {} {duplicate_set}", duplicates.len(),);
             }
+
+            renderer.add_row(&[&mailbox, &duplicates.len(), &duplicate_set])?;
         }
 
         Ok(())
