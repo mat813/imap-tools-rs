@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
  - <csr-id-0000040548864c38e7f0fe58774e6dfaa9c7c5b3/> update dependencies
+ - <csr-id-0000040c8ebcaecadcdd9b48ed1d4004690653e2/> update dependencies
 
 ### Commit Statistics
 
@@ -31,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v1.3.1 (2024-11-17)
+
+<csr-id-0000039166f9224084d324170e72dead219bb382/>
+<csr-id-0000033d0bcb5d10fa76d5639bef9f37108ced1b/>
+<csr-id-00000384015332735dca79ad30079b0a4a5605ed/>
 
 ### Chore
 
@@ -75,6 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.3.0 (2024-11-11)
 
+<csr-id-00000328d25b5194a636f7257a5179a6d404b0c6/>
+
 ### Chore
 
  - <csr-id-00000328d25b5194a636f7257a5179a6d404b0c6/> v1.3.0
@@ -104,6 +111,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v1.2.0 (2024-11-09)
+
+<csr-id-0000030e2e0f3d18ad449885d828cb32b455235f/>
+<csr-id-00000292d6cf4a51f44df4a490f262ea0af35479/>
 
 ### Chore
 
@@ -141,6 +151,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v1.1.2 (2024-11-06)
+
+<csr-id-0000026923ba236ad9c7396f24fe2655971a7187/>
+<csr-id-000002580e3e43e86528d48230aada890c18a913/>
+<csr-id-0000021d4d1c41beba5cb395a15067a7f9ac804e/>
+<csr-id-000001999305c2a32214fb55cdd28402701bd768/>
 
 ### Chore
 
@@ -187,6 +202,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.1.1 (2024-11-05)
 
+<csr-id-0000018e1249ac1ff1b4d76cb77a3967a96cece1/>
+<csr-id-000001724dfb80f660c8c2fb277b8768c2ea4ac2/>
+<csr-id-000001665c76fcb6cb652ee69f7dd1f17f33ace6/>
+<csr-id-00000142ef7b70894811e79fdce929d15dad12ba/>
+
 ### Chore
 
  - <csr-id-0000018e1249ac1ff1b4d76cb77a3967a96cece1/> v1.1.1
@@ -232,6 +252,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v1.1.0 (2024-11-04)
+
+<csr-id-0000012f37424b28d1f828504f5245ac818466ff/>
 
 ### Chore
 
