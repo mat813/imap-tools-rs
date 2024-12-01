@@ -1,0 +1,308 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v1.3.2 (2024-12-01)
+
+### Bug Fixes
+
+ - <csr-id-0000040548864c38e7f0fe58774e6dfaa9c7c5b3/> update dependencies
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 13 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update dependencies (0000040)
+</details>
+
+## v1.3.1 (2024-11-17)
+
+### Chore
+
+ - <csr-id-0000039166f9224084d324170e72dead219bb382/> v1.3.1
+ - <csr-id-0000033d0bcb5d10fa76d5639bef9f37108ced1b/> this is expected
+
+### Bug Fixes
+
+ - <csr-id-00000377ca784d3e8be66767e8747ac75d6f5195/> remove the lib, this is not a library
+ - <csr-id-00000364a62be810db697f78de3ba84be71e6976/> bubble up our errors to main
+ - <csr-id-00000352e920de24acb28ef12456f177b44bf265/> impl source for OurError
+ - <csr-id-0000034a1618d365969f3f2454e8188176c76b5e/> refactor internal errors
+
+### Test
+
+ - <csr-id-00000384015332735dca79ad30079b0a4a5605ed/> add some tests
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release.
+ - 6 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.3.1 (0000039)
+    - Add some tests (0000038)
+    - Remove the lib, this is not a library (0000037)
+    - Bubble up our errors to main (0000036)
+    - Impl source for OurError (0000035)
+    - Refactor internal errors (0000034)
+    - This is expected (0000033)
+</details>
+
+## v1.3.0 (2024-11-11)
+
+### Chore
+
+ - <csr-id-00000328d25b5194a636f7257a5179a6d404b0c6/> v1.3.0
+
+### New Features
+
+ - <csr-id-00000318d6061a10b5445b0465cfe4154f159075/> make rustls/openssl features
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 2 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.3.0 (0000032)
+    - Make rustls/openssl features (0000031)
+</details>
+
+## v1.2.0 (2024-11-09)
+
+### Chore
+
+ - <csr-id-0000030e2e0f3d18ad449885d828cb32b455235f/> v1.2.0
+ - <csr-id-00000292d6cf4a51f44df4a490f262ea0af35479/> update lock file
+
+### New Features
+
+ - <csr-id-00000279c151fce8d34a9ca50727e92d5bf986e3/> use latest imap version+switch to rustls
+
+### Bug Fixes
+
+ - <csr-id-00000280fdf29dae30469d86266b28d63e5fb8ce/> stop messing with the terminal in find_dups
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 2 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.2.0 (0000030)
+    - Update lock file (0000029)
+    - Stop messing with the terminal in find_dups (0000028)
+    - Use latest imap version+switch to rustls (0000027)
+</details>
+
+## v1.1.2 (2024-11-06)
+
+### Chore
+
+ - <csr-id-0000026923ba236ad9c7396f24fe2655971a7187/> v1.1.2
+ - <csr-id-000002580e3e43e86528d48230aada890c18a913/> update lock file
+ - <csr-id-0000021d4d1c41beba5cb395a15067a7f9ac804e/> shuffle some types/includes around
+
+### Bug Fixes
+
+ - <csr-id-00000240ff5d84e2e727682ca9caa422c6ffa0b7/> add a couple more aliases for find-dups
+ - <csr-id-000002395b75258111096b523e4a32893677ad4e/> refactor a bit of code here too
+ - <csr-id-000002283660546a9b52a7ce41dea28cfa1d0be3/> try and give a similar message when dry-run
+ - <csr-id-0000020cd56633d3e2b30e0cd76bd50e3f49bfa6/> always use uid_* functions
+
+### Refactor
+
+ - <csr-id-000001999305c2a32214fb55cdd28402701bd768/> add an alias OurResult for Result<x, OurError>
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release.
+ - 1 day passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.1.2 (0000026)
+    - Update lock file (0000025)
+    - Add a couple more aliases for find-dups (0000024)
+    - Refactor a bit of code here too (0000023)
+    - Try and give a similar message when dry-run (0000022)
+    - Shuffle some types/includes around (0000021)
+    - Always use uid_* functions (0000020)
+    - Add an alias OurResult for Result<x, OurError> (0000019)
+</details>
+
+## v1.1.1 (2024-11-05)
+
+### Chore
+
+ - <csr-id-0000018e1249ac1ff1b4d76cb77a3967a96cece1/> v1.1.1
+ - <csr-id-000001724dfb80f660c8c2fb277b8768c2ea4ac2/> update lock file
+
+### Documentation
+
+ - <csr-id-0000013a1d35d3bc4b27524b798f3b7dd0038539/> fix short argument name
+
+### Bug Fixes
+
+ - <csr-id-0000015a9aa6ada766dc1f2cf441aac4e5174245/> replace unwrap's with ? or ok_or()? so we don't panic
+
+### Other
+
+ - <csr-id-000001665c76fcb6cb652ee69f7dd1f17f33ace6/> explain why those two unwrap are ok
+
+### Refactor
+
+ - <csr-id-00000142ef7b70894811e79fdce929d15dad12ba/> rename to OurError so it does not clash with others
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.1.1 (0000018)
+    - Update lock file (0000017)
+    - Explain why those two unwrap are ok (0000016)
+    - Replace unwrap's with ? or ok_or()? so we don't panic (0000015)
+    - Rename to OurError so it does not clash with others (0000014)
+    - Fix short argument name (0000013)
+</details>
+
+## v1.1.0 (2024-11-04)
+
+### Chore
+
+ - <csr-id-0000012f37424b28d1f828504f5245ac818466ff/> v1.1.0
+
+### New Features
+
+ - <csr-id-0000011fa73ff37474495eb0a722c37dfe506706/> add support for servers with no MOVE
+ - <csr-id-00000080d6890b9211c5b7117a956a038b328b0e/> add capabilities check with caching
+
+### Bug Fixes
+
+ - <csr-id-00000101b856bc1847f96b463bf8c29e449e62f6/> quote mailboxes if they contain spaces or \ or "
+ - <csr-id-0000009cb9cec77a8f231847b5a65db823f4cb3e/> check for UIDPLUS as we need it
+ - <csr-id-0000007f6bc59b8e1829e7805dedb35af4c6931f/> display shorter archive mailbox
+ - <csr-id-00000062f315793babcc2c92653c3045dffb02e7/> add missing documentation to the generic arguments
+ - <csr-id-00000052418f6ccf9073489ad478621efc572228/> only do this computation when we actually need it
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release.
+ - 1 day passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - V1.1.0 (0000012)
+    - Add support for servers with no MOVE (0000011)
+    - Quote mailboxes if they contain spaces or \ or " (0000010)
+    - Check for UIDPLUS as we need it (0000009)
+    - Add capabilities check with caching (0000008)
+    - Display shorter archive mailbox (0000007)
+    - Add missing documentation to the generic arguments (0000006)
+    - Only do this computation when we actually need it (0000005)
+</details>
+
+## v1.0.0 (2024-11-03)
+
+### New Features
+
+ - <csr-id-0000004d0e549bcc34a976e8788964b0424ff64e/> add archive
+ - <csr-id-0000003a0ab3343eef31f38a21b492fc94346d19/> add clean
+ - <csr-id-0000002ea109f59cd0b0dc9be3e7814968b8b201/> add find-dups
+ - <csr-id-00000012d5ac978339ab8d92deaa314c4cab55af/> add base with list to test filters
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add archive (0000004)
+    - Add clean (0000003)
+    - Add find-dups (0000002)
+    - Add base with list to test filters (0000001)
+</details>
+
