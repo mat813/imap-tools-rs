@@ -2,11 +2,16 @@ use anyhow::Result;
 use std::fmt::Display;
 mod print;
 #[cfg(feature = "ratatui")]
-use std::io::{stdout, IsTerminal};
-#[cfg(feature = "ratatui")]
 mod terminal;
 
 pub trait Renderer {
+    fn is_usable() -> bool
+    where
+        Self: Sized,
+    {
+        true
+    }
+
     fn new(title: &'static str, format: &'static str, headers: &[&'static str]) -> Result<Self>
     where
         Self: Sized;
@@ -19,7 +24,7 @@ pub fn new_renderer(
     headers: &[&'static str],
 ) -> Result<Box<dyn Renderer>> {
     #[cfg(feature = "ratatui")]
-    if stdout().is_terminal() {
+    if terminal::Renderer::is_usable() {
         return Ok(Box::new(terminal::Renderer::new(title, format, headers)?));
     }
 

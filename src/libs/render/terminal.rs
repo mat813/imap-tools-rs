@@ -7,10 +7,13 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table},
     Terminal, TerminalOptions, Viewport,
 };
-use std::{fmt::Display, io};
+use std::{
+    fmt::Display,
+    io::{stdout, IsTerminal, Stdout},
+};
 
 pub struct Renderer<'a> {
-    terminal: Terminal<CrosstermBackend<io::Stdout>>,
+    terminal: Terminal<CrosstermBackend<Stdout>>,
     table_rows: Vec<Row<'a>>,
     column_widths: Option<Vec<u16>>,
     headers: Row<'a>,
@@ -18,6 +21,10 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> RendererTrait for Renderer<'a> {
+    fn is_usable() -> bool {
+        stdout().is_terminal()
+    }
+
     fn new(title: &'static str, _format: &'static str, headers: &[&'static str]) -> Result<Self> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
