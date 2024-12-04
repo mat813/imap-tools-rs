@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.0 (2024-12-04)
+
+### New Features
+
+ - <csr-id-0000047c05f8db507ca61d8639bf8a9b5f6e3d8a/> convert find_dups to Renderer
+ - <csr-id-00000462ab1ec92b8a6cea0fa69a5bb00815f8d0/> convert archive to Renderer
+ - <csr-id-000004534c2937f6aa928df6f9a828347ad00edd/> convert clean to Renderer
+ - <csr-id-000004426b28aae762e9c04e4ee7bc918cddb28e/> convert list to Renderer
+ - <csr-id-0000042a18c49887b46338cb9ad8aa13c66c8eb6/> add a pretty terminal renderer based on ratatui
+
+### Bug Fixes
+
+ - <csr-id-00000439a769ae3acbc1d38d806c6a209327d134/> refactor errors a bit
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Convert find_dups to Renderer (0000047)
+    - Convert archive to Renderer (0000046)
+    - Convert clean to Renderer (0000045)
+    - Convert list to Renderer (0000044)
+    - Refactor errors a bit (0000043)
+    - Add a pretty terminal renderer based on ratatui (0000042)
+</details>
+
 ## v1.3.2 (2024-12-01)
 
 ### Bug Fixes
@@ -16,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 2 commits contributed to the release.
  - 13 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -28,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.3.2 (565c7e0)
     - Update dependencies (0000040)
 </details>
 
