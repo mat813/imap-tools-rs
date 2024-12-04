@@ -1,10 +1,10 @@
 use crate::libs::{
     args,
     config::Config,
-    error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
+use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
 use imap::types::Uid;
@@ -30,7 +30,7 @@ struct MyExtra {
 }
 
 impl Archive {
-    pub fn execute(&self) -> OurResult<()> {
+    pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut renderer = new_renderer(
@@ -57,7 +57,7 @@ impl Archive {
                 Some(ref extra) => {
                     self.archive(&mut imap, &mut renderer, &mailbox, extra)?;
                 }
-                None => Err(format!(
+                None => Err(anyhow!(
                     "Mailbox {mailbox} does not have an extra parameter"
                 ))?,
             }
@@ -72,8 +72,11 @@ impl Archive {
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
-    ) -> OurResult<()> {
-        let mbx = imap.session.examine(mailbox)?;
+    ) -> Result<()> {
+        let mbx = imap
+            .session
+            .examine(mailbox)
+            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are no messages, skip
         if mbx.exists == 0 {
@@ -87,7 +90,8 @@ impl Archive {
         // Search for messages older than the cutoff date and that are neither unread nor flagged
         let uids_to_move = imap
             .session
-            .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))?;
+            .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
+            .context("imap uid search failed")?;
 
         // Only delete if the rule applies based on mailbox size and message age
         if !uids_to_move.is_empty() {
@@ -110,7 +114,9 @@ impl Archive {
                     ])?;
                 }
             } else {
-                imap.session.select(mailbox)?;
+                imap.session
+                    .select(mailbox)
+                    .with_context(|| format!("imap select {mailbox:?} failed"))?;
 
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
                     let quoted_mailbox =
@@ -124,17 +130,30 @@ impl Archive {
                         };
 
                     // If archive mailbox does not exist, create it
-                    if imap.session.list(None, Some(quoted_mailbox))?.is_empty() {
-                        imap.session.create(&archive_mailbox)?;
+                    if imap
+                        .session
+                        .list(None, Some(quoted_mailbox))
+                        .with_context(|| format!("imap list pattern {quoted_mailbox:?} failed"))?
+                        .is_empty()
+                    {
+                        imap.session
+                            .create(&archive_mailbox)
+                            .with_context(|| format!("imap create {archive_mailbox:?} failed"))?;
                     }
 
                     if imap.has_capability("MOVE")? {
                         // MV does COPY / MARK \Deleted / EXPUNGE all in one go
-                        imap.session.uid_mv(&sequence, quoted_mailbox)?;
+                        imap.session
+                            .uid_mv(&sequence, quoted_mailbox)
+                            .with_context(|| format!("imap move to {quoted_mailbox:?} failed"))?;
                     } else {
                         // If we don't have MV, do it the old fashion way.
-                        imap.session.uid_copy(&sequence, quoted_mailbox)?;
-                        imap.session.uid_store(&sequence, "+FLAGS (\\Deleted)")?;
+                        imap.session
+                            .uid_copy(&sequence, quoted_mailbox)
+                            .with_context(|| format!("imap copy to {quoted_mailbox:?} failed"))?;
+                        imap.session
+                            .uid_store(&sequence, "+FLAGS (\\Deleted)")
+                            .context("imap store failed")?;
                     }
 
                     renderer.add_row(&[
@@ -148,7 +167,7 @@ impl Archive {
                 }
 
                 // Close the moved messages
-                imap.session.close()?;
+                imap.session.close().context("imap close failed")?;
             }
         }
 
@@ -160,8 +179,11 @@ impl Archive {
         mailbox: &str,
         extra: &MyExtra,
         uid_set: String,
-    ) -> OurResult<BTreeMap<String, (String, usize)>> {
-        let messages_to_move = imap.session.uid_fetch(uid_set, "INTERNALDATE")?;
+    ) -> Result<BTreeMap<String, (String, usize)>> {
+        let messages_to_move = imap
+            .session
+            .uid_fetch(uid_set, "INTERNALDATE")
+            .context("imap uid fetch failed")?;
 
         // First group uids by archive mailbox
         let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
@@ -176,7 +198,7 @@ impl Archive {
             uids_by_mailbox
                 .entry(mbx)
                 .or_default()
-                .insert(message.uid.ok_or(OurError::Uidplus)?);
+                .insert(message.uid.context("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
         }
 
         // Then compute the emails sequence and length

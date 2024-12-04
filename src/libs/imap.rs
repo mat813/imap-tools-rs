@@ -1,8 +1,5 @@
-use crate::libs::{
-    config::Config,
-    error::{OurError, OurResult},
-    filter::Filter,
-};
+use crate::libs::{config::Config, filter::Filter};
+use anyhow::{anyhow, Context, Result};
 use imap::{types::Uid, ImapConnection, Session};
 use imap_proto::NameAttribute;
 use serde::Serialize;
@@ -47,19 +44,24 @@ where
     /// Connect to the server and login with the given credentials.
     /// # Errors
     /// Many errors can happen
-    pub fn connect(config: &Config<T>) -> OurResult<Self> {
-        let server = config.server.as_ref().ok_or("Missing server")?;
+    pub fn connect(config: &Config<T>) -> Result<Self> {
+        let server = config.server.as_ref().context("Missing server")?;
 
-        let mut client = imap::ClientBuilder::new(server.as_str(), 143).connect()?;
+        let mut client = imap::ClientBuilder::new(server.as_str(), 143)
+            .connect()
+            .with_context(|| format!("failed to connect to {server} on port 143"))?;
 
         if config.debug {
             client.debug = true;
         }
 
-        let session = client.login(
-            config.username.as_ref().ok_or("Missing username")?,
-            config.password()?,
-        )?;
+        let session = client
+            .login(
+                config.username.as_ref().context("Missing username")?,
+                config.password()?,
+            )
+            .map_err(|err| err.0)
+            .context("imap login failed")?;
 
         let mut ret = Self {
             session,
@@ -68,7 +70,7 @@ where
         };
 
         if !ret.has_capability("UIDPLUS")? {
-            return Err(OurError::Uidplus);
+            return Err(anyhow!("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"));
         }
 
         Ok(ret)
@@ -77,7 +79,7 @@ where
     /// Check if the imap server has some capability
     /// # Errors
     /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> OurResult<bool> {
+    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
@@ -85,7 +87,11 @@ where
         // We can't cache the result of .capabilities() because it returns some
         // strange structure with very limited lifetime, so we ask once each
         // time we need a new capability and cache the result.
-        let has_capability = self.session.capabilities()?.has_str(cap.as_ref());
+        let has_capability = self
+            .session
+            .capabilities()
+            .context("imap capabilities failed")?
+            .has_str(cap.as_ref());
 
         self.cached_capabilities
             .insert(cap.as_ref().to_string(), has_capability);
@@ -101,7 +107,7 @@ where
     ///
     /// # Errors
     /// Many errors can happen
-    pub fn list(&mut self) -> OurResult<BTreeMap<String, ListResult<T>>> {
+    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
         for filter in self.config.filters.clone().unwrap_or_else(||
@@ -113,7 +119,7 @@ where
             for mailbox in self
                 .session
                 .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .map_err(|e| format!("Imap error {e} for {filter:?}"))?
+                .with_context(|| format!("imap list failed with {filter:?}"))?
                 .iter()
                 // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -143,7 +149,7 @@ where
                 );
             }
             if !found {
-                Err(format!("This filter did not return anything {filter:?}"))?;
+                Err(anyhow!("This filter did not return anything {filter:?}"))?;
             }
         }
 

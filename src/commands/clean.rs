@@ -1,10 +1,10 @@
 use crate::libs::{
     args,
     config::Config,
-    error::OurResult,
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
+use anyhow::{anyhow, Context, Result};
 use chrono::{Duration, Utc};
 use clap::Args;
 use size::Size;
@@ -25,7 +25,7 @@ pub struct Clean {
 type MyExtra = BTreeMap<Size, u64>;
 
 impl Clean {
-    pub fn execute(&self) -> OurResult<()> {
+    pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
@@ -54,7 +54,7 @@ impl Clean {
                 Some(ref extra) => {
                     self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)?;
                 }
-                None => Err(format!(
+                None => Err(anyhow!(
                     "Mailbox {mailbox} does not have an extra parameter"
                 ))?,
             }
@@ -69,8 +69,11 @@ impl Clean {
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
-    ) -> OurResult<()> {
-        let mbx = imap.session.examine(mailbox)?;
+    ) -> Result<()> {
+        let mbx = imap
+            .session
+            .examine(mailbox)
+            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are not enough messages, skip
         if mbx.exists <= 300 {
@@ -79,7 +82,8 @@ impl Clean {
 
         let messages = imap
             .session
-            .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")?;
+            .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
+            .context("imap uid fetch failed")?;
 
         let total_size = messages
             .iter()
@@ -89,7 +93,7 @@ impl Clean {
         let first_date = messages
             .iter()
             .next()
-            .ok_or("Could not find the first message where there should be one")?
+            .context("Could not find the first message where there should be one")?
             .internal_date()
             .unwrap_or_default();
 
@@ -107,7 +111,8 @@ impl Clean {
             // Search for messages older than the cutoff date
             let uids_to_delete = imap
                 .session
-                .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))?; // Search messages by cutoff date
+                .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
+                .context("imap uid search failed")?; // Search messages by cutoff date
 
             // Only delete if the rule applies based on mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
@@ -116,12 +121,16 @@ impl Clean {
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
                 if !self.config.dry_run {
-                    imap.session.select(mailbox)?;
+                    imap.session
+                        .select(mailbox)
+                        .with_context(|| format!("imap select {mailbox:?} failed"))?;
 
-                    imap.session.uid_store(&sequence, "+FLAGS (\\Deleted)")?;
+                    imap.session
+                        .uid_store(&sequence, "+FLAGS (\\Deleted)")
+                        .context("imap uid store failed")?;
 
                     // Expunge to permanently remove messages marked for deletion
-                    imap.session.close()?;
+                    imap.session.close().context("imap close failed")?;
                 }
 
                 renderer.add_row(&[

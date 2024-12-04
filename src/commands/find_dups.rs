@@ -1,10 +1,10 @@
 use crate::libs::{
     args,
     config::Config,
-    error::{OurError, OurResult},
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
+use anyhow::{Context, Result};
 use clap::Args;
 use imap::types::{Fetches, Uid};
 use once_cell::sync::Lazy;
@@ -36,7 +36,7 @@ static MESSAGE_ID_REGEX: Lazy<Regex> = Lazy::new(|| {
 });
 
 impl FindDups {
-    pub fn execute(&self) -> OurResult<()> {
+    pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut renderer = new_renderer(
@@ -63,10 +63,13 @@ impl FindDups {
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
-    ) -> OurResult<()> {
+    ) -> Result<()> {
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
-        let mbx = imap.session.examine(mailbox)?;
+        let mbx = imap
+            .session
+            .examine(mailbox)
+            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are less than 2 messages, there cannot possible be
         // duplicates, stop here
@@ -77,7 +80,8 @@ impl FindDups {
         // Fetch message headers to find duplicates
         let messages = imap
             .session
-            .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")?;
+            .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
+            .context("imap uid fetch failed")?;
         let duplicates = Self::find_duplicates(&messages)?;
 
         // Delete duplicate messages
@@ -86,12 +90,15 @@ impl FindDups {
 
             if !self.config.dry_run {
                 // Re-open the mailbox in read-write mode
-                imap.session.select(mailbox)?;
+                imap.session
+                    .select(mailbox)
+                    .with_context(|| format!("imap select {mailbox:?} failed"))?;
 
                 imap.session
-                    .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")?;
+                    .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")
+                    .context("imap uid store failed")?;
 
-                imap.session.close()?;
+                imap.session.close().context("imap close failed")?;
             }
 
             renderer.add_row(&[&mailbox, &duplicates.len(), &duplicate_set])?;
@@ -100,7 +107,7 @@ impl FindDups {
         Ok(())
     }
 
-    fn find_duplicates(messages: &Fetches) -> OurResult<HashSet<Uid>> {
+    fn find_duplicates(messages: &Fetches) -> Result<HashSet<Uid>> {
         let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
         // Collect message IDs with sequence numbers
@@ -109,7 +116,7 @@ impl FindDups {
                 message_ids
                     .entry(id)
                     .or_default()
-                    .push(message.uid.ok_or(OurError::Uidplus)?);
+                    .push(message.uid.context("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
             }
         }
 

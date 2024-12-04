@@ -1,4 +1,5 @@
-use crate::libs::{args::Generic, error::OurResult, filters::Filters};
+use crate::libs::{args::Generic, filters::Filters};
+use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -36,9 +37,10 @@ where
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
-    pub fn new_with_args(args: &Generic) -> OurResult<Self> {
+    pub fn new_with_args(args: &Generic) -> Result<Self> {
         let mut config = if let Some(ref config) = args.config {
-            serde_any::from_file(config)?
+            serde_any::from_file(config)
+                .map_err(|err| anyhow!("config file parsing falied {err:?}"))?
         } else {
             Self {
                 server: None,
@@ -77,15 +79,15 @@ where
         }
 
         if config.server.is_none() {
-            Err("The server must be set")?;
+            Err(anyhow!("The server must be set"))?;
         }
 
         if config.username.is_none() {
-            Err("The username must be set")?;
+            Err(anyhow!("The username must be set"))?;
         }
 
         if config.password.is_none() && config.password_command.is_none() {
-            Err("The password or password command must be set")?;
+            Err(anyhow!("The password or password command must be set"))?;
         }
 
         Ok(config)
@@ -99,16 +101,20 @@ where
     /// Figure out the password from literal or command
     /// # Errors
     /// Many errors can happen
-    pub fn password(&self) -> OurResult<String> {
+    pub fn password(&self) -> Result<String> {
         if let Some(ref pass) = self.password {
             Ok(pass.clone())
         } else if let Some(ref command) = self.password_command {
-            let args = split(command)?;
-            let (exe, args) = args.split_first().ok_or("password command is empty")?;
-            let output = Command::new(exe).args(args).output()?;
+            let args =
+                split(command).with_context(|| format!("parsing command failed: {command}"))?;
+            let (exe, args) = args.split_first().context("password command is empty")?;
+            let output = Command::new(exe)
+                .args(args)
+                .output()
+                .context("password command exec failed")?;
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
         } else {
-            Err("the password or password command must be set")?
+            Err(anyhow!("the password or password command must be set"))?
         }
     }
 }
@@ -164,7 +170,7 @@ mod tests {
             dry_run: false,
         };
 
-        let result: OurResult<Config<()>> = Config::new_with_args(&args);
+        let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -184,7 +190,7 @@ mod tests {
             dry_run: false,
         };
 
-        let result: OurResult<Config<()>> = Config::new_with_args(&args);
+        let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
@@ -223,7 +229,7 @@ mod tests {
             dry_run: false,
         };
 
-        let config: OurResult<Config<()>> = Config::new_with_args(&args);
+        let config: Result<Config<()>> = Config::new_with_args(&args);
 
         assert!(config.is_err());
         assert_eq!(

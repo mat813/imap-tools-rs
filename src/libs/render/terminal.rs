@@ -1,4 +1,5 @@
-use crate::libs::{error::OurResult, render::Renderer as RendererTrait};
+use crate::libs::render::Renderer as RendererTrait;
+use anyhow::{Context, Result};
 use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
@@ -17,15 +18,12 @@ pub struct Renderer<'a> {
 }
 
 impl<'a> RendererTrait for Renderer<'a> {
-    fn new(
-        title: &'static str,
-        _format: &'static str,
-        headers: &[&'static str],
-    ) -> OurResult<Self> {
+    fn new(title: &'static str, _format: &'static str, headers: &[&'static str]) -> Result<Self> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
-        })?;
-        terminal.clear()?;
+        })
+        .context("ratatui init failed")?;
+        terminal.clear().context("terminal clear failed")?;
         Ok(Self {
             terminal,
             table_rows: vec![],
@@ -40,7 +38,7 @@ impl<'a> RendererTrait for Renderer<'a> {
         })
     }
 
-    fn add_row(&mut self, row: &[&dyn Display]) -> OurResult<()> {
+    fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
         let str_row = row
             .iter()
             .map(std::string::ToString::to_string)
@@ -62,28 +60,36 @@ impl<'a> RendererTrait for Renderer<'a> {
 
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
-            if u16::try_from(width)? > self.column_widths.as_ref().unwrap()[idx] {
-                self.column_widths.as_mut().unwrap()[idx] = u16::try_from(width)?;
+            let width = u16::try_from(width)
+                .with_context(|| format!("failed converting {width} in a u16"))?;
+            if width > self.column_widths.as_ref().unwrap()[idx] {
+                self.column_widths.as_mut().unwrap()[idx] = width;
             }
         }
 
         // let area = self.terminal.get_frame().area();
         // self.terminal.set_cursor_position(area)?;
-        self.terminal.clear()?;
+        self.terminal.clear().context("terminal clear failed")?;
+        let table_width = self.table_rows.len();
+        let table_width = u16::try_from(table_width)
+            .with_context(|| format!("convert {table_width} into a u16 failed"))?;
         self.terminal = ratatui::try_init_with_options(TerminalOptions {
-            viewport: Viewport::Inline(u16::try_from(self.table_rows.len())? + 3),
-        })?;
+            viewport: Viewport::Inline(table_width + 3),
+        })
+        .context("ratatui init failed")?;
 
         let rows = self.table_rows.clone();
         let widths = self.column_widths();
         let headers = self.headers.clone();
 
-        self.terminal.draw(|frame| {
-            let table = Table::new(rows, widths)
-                .header(headers)
-                .block(Block::default().title(self.title).borders(Borders::ALL));
-            frame.render_widget(table, frame.area());
-        })?;
+        self.terminal
+            .draw(|frame| {
+                let table = Table::new(rows, widths)
+                    .header(headers)
+                    .block(Block::default().title(self.title).borders(Borders::ALL));
+                frame.render_widget(table, frame.area());
+            })
+            .context("termianl draw failed")?;
 
         Ok(())
     }

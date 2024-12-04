@@ -91,7 +91,8 @@ where
 mod internal {
     use super::Filter as RealFilter;
     use crate::libs::single_or_array::SingleOrArray;
-    use regex::{escape, Error as RegexError, Regex};
+    use anyhow::{Context, Result};
+    use regex::{escape, Regex};
     use serde::{Deserialize, Serialize};
     use std::fmt::Debug;
 
@@ -115,21 +116,21 @@ mod internal {
     where
         T: Clone + Debug + Serialize,
     {
-        pub fn make_include_filter_re(&self) -> Result<Option<Regex>, RegexError> {
-            Self::make_filter_re(&self.include, &self.include_re)
+        pub fn make_include_filter_re(&self) -> Result<Option<Regex>> {
+            Self::make_filter_re(self.include.as_ref(), self.include_re.as_ref())
         }
 
-        pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>, RegexError> {
-            Self::make_filter_re(&self.exclude, &self.exclude_re)
+        pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>> {
+            Self::make_filter_re(self.exclude.as_ref(), self.exclude_re.as_ref())
         }
 
         fn make_filter_re(
-            filter: &Option<SingleOrArray<String>>,
-            re_filter: &Option<SingleOrArray<String>>,
-        ) -> Result<Option<Regex>, RegexError> {
+            filter: Option<&SingleOrArray<String>>,
+            re_filter: Option<&SingleOrArray<String>>,
+        ) -> Result<Option<Regex>> {
             let mut internal: Vec<String> = vec![];
 
-            if let Some(ref exclude) = filter {
+            if let Some(exclude) = filter {
                 let mut exclude_escaped: Vec<String> = Into::<Vec<&String>>::into(exclude)
                     .iter()
                     .map(|s| escape(s))
@@ -137,7 +138,7 @@ mod internal {
                 internal.append(&mut exclude_escaped);
             }
 
-            if let Some(ref exclude_re) = re_filter.clone() {
+            if let Some(exclude_re) = re_filter {
                 let mut exclude_re_escaped: Vec<String> = Into::<Vec<&String>>::into(exclude_re)
                     .iter()
                     .map(|s| format!("(?:{s})"))
@@ -148,7 +149,10 @@ mod internal {
             if internal.is_empty() {
                 Ok(None)
             } else {
-                Regex::new(&internal.join("|")).map(Some)
+                let full_re = internal.join("|");
+                Regex::new(&full_re)
+                    .with_context(|| format!("regexp creation failed for {full_re:?}"))
+                    .map(Some)
             }
         }
     }

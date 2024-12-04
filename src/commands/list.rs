@@ -1,4 +1,5 @@
-use crate::libs::{args, config::Config, error::OurResult, imap::Imap, render::new_renderer};
+use crate::libs::{args, config::Config, imap::Imap, render::new_renderer};
+use anyhow::Result;
 use clap::Args;
 
 #[derive(Args, Debug, Clone)]
@@ -17,7 +18,7 @@ pub struct List {
 type MyExtra = serde_value::Value;
 
 impl List {
-    pub fn execute(&self) -> OurResult<()> {
+    pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;

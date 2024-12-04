@@ -1,4 +1,5 @@
-use crate::{commands::Commands, libs::error::OurResult};
+use crate::commands::Commands;
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Parser, Debug, Clone)]
@@ -18,7 +19,7 @@ struct MainArgs {
 /// Dispatch-run our commands
 /// # Errors
 /// forwards the errors from the commands to `main()`
-pub fn run() -> OurResult<()> {
+pub fn run() -> Result<()> {
     let cli = MainArgs::parse();
 
     match cli.command {
