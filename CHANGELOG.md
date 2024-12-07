@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.1 (2024-12-07)
+
+### Chore
+
+ - <csr-id-00000526a5079c10eb082a33198b9507b1944762/> update lock file
+
+### Bug Fixes
+
+ - <csr-id-00000510078bd05d01135b01406aa874e3b58fe6/> refactor renderers activation
+ - <csr-id-000005065e7ac0817886802f09685f7d387717b3/> switch to using anyhow
+ - <csr-id-0000049753eaf55bc4416915c56cda6339779267/> update clap to 4.5.23
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 3 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update lock file (0000052)
+    - Refactor renderers activation (0000051)
+    - Switch to using anyhow (0000050)
+    - Update clap to 4.5.23 (0000049)
+</details>
+
 ## v1.4.0 (2024-12-04)
 
 ### New Features
@@ -23,7 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release.
+ - 7 commits contributed to the release.
+ - 2 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -34,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.4.0 (a7593bc)
     - Convert find_dups to Renderer (0000047)
     - Convert archive to Renderer (0000046)
     - Convert clean to Renderer (0000045)
