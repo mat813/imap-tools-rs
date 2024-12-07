@@ -172,10 +172,7 @@ mod tests {
 
         let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().to_string(),
-            "Internal error: The server must be set"
-        );
+        assert_eq!(result.unwrap_err().to_string(), "The server must be set");
     }
 
     #[test]
@@ -192,10 +189,7 @@ mod tests {
 
         let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err().to_string(),
-            "Internal error: The username must be set"
-        );
+        assert_eq!(result.unwrap_err().to_string(), "The username must be set");
     }
 
     #[test]
@@ -234,7 +228,7 @@ mod tests {
         assert!(config.is_err());
         assert_eq!(
             config.unwrap_err().to_string(),
-            "Internal error: The password or password command must be set"
+            "The password or password command must be set"
         );
     }
 
