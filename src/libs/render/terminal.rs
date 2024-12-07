@@ -20,7 +20,7 @@ pub struct Renderer<'a> {
     title: &'static str,
 }
 
-impl<'a> RendererTrait for Renderer<'a> {
+impl RendererTrait for Renderer<'_> {
     fn is_usable() -> bool {
         stdout().is_terminal()
     }
@@ -102,7 +102,7 @@ impl<'a> RendererTrait for Renderer<'a> {
     }
 }
 
-impl<'a> Renderer<'a> {
+impl Renderer<'_> {
     fn column_widths(&self) -> Vec<Constraint> {
         let widths = self.column_widths.as_ref().unwrap();
         let last_idx = widths.len() - 1;
@@ -120,7 +120,7 @@ impl<'a> Renderer<'a> {
     }
 }
 
-impl<'a> Drop for Renderer<'a> {
+impl Drop for Renderer<'_> {
     fn drop(&mut self) {
         ratatui::restore();
     }
