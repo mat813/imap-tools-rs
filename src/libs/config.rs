@@ -15,9 +15,9 @@ where
 
     pub username: Option<String>,
 
-    pub password: Option<String>,
+    pub(self) password: Option<String>,
 
-    pub password_command: Option<String>,
+    pub(self) password_command: Option<String>,
 
     #[serde(default)]
     pub debug: bool,
@@ -40,7 +40,7 @@ where
     pub fn new_with_args(args: &Generic) -> Result<Self> {
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
-                .map_err(|err| anyhow!("config file parsing falied {err:?}"))?
+                .map_err(|err| anyhow!("config file parsing failed: {err:?}"))?
         } else {
             Self {
                 server: None,
@@ -104,7 +104,9 @@ where
     pub fn password(&self) -> Result<String> {
         if let Some(ref pass) = self.password {
             Ok(pass.clone())
-        } else if let Some(ref command) = self.password_command {
+        } else {
+            let command = self.password_command.as_ref().unwrap();
+
             let args =
                 split(command).with_context(|| format!("parsing command failed: {command}"))?;
             let (exe, args) = args.split_first().context("password command is empty")?;
@@ -113,8 +115,6 @@ where
                 .output()
                 .context("password command exec failed")?;
             Ok(String::from_utf8_lossy(&output.stdout).to_string())
-        } else {
-            Err(anyhow!("the password or password command must be set"))?
         }
     }
 }
@@ -172,7 +172,10 @@ mod tests {
 
         let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "The server must be set");
+        assert_eq!(
+            format!("{:?}", result.unwrap_err()),
+            "The server must be set"
+        );
     }
 
     #[test]
@@ -189,17 +192,108 @@ mod tests {
 
         let result: Result<Config<()>> = Config::new_with_args(&args);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err().to_string(), "The username must be set");
+        assert_eq!(
+            format!("{:?}", result.unwrap_err()),
+            "The username must be set"
+        );
     }
 
     #[test]
-    fn test_password_command_execution() {
+    fn test_password_fn_command_execution() {
         let args = Generic {
             config: None,
             server: Some("imap.example.com".to_string()),
             username: Some("user@example.com".to_string()),
             password: None,
             password_command: Some("echo secret_password".to_string()),
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        // Mock the command execution with a fake password output
+        let password = config.password().unwrap();
+        assert_eq!(password.trim(), "secret_password");
+    }
+
+    #[test]
+    fn test_password_fn_command_cannot_be_parsed() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: None,
+            password_command: Some(r#"echo "secret_password"#.to_string()),
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        // Mock the command execution with a fake password output
+        let result = config.password();
+        assert!(result.is_err());
+        assert_eq!(
+            format!("{:?}", result.unwrap_err()),
+            "parsing command failed: echo \"secret_password\n\nCaused by:\n    missing closing quote"
+        );
+    }
+
+    #[test]
+    fn test_password_fn_command_fails() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: None,
+            password_command: Some("exit 1".to_string()),
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        // Mock the command execution with a fake password output
+        let result = config.password();
+        assert!(result.is_err());
+        assert_eq!(
+            format!("{:?}", result.unwrap_err()),
+            "password command exec failed\n\nCaused by:\n    No such file or directory (os error 2)"
+        );
+    }
+
+    #[test]
+    fn test_password_fn_command_empty() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: None,
+            password_command: Some(String::new()),
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Config<()> = Config::new_with_args(&args).unwrap();
+
+        // Mock the command execution with a fake password output
+        let result = config.password();
+        assert!(result.is_err());
+        assert_eq!(
+            format!("{:?}", result.unwrap_err()),
+            "password command is empty"
+        );
+    }
+
+    #[test]
+    fn test_password_fn_static() {
+        let args = Generic {
+            config: None,
+            server: Some("imap.example.com".to_string()),
+            username: Some("user@example.com".to_string()),
+            password: Some("secret_password".to_string()),
+            password_command: None,
             debug: false,
             dry_run: false,
         };
@@ -227,8 +321,34 @@ mod tests {
 
         assert!(config.is_err());
         assert_eq!(
-            config.unwrap_err().to_string(),
+            format!("{:?}", config.unwrap_err()),
             "The password or password command must be set"
+        );
+    }
+
+    #[test]
+    fn test_config_loading_from_file_bad_config() {
+        let config_content = r#"
+        server = "imap.example.com
+    "#;
+
+        let (_temp_dir, config_path) = write_temp_config(config_content);
+
+        let args = Generic {
+            config: Some(config_path),
+            server: None,
+            username: None,
+            password: None,
+            password_command: None,
+            debug: false,
+            dry_run: false,
+        };
+
+        let config: Result<Config<()>> = Config::new_with_args(&args);
+        assert!(config.is_err());
+        assert_eq!(
+            format!("{:?}", config.unwrap_err()),
+            "config file parsing failed: TomlDeserialize(Error { inner: ErrorInner { kind: NewlineInString, line: Some(1), col: 34, message: \"\", key: [] } })"
         );
     }
 
