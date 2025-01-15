@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.4.2 (2025-01-15)
 
+<csr-id-0000064e2baeb8ed0020b2884fa7b71811adb3f2/>
+<csr-id-00000596b042f8942f5ec57d21b9ccfe02f424dd/>
+<csr-id-00000582ba77add2f190346a4491ec1ffe1297a6/>
+<csr-id-00000573e3039b6f3cbc20948b42016b3032f9af/>
+<csr-id-0000054b537566710c303f1b167327b9f6b67702/>
+<csr-id-00000568f9b87b56eefd1fd812984d3239ab0c87/>
+<csr-id-0000055b39a85bac66d46e599b302a9695669e58/>
+
 ### Chore
 
  - <csr-id-0000064e2baeb8ed0020b2884fa7b71811adb3f2/> update lock file
@@ -37,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
+ - 12 commits contributed to the release.
  - 38 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -49,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.4.2 (64e2f2f)
     - Update lock file (0000064)
     - Update serde to 1.0.217 (0000063)
     - Update clap to 4.5.26 (0000062)
