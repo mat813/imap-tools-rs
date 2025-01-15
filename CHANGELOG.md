@@ -5,7 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.2 (2025-01-15)
+
+### Chore
+
+ - <csr-id-0000064e2baeb8ed0020b2884fa7b71811adb3f2/> update lock file
+ - <csr-id-00000596b042f8942f5ec57d21b9ccfe02f424dd/> update tempfile to 3.15.0
+ - <csr-id-00000582ba77add2f190346a4491ec1ffe1297a6/> add license
+
+### Bug Fixes
+
+ - <csr-id-0000063b9576e8c514e1941f2ba636d37769355c/> update serde to 1.0.217
+ - <csr-id-0000062305b7ec11e70fc8a2c978d342bb6dbe4f/> update clap to 4.5.26
+ - <csr-id-0000061cc4d385f1fee15b9c8617f8f85f6fe035/> update chrono to 0.4.39
+ - <csr-id-00000601637abd9c5654de75dc159d8e7bd45e5b/> update anyhow to 1.0.95
+
+### Other
+
+ - <csr-id-00000573e3039b6f3cbc20948b42016b3032f9af/> add ci
+
+### Style
+
+ - <csr-id-0000054b537566710c303f1b167327b9f6b67702/> clippy
+
+### Test
+
+ - <csr-id-00000568f9b87b56eefd1fd812984d3239ab0c87/> more config tests
+ - <csr-id-0000055b39a85bac66d46e599b302a9695669e58/> fix tests after anyhow
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release.
+ - 38 days passed between releases.
+ - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update lock file (0000064)
+    - Update serde to 1.0.217 (0000063)
+    - Update clap to 4.5.26 (0000062)
+    - Update chrono to 0.4.39 (0000061)
+    - Update anyhow to 1.0.95 (0000060)
+    - Update tempfile to 3.15.0 (0000059)
+    - Add license (0000058)
+    - Add ci (0000057)
+    - More config tests (0000056)
+    - Fix tests after anyhow (0000055)
+    - Clippy (0000054)
+</details>
+
 ## v1.4.1 (2024-12-07)
+
+<csr-id-00000526a5079c10eb082a33198b9507b1944762/>
 
 ### Chore
 
@@ -21,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 3 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -33,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.4.1 (376261a)
     - Update lock file (0000052)
     - Refactor renderers activation (0000051)
     - Switch to using anyhow (0000050)
