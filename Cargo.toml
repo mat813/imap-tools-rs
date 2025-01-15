@@ -24,7 +24,7 @@ inherits = "dev"
 
 [dependencies]
 anyhow = "1.0.95"
-chrono = "0.4.38"
+chrono = "0.4.39"
 clap = { version = "4.5.23", features = ["derive"] }
 imap = { version = "3.0.0-alpha.14", default-features = false, optional = true }
 imap-proto = "0.16.5"
