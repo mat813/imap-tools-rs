@@ -9,18 +9,18 @@ keywords = ["IMAP"]
 homepage = "https://gitlab.com/mat813/imap-tools-rs"
 repository = "https://gitlab.com/mat813/imap-tools-rs"
 
-[features]
-default = ["openssl"]
-openssl = ["imap/default"]
-rustls = ["imap/rustls-tls"]
-ratatui = ["ratatui/default"]
-
 # cargo watch -x "build --profile dev-rustls --no-default-features -F rustls" -x "build --profile dev-openssl --no-default-features -F openssl"
 [profile.dev-openssl]
 inherits = "dev"
 
 [profile.dev-rustls]
 inherits = "dev"
+
+[features]
+default = ["openssl"]
+openssl = ["imap/default"]
+ratatui = ["ratatui/default"]
+rustls = ["imap/rustls-tls"]
 
 [dependencies]
 anyhow = "1.0.95"
