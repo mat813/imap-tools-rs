@@ -29,7 +29,7 @@ ratatui = ["ratatui/default"]
 rustls = ["imap/rustls-tls"]
 
 [dependencies]
-anyhow = "1.0.95"
+anyhow = "1.0.97"
 chrono = "0.4.39"
 clap = { version = "4.5.26", features = ["derive"] }
 imap = { version = "3.0.0-alpha.14", default-features = false, optional = true }
