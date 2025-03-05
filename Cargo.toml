@@ -45,4 +45,4 @@ size = { version = "0.5.0-preview2", features = ["serde"] }
 strfmt = "0.2.4"
 
 [dev-dependencies]
-tempfile = "3.15.0"
+tempfile = "3.17.1"
