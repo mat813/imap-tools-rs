@@ -30,6 +30,7 @@ impl Clean {
 
         let mut imap = Imap::connect(&config)?;
 
+        #[expect(clippy::literal_string_with_formatting_args)]
         let mut renderer = new_renderer(
             if config.dry_run {
                 "Mailbox Cleaner DRY-RUN"

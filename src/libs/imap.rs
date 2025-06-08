@@ -129,7 +129,7 @@ where
                     filter
                         .include_re
                         .as_ref()
-                        .map_or(true, |re| re.is_match(mbx.name()))
+                        .is_none_or(|re| re.is_match(mbx.name()))
                 })
                 // If we have an exclude regex, filter out folders that match it
                 // Otherwise, keep everything
@@ -137,7 +137,7 @@ where
                     filter
                         .exclude_re
                         .as_ref()
-                        .map_or(true, |re| !re.is_match(mbx.name()))
+                        .is_none_or(|re| !re.is_match(mbx.name()))
                 })
             {
                 found = true;

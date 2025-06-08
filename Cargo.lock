@@ -535,7 +535,6 @@ dependencies = [
  "clap",
  "imap",
  "imap-proto",
- "once_cell",
  "ratatui",
  "regex",
  "serde",

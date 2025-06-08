@@ -33,6 +33,7 @@ impl Archive {
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
+        #[expect(clippy::literal_string_with_formatting_args)]
         let mut renderer = new_renderer(
             if config.dry_run {
                 "Mailbox Archiving DRY-RUN"
