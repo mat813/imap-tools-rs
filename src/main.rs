@@ -13,6 +13,10 @@
     clippy::match_same_arms,
     clippy::nursery,
     clippy::option_as_ref_deref,
+    clippy::needless_raw_strings,
+    clippy::unneeded_field_pattern,
+    clippy::expect_used,
+    clippy::unwrap_used,
     clippy::pedantic
 )]
 mod commands;

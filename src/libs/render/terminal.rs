@@ -15,7 +15,7 @@ use std::{
 pub struct Renderer<'a> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
     table_rows: Vec<Row<'a>>,
-    column_widths: Option<Vec<u16>>,
+    column_widths: Vec<u16>,
     headers: Row<'a>,
     title: &'static str,
 }
@@ -34,7 +34,7 @@ impl RendererTrait for Renderer<'_> {
         Ok(Self {
             terminal,
             table_rows: vec![],
-            column_widths: None,
+            column_widths: vec![],
             title,
             headers: headers
                 .iter()
@@ -59,18 +59,18 @@ impl RendererTrait for Renderer<'_> {
         }));
         self.table_rows.push(new_row);
 
-        if self.column_widths.is_none() {
+        if self.column_widths.is_empty() {
             let column_count = row.len();
 
-            self.column_widths = Some(vec![0u16; column_count]);
+            self.column_widths = vec![0u16; column_count];
         }
 
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
             let width = u16::try_from(width)
                 .with_context(|| format!("failed converting {width} in a u16"))?;
-            if width > self.column_widths.as_ref().unwrap()[idx] {
-                self.column_widths.as_mut().unwrap()[idx] = width;
+            if width > self.column_widths[idx] {
+                self.column_widths[idx] = width;
             }
         }
 
@@ -104,9 +104,8 @@ impl RendererTrait for Renderer<'_> {
 
 impl Renderer<'_> {
     fn column_widths(&self) -> Vec<Constraint> {
-        let widths = self.column_widths.as_ref().unwrap();
-        let last_idx = widths.len() - 1;
-        widths
+        let last_idx = self.column_widths.len() - 1;
+        self.column_widths
             .iter()
             .enumerate()
             .map(|(idx, width)| {

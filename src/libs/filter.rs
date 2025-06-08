@@ -177,6 +177,8 @@ mod internal {
 
 #[cfg(test)]
 mod tests {
+    #![expect(clippy::unwrap_used)]
+
     use crate::libs::filter::Filter;
     use regex::Regex;
     use serde::{Deserialize, Serialize};

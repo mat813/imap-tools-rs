@@ -102,25 +102,29 @@ where
     /// # Errors
     /// Many errors can happen
     pub fn password(&self) -> Result<String> {
-        if let Some(ref pass) = self.password {
-            Ok(pass.clone())
-        } else {
-            let command = self.password_command.as_ref().unwrap();
-
-            let args =
-                split(command).with_context(|| format!("parsing command failed: {command}"))?;
-            let (exe, args) = args.split_first().context("password command is empty")?;
-            let output = Command::new(exe)
-                .args(args)
-                .output()
-                .context("password command exec failed")?;
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        match (&self.password, &self.password_command) {
+            (Some(pass), _) => Ok(pass.clone()),
+            (_, Some(command)) => {
+                let args =
+                    split(command).with_context(|| format!("parsing command failed: {command}"))?;
+                let (exe, args) = args.split_first().context("password command is empty")?;
+                let output = Command::new(exe)
+                    .args(args)
+                    .output()
+                    .context("password command exec failed")?;
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            }
+            _ => {
+                Err(anyhow!("The password or password command must be set"))
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #![expect(clippy::unwrap_used)]
+
     use super::*;
     use std::fs::File;
     use std::io::Write;

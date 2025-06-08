@@ -36,19 +36,13 @@ where
 }
 
 // This is a fallible impl, but we know that the input vector will always be non-empty
-#[expect(clippy::fallible_impl_from)]
 impl<T> From<Vec<T>> for SingleOrArray<T>
 where
     T: Clone + Debug,
 {
     fn from(v: Vec<T>) -> Self {
         if v.len() == 1 {
-            Self::Single(
-                v.into_iter()
-                    .next()
-                    // We can unwrap() here because we know there is one entry, so next() is not None.
-                    .unwrap(),
-            )
+            Self::Single(v[0].clone())
         } else {
             Self::Array(v)
         }
@@ -57,6 +51,7 @@ where
 
 #[cfg(test)]
 mod tests {
+    #![expect(clippy::expect_used)]
     use super::*;
     use serde_any::{from_str, to_string, Format};
 

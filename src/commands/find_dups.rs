@@ -28,6 +28,7 @@ type MyExtra = serde_value::Value;
 // Define the regex as a static global variable
 static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
     // Regular expression to capture Message-ID values across line breaks
+    #[expect(clippy::unwrap_used, reason = "re is correct")]
     Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)")
         // We cannot bubble up the error here, so we unwrap(), but it's ok because
         // we wrote it and we know it is valid.
