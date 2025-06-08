@@ -5,7 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.4.4 (2025-06-08)
+
+### Chore
+
+ - <csr-id-0000079a08f72310ae5e5a9fb2564d5da4d99864/> update lock file
+
+### Bug Fixes
+
+ - <csr-id-00000810f27f023da994b7d84c555955a8ff9046/> some new lints
+ - <csr-id-0000080d75899efd4615fac3543658ee7468d665/> clippy rust 1.87
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Some new lints (0000081)
+    - Clippy rust 1.87 (0000080)
+    - Update lock file (0000079)
+</details>
+
 ## v1.4.3 (2025-03-05)
+
+<csr-id-0000077ccb87ef520c2d9eb9dddc407a3ba4438a/>
+<csr-id-000006918cf32438b7d0ee6e1e96121f20b53abd/>
+<csr-id-00000681ad95657f45eed59efa3bd3294fe88c6c/>
+<csr-id-00000674d74f7c1962a176a6f4035c7b4101335f/>
 
 ### Chore
 
@@ -28,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
+ - 12 commits contributed to the release.
  - 48 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -40,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.4.3 (1e36d3b)
     - Update lock file (0000077)
     - Update imap to 3.0.0-alpha.15 (0000076)
     - Update size to 0.5.0 (0000075)
@@ -93,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 13 commits contributed to the release.
+ - 13 commits contributed to the release over the course of 38 calendar days.
  - 38 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -175,7 +212,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release.
+ - 7 commits contributed to the release over the course of 2 calendar days.
  - 2 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -249,7 +286,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release.
+ - 7 commits contributed to the release over the course of 4 calendar days.
  - 6 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
