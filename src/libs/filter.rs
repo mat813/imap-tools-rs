@@ -30,7 +30,7 @@ where
     fn default() -> Self {
         Self {
             reference: None,
-            pattern: Some("*".to_string()),
+            pattern: Some("*".to_owned()),
             include_re: None,
             exclude_re: None,
             extra: None,
@@ -91,7 +91,7 @@ where
 mod internal {
     use super::Filter as RealFilter;
     use crate::libs::single_or_array::SingleOrArray;
-    use anyhow::{Context, Result};
+    use anyhow::{Context as _, Result};
     use regex::{escape, Regex};
     use serde::{Deserialize, Serialize};
     use std::fmt::Debug;
@@ -177,7 +177,7 @@ mod internal {
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::unwrap_used)]
+    #![expect(clippy::unwrap_used, reason = "test")]
 
     use crate::libs::filter::Filter;
     use regex::Regex;
@@ -191,7 +191,7 @@ mod tests {
 
     /// Test deserialization and internal regex creation
     #[test]
-    fn test_filter_deserialization_and_regex_creation() {
+    fn filter_deserialization_and_regex_creation() {
         let json_data = r#"
     {
         "reference": "test_ref",
@@ -204,8 +204,8 @@ mod tests {
     }"#;
 
         let filter: Filter<ExtraConfig> = from_str(json_data, Format::Json).unwrap();
-        assert_eq!(filter.reference, Some("test_ref".to_string()));
-        assert_eq!(filter.pattern, Some("*".to_string()));
+        assert_eq!(filter.reference, Some("test_ref".to_owned()));
+        assert_eq!(filter.pattern, Some("*".to_owned()));
 
         // Test regex patterns created in include_re and exclude_re
         assert!(filter.include_re.is_some());
@@ -224,26 +224,26 @@ mod tests {
         assert_eq!(
             filter.extra,
             Some(ExtraConfig {
-                additional_info: "test info".to_string()
+                additional_info: "test info".to_owned()
             })
         );
     }
 
     /// Test serialization, ensuring expected fields are present
     #[test]
-    fn test_filter_serialization() {
+    fn filter_serialization() {
         let filter = Filter::<ExtraConfig> {
-            reference: Some("test_ref".to_string()),
-            pattern: Some("*".to_string()),
+            reference: Some("test_ref".to_owned()),
+            pattern: Some("*".to_owned()),
             include_re: Some(Regex::new("include_this|^include_pattern.*").unwrap()),
             exclude_re: Some(Regex::new("exclude_this|^exclude_pattern.*").unwrap()),
             extra: Some(ExtraConfig {
-                additional_info: "test info".to_string(),
+                additional_info: "test info".to_owned(),
             }),
-            priv_include: Some(vec!["include_this".to_string(), "also_this".to_string()]),
-            priv_include_re: Some(vec!["^include_pattern.*".to_string()]),
-            priv_exclude: Some(vec!["exclude_this".to_string()]),
-            priv_exclude_re: Some(vec!["^exclude_pattern.*".to_string()]),
+            priv_include: Some(vec!["include_this".to_owned(), "also_this".to_owned()]),
+            priv_include_re: Some(vec!["^include_pattern.*".to_owned()]),
+            priv_exclude: Some(vec!["exclude_this".to_owned()]),
+            priv_exclude_re: Some(vec!["^exclude_pattern.*".to_owned()]),
         };
 
         let json = to_string(&filter, Format::Json).unwrap();
@@ -258,10 +258,10 @@ mod tests {
 
     /// Test default values
     #[test]
-    fn test_filter_default() {
+    fn filter_default() {
         let filter: Filter<()> = Filter::default();
         assert!(filter.reference.is_none());
-        assert_eq!(filter.pattern, Some("*".to_string()));
+        assert_eq!(filter.pattern, Some("*".to_owned()));
         assert!(filter.include_re.is_none());
         assert!(filter.exclude_re.is_none());
         assert!(filter.extra.is_none());
@@ -273,7 +273,7 @@ mod tests {
 
     /// Test regex creation with empty include/exclude to confirm None is returned
     #[test]
-    fn test_filter_no_regex_created() {
+    fn filter_no_regex_created() {
         let json_data = r#"
     {
         "pattern": "*"
@@ -286,7 +286,7 @@ mod tests {
 
     /// Test error handling for invalid regex patterns
     #[test]
-    fn test_filter_invalid_regex() {
+    fn filter_invalid_regex() {
         let json_data = r#"
     {
         "pattern": "*",

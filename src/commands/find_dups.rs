@@ -4,7 +4,7 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use clap::Args;
 use imap::types::{Fetches, Uid};
 use regex::Regex;
@@ -126,6 +126,7 @@ impl FindDups {
         for ids in message_ids.values() {
             if ids.len() > 1 {
                 // Keep the first message and mark the rest as duplicates
+                #[expect(clippy::indexing_slicing, reason = "we just tested it's ok")]
                 duplicates.extend(&ids[1..]);
             }
         }
@@ -141,10 +142,12 @@ impl FindDups {
         let cleaned_headers = header_text; //.replace("\r\n ", " ").replace("\n ", " ");
 
         // Find and capture the Message-ID using the regex
-        MESSAGE_ID_REGEX
-            .captures(cleaned_headers)
-            .and_then(|cap| cap.get(1).map(|m| m.as_str().to_string()))
-            // If the length of the message id is too short, say it's None
-            .and_then(|s| (s.len() > 4).then_some(s))
+        let s = MESSAGE_ID_REGEX
+            .captures(cleaned_headers)?
+            .get(1)
+            .map(|m| m.as_str().to_owned())?;
+        // If the length of the message id is too short, say it's None
+
+        (s.len() > 4).then_some(s)
     }
 }

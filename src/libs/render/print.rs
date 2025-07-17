@@ -1,5 +1,5 @@
 use crate::libs::render::Renderer as RendererTrait;
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use std::{collections::HashMap, fmt::Display};
 use strfmt::strfmt;
 
@@ -18,6 +18,7 @@ impl RendererTrait for Renderer<'_> {
         })
     }
 
+    #[expect(clippy::print_stdout, reason = "we print")]
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
         if !self.some_output {
             self.some_output = true;
@@ -26,7 +27,7 @@ impl RendererTrait for Renderer<'_> {
                 .headers
                 .iter()
                 .enumerate()
-                .map(|(idx, f)| (idx.to_string(), (*f).to_string()))
+                .map(|(idx, f)| (idx.to_string(), (*f).to_owned()))
                 .collect();
             let output = strfmt(self.format, &map)
                 .with_context(|| format!("strfmt failed {:?} {:?}", self.format, map))?;

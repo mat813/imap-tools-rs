@@ -1,5 +1,5 @@
 use crate::libs::render::Renderer as RendererTrait;
-use anyhow::{Context, Result};
+use anyhow::{Context as _, Result};
 use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
@@ -9,7 +9,7 @@ use ratatui::{
 };
 use std::{
     fmt::Display,
-    io::{stdout, IsTerminal, Stdout},
+    io::{stdout, IsTerminal as _, Stdout},
 };
 
 pub struct Renderer<'a> {
@@ -39,7 +39,7 @@ impl RendererTrait for Renderer<'_> {
             headers: headers
                 .iter()
                 .map(|h| {
-                    Cell::new((*h).to_string()).style(Style::default().add_modifier(Modifier::BOLD))
+                    Cell::new((*h).to_owned()).style(Style::default().add_modifier(Modifier::BOLD))
                 })
                 .collect(),
         })
@@ -65,6 +65,7 @@ impl RendererTrait for Renderer<'_> {
             self.column_widths = vec![0u16; column_count];
         }
 
+        #[expect(clippy::indexing_slicing, reason = "it's ok")]
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
             let width = u16::try_from(width)

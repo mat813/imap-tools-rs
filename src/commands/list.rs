@@ -23,7 +23,10 @@ impl List {
 
         let mut imap = Imap::connect(&config)?;
 
-        #[expect(clippy::literal_string_with_formatting_args)]
+        #[expect(
+            clippy::literal_string_with_formatting_args,
+            reason = "We need it for later"
+        )]
         let mut renderer =
             new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Mailbox extra"])?;
 

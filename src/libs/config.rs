@@ -1,5 +1,5 @@
 use crate::libs::{args::Generic, filters::Filters};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context as _, Result};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -79,15 +79,15 @@ where
         }
 
         if config.server.is_none() {
-            Err(anyhow!("The server must be set"))?;
+            bail!("The server must be set");
         }
 
         if config.username.is_none() {
-            Err(anyhow!("The username must be set"))?;
+            bail!("The username must be set");
         }
 
         if config.password.is_none() && config.password_command.is_none() {
-            Err(anyhow!("The password or password command must be set"))?;
+            bail!("The password or password command must be set");
         }
 
         Ok(config)
@@ -102,9 +102,10 @@ where
     /// # Errors
     /// Many errors can happen
     pub fn password(&self) -> Result<String> {
+        #[expect(clippy::needless_borrowed_reference, reason = "ok")]
         match (&self.password, &self.password_command) {
-            (Some(pass), _) => Ok(pass.clone()),
-            (_, Some(command)) => {
+            (&Some(ref pass), _) => Ok(pass.clone()),
+            (_, &Some(ref command)) => {
                 let args =
                     split(command).with_context(|| format!("parsing command failed: {command}"))?;
                 let (exe, args) = args.split_first().context("password command is empty")?;
@@ -114,20 +115,18 @@ where
                     .context("password command exec failed")?;
                 Ok(String::from_utf8_lossy(&output.stdout).to_string())
             }
-            _ => {
-                Err(anyhow!("The password or password command must be set"))
-            }
+            _ => Err(anyhow!("The password or password command must be set")),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::unwrap_used)]
+    #![expect(clippy::unwrap_used, reason = "test")]
 
     use super::*;
     use std::fs::File;
-    use std::io::Write;
+    use std::io::Write as _;
 
     // Helper to create temporary config files with given content.
     // We have to return the directory too otherwise it goes out of scope, gets
@@ -141,13 +140,13 @@ mod tests {
     }
 
     #[test]
-    fn test_new_with_args_minimal_config() {
+    fn new_with_args_minimal_config() {
         // Create a minimal args with required fields only
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
-            password: Some("password123".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
+            password: Some("password123".to_owned()),
             password_command: None,
             debug: true,
             dry_run: false,
@@ -155,20 +154,20 @@ mod tests {
 
         let config: Config<()> = Config::new_with_args(&args).unwrap();
 
-        assert_eq!(config.server, Some("imap.example.com".to_string()));
-        assert_eq!(config.username, Some("user@example.com".to_string()));
-        assert_eq!(config.password, Some("password123".to_string()));
+        assert_eq!(config.server, Some("imap.example.com".to_owned()));
+        assert_eq!(config.username, Some("user@example.com".to_owned()));
+        assert_eq!(config.password, Some("password123".to_owned()));
         assert!(config.debug);
         assert!(!config.dry_run);
     }
 
     #[test]
-    fn test_new_with_args_missing_server_error() {
+    fn new_with_args_missing_server_error() {
         let args = Generic {
             config: None,
             server: None,
-            username: Some("user@example.com".to_string()),
-            password: Some("password123".to_string()),
+            username: Some("user@example.com".to_owned()),
+            password: Some("password123".to_owned()),
             password_command: None,
             debug: false,
             dry_run: false,
@@ -183,12 +182,12 @@ mod tests {
     }
 
     #[test]
-    fn test_new_with_args_missing_username_error() {
+    fn new_with_args_missing_username_error() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
             username: None,
-            password: Some("password123".to_string()),
+            password: Some("password123".to_owned()),
             password_command: None,
             debug: false,
             dry_run: false,
@@ -203,13 +202,13 @@ mod tests {
     }
 
     #[test]
-    fn test_password_fn_command_execution() {
+    fn password_fn_command_execution() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
             password: None,
-            password_command: Some("echo secret_password".to_string()),
+            password_command: Some("echo secret_password".to_owned()),
             debug: false,
             dry_run: false,
         };
@@ -222,13 +221,13 @@ mod tests {
     }
 
     #[test]
-    fn test_password_fn_command_cannot_be_parsed() {
+    fn password_fn_command_cannot_be_parsed() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
             password: None,
-            password_command: Some(r#"echo "secret_password"#.to_string()),
+            password_command: Some(r#"echo "secret_password"#.to_owned()),
             debug: false,
             dry_run: false,
         };
@@ -245,13 +244,13 @@ mod tests {
     }
 
     #[test]
-    fn test_password_fn_command_fails() {
+    fn password_fn_command_fails() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
             password: None,
-            password_command: Some("exit 1".to_string()),
+            password_command: Some("exit 1".to_owned()),
             debug: false,
             dry_run: false,
         };
@@ -268,11 +267,11 @@ mod tests {
     }
 
     #[test]
-    fn test_password_fn_command_empty() {
+    fn password_fn_command_empty() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
             password: None,
             password_command: Some(String::new()),
             debug: false,
@@ -291,12 +290,12 @@ mod tests {
     }
 
     #[test]
-    fn test_password_fn_static() {
+    fn password_fn_static() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
-            password: Some("secret_password".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
+            password: Some("secret_password".to_owned()),
             password_command: None,
             debug: false,
             dry_run: false,
@@ -310,11 +309,11 @@ mod tests {
     }
 
     #[test]
-    fn test_password_error_when_missing() {
+    fn password_error_when_missing() {
         let args = Generic {
             config: None,
-            server: Some("imap.example.com".to_string()),
-            username: Some("user@example.com".to_string()),
+            server: Some("imap.example.com".to_owned()),
+            username: Some("user@example.com".to_owned()),
             password: None,
             password_command: None,
             debug: false,
@@ -331,7 +330,7 @@ mod tests {
     }
 
     #[test]
-    fn test_config_loading_from_file_bad_config() {
+    fn config_loading_from_file_bad_config() {
         let config_content = r#"
         server = "imap.example.com
     "#;
@@ -357,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn test_config_loading_from_file() {
+    fn config_loading_from_file() {
         let config_content = r#"
         server = "imap.example.com"
         username = "user@example.com"
@@ -379,15 +378,15 @@ mod tests {
         };
 
         let config: Config<()> = Config::new_with_args(&args).unwrap();
-        assert_eq!(config.server, Some("imap.example.com".to_string()));
-        assert_eq!(config.username, Some("user@example.com".to_string()));
-        assert_eq!(config.password, Some("password123".to_string()));
+        assert_eq!(config.server, Some("imap.example.com".to_owned()));
+        assert_eq!(config.username, Some("user@example.com".to_owned()));
+        assert_eq!(config.password, Some("password123".to_owned()));
         assert!(config.debug);
         assert!(config.dry_run);
     }
 
     #[test]
-    fn test_arg_overrides_file_config() {
+    fn arg_overrides_file_config() {
         let config_content = r#"
         server = "imap.example.com"
         username = "user@example.com"
@@ -400,21 +399,21 @@ mod tests {
 
         let args = Generic {
             config: Some(config_path),
-            server: Some("override.example.com".to_string()),
-            username: Some("override_user@example.com".to_string()),
-            password: Some("override_password".to_string()),
+            server: Some("override.example.com".to_owned()),
+            username: Some("override_user@example.com".to_owned()),
+            password: Some("override_password".to_owned()),
             password_command: None,
             debug: true,
             dry_run: true,
         };
 
         let config: Config<()> = Config::new_with_args(&args).unwrap();
-        assert_eq!(config.server, Some("override.example.com".to_string()));
+        assert_eq!(config.server, Some("override.example.com".to_owned()));
         assert_eq!(
             config.username,
-            Some("override_user@example.com".to_string())
+            Some("override_user@example.com".to_owned())
         );
-        assert_eq!(config.password, Some("override_password".to_string()));
+        assert_eq!(config.password, Some("override_password".to_owned()));
         assert!(config.debug);
         assert!(config.dry_run);
     }

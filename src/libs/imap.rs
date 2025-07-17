@@ -1,5 +1,5 @@
 use crate::libs::{config::Config, filter::Filter};
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context as _, Result};
 use imap::{types::Uid, ImapConnection, Session};
 use imap_proto::NameAttribute;
 use serde::Serialize;
@@ -30,6 +30,7 @@ impl<T> Drop for Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[expect(clippy::print_stderr, reason = "ok")]
     fn drop(&mut self) {
         if let Err(e) = self.session.logout() {
             eprintln!("error disconnecting: {e}");
@@ -94,7 +95,7 @@ where
             .has_str(cap.as_ref());
 
         self.cached_capabilities
-            .insert(cap.as_ref().to_string(), has_capability);
+            .insert(cap.as_ref().to_owned(), has_capability);
 
         Ok(has_capability)
     }
@@ -142,14 +143,14 @@ where
             {
                 found = true;
                 mailboxes.insert(
-                    mailbox.name().to_string(),
+                    mailbox.name().to_owned(),
                     ListResult {
                         extra: filter.extra.clone().or_else(|| self.config.extra.clone()),
                     },
                 );
             }
             if !found {
-                Err(anyhow!("This filter did not return anything {filter:?}"))?;
+                bail!("This filter did not return anything {filter:?}");
             }
         }
 
@@ -171,7 +172,7 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
     let mut start = sorted_ids.first().copied();
     let mut end = start;
 
-    for &id in &sorted_ids[1..] {
+    for &id in sorted_ids.get(1..).unwrap_or_default() {
         match (end, start) {
             (Some(e), Some(_s)) if id == e + 1 => end = Some(id),
             _ => {
@@ -209,39 +210,39 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "not yet implemented: nothing in there")]
-    fn test_empty_set() {
+    fn empty_set() {
         let ids: HashSet<Uid> = HashSet::new();
         // Assuming `ids_list_to_collapsed_sequence` returns an empty string for an empty set
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "");
     }
 
     #[test]
-    fn test_single_id() {
+    fn single_id() {
         let mut ids = HashSet::new();
         ids.insert(5);
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "5");
     }
 
     #[test]
-    fn test_continuous_range() {
+    fn continuous_range() {
         let ids: HashSet<Uid> = [1, 2, 3, 4, 5].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:5");
     }
 
     #[test]
-    fn test_multiple_disjoint_ranges() {
+    fn multiple_disjoint_ranges() {
         let ids: HashSet<Uid> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:3,7:8,10:11");
     }
 
     #[test]
-    fn test_mixed_ranges_and_single_ids() {
+    fn mixed_ranges_and_single_ids() {
         let ids: HashSet<Uid> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1,3:4,6:7,10,12");
     }
 
     #[test]
-    fn test_unsorted_input() {
+    fn unsorted_input() {
         let ids: HashSet<Uid> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
             .iter()
             .copied()

@@ -4,7 +4,7 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
-use anyhow::{anyhow, Context, Result};
+use anyhow::{bail, Context as _, Result};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
 use imap::types::Uid;
@@ -33,7 +33,10 @@ impl Archive {
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
-        #[expect(clippy::literal_string_with_formatting_args)]
+        #[expect(
+            clippy::literal_string_with_formatting_args,
+            reason = "We need it for later"
+        )]
         let mut renderer = new_renderer(
             if config.dry_run {
                 "Mailbox Archiving DRY-RUN"
@@ -58,9 +61,7 @@ impl Archive {
                 Some(ref extra) => {
                     self.archive(&mut imap, &mut renderer, &mailbox, extra)?;
                 }
-                None => Err(anyhow!(
-                    "Mailbox {mailbox} does not have an extra parameter"
-                ))?,
+                None => bail!("Mailbox {mailbox} does not have an extra parameter"),
             }
         }
 

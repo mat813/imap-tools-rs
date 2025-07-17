@@ -28,9 +28,9 @@ where
     T: Clone + Debug,
 {
     fn from(value: &'a SingleOrArray<T>) -> Self {
-        match value {
-            SingleOrArray::Single(s) => vec![s],
-            SingleOrArray::Array(vec) => vec.iter().collect(),
+        match *value {
+            SingleOrArray::Single(ref s) => vec![s],
+            SingleOrArray::Array(ref vec) => vec.iter().collect(),
         }
     }
 }
@@ -42,6 +42,7 @@ where
 {
     fn from(v: Vec<T>) -> Self {
         if v.len() == 1 {
+            #[expect(clippy::indexing_slicing, reason = "we just checked")]
             Self::Single(v[0].clone())
         } else {
             Self::Array(v)
@@ -51,26 +52,26 @@ where
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::expect_used)]
+    #![expect(clippy::expect_used, clippy::panic, reason = "test")]
     use super::*;
     use serde_any::{from_str, to_string, Format};
 
     #[test]
-    fn test_serialization_single() {
+    fn serialization_single() {
         let single = SingleOrArray::Single(42);
         let serialized = to_string(&single, Format::Json).expect("Serialization failed");
         assert_eq!(serialized, "42");
     }
 
     #[test]
-    fn test_serialization_array() {
+    fn serialization_array() {
         let array = SingleOrArray::Array(vec![1, 2, 3]);
         let serialized = to_string(&array, Format::Json).expect("Serialization failed");
         assert_eq!(serialized, "[1,2,3]");
     }
 
     #[test]
-    fn test_deserialization_single() {
+    fn deserialization_single() {
         let json = "42";
         let deserialized: SingleOrArray<i32> =
             from_str(json, Format::Json).expect("Deserialization failed");
@@ -81,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialization_array() {
+    fn deserialization_array() {
         let json = "[1,2,3]";
         let deserialized: SingleOrArray<i32> =
             from_str(json, Format::Json).expect("Deserialization failed");
@@ -92,35 +93,35 @@ mod tests {
     }
 
     #[test]
-    fn test_conversion_single_to_vec() {
+    fn conversion_single_to_vec() {
         let single = SingleOrArray::Single(42);
         let vec: Vec<i32> = Vec::from(single);
         assert_eq!(vec, vec![42]);
     }
 
     #[test]
-    fn test_conversion_array_to_vec() {
+    fn conversion_array_to_vec() {
         let array = SingleOrArray::Array(vec![1, 2, 3]);
         let vec: Vec<i32> = Vec::from(array);
         assert_eq!(vec, vec![1, 2, 3]);
     }
 
     #[test]
-    fn test_conversion_single_to_vec_ref() {
+    fn conversion_single_to_vec_ref() {
         let single = SingleOrArray::Single(42);
         let vec_ref: Vec<&i32> = Vec::from(&single);
         assert_eq!(vec_ref, vec![&42]);
     }
 
     #[test]
-    fn test_conversion_array_to_vec_ref() {
+    fn conversion_array_to_vec_ref() {
         let array = SingleOrArray::Array(vec![1, 2, 3]);
         let vec_ref: Vec<&i32> = Vec::from(&array);
         assert_eq!(vec_ref, vec![&1, &2, &3]);
     }
 
     #[test]
-    fn test_conversion_vec_single_to_singleorarray() {
+    fn conversion_vec_single_to_singleorarray() {
         let vec = vec![42];
         let single_or_array: SingleOrArray<i32> = SingleOrArray::from(vec);
         match single_or_array {
@@ -130,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_conversion_vec_array_to_singleorarray() {
+    fn conversion_vec_array_to_singleorarray() {
         let vec = vec![1, 2, 3];
         let single_or_array: SingleOrArray<i32> = SingleOrArray::from(vec);
         match single_or_array {
@@ -140,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cloning_single_variant() {
+    fn cloning_single_variant() {
         let single = SingleOrArray::Single(42);
         let cloned = single;
         match cloned {
@@ -150,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cloning_array_variant() {
+    fn cloning_array_variant() {
         let array = SingleOrArray::Array(vec![1, 2, 3]);
         let cloned = array;
         match cloned {
@@ -160,14 +161,14 @@ mod tests {
     }
 
     #[test]
-    fn test_debug_output_single() {
+    fn debug_output_single() {
         let single = SingleOrArray::Single(42);
         let debug_output = format!("{single:?}");
         assert_eq!(debug_output, "Single(42)");
     }
 
     #[test]
-    fn test_debug_output_array() {
+    fn debug_output_array() {
         let array = SingleOrArray::Array(vec![1, 2, 3]);
         let debug_output = format!("{array:?}");
         assert_eq!(debug_output, "Array([1, 2, 3])");

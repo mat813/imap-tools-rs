@@ -52,59 +52,59 @@ mod tests {
     }
 
     #[test]
-    fn test_default_config_path() {
+    fn default_config_path() {
         // No arguments, config should use default value
         let generic = get_generic_from_args(["test"]);
         assert_eq!(generic.config, Some(PathBuf::from(".imap-tools.toml")));
     }
 
     #[test]
-    fn test_custom_config_path() {
+    fn custom_config_path() {
         let generic = get_generic_from_args(["test", "-c", "custom-config.toml"]);
         assert_eq!(generic.config, Some(PathBuf::from("custom-config.toml")));
     }
 
     #[test]
-    fn test_server_option() {
+    fn server_option() {
         let generic = get_generic_from_args(["test", "-s", "imap.example.com"]);
-        assert_eq!(generic.server, Some("imap.example.com".to_string()));
+        assert_eq!(generic.server, Some("imap.example.com".to_owned()));
     }
 
     #[test]
-    fn test_username_option() {
+    fn username_option() {
         let generic = get_generic_from_args(["test", "-u", "user@example.com"]);
-        assert_eq!(generic.username, Some("user@example.com".to_string()));
+        assert_eq!(generic.username, Some("user@example.com".to_owned()));
     }
 
     #[test]
-    fn test_password_option() {
+    fn password_option() {
         let generic = get_generic_from_args(["test", "-p", "secret_password"]);
-        assert_eq!(generic.password, Some("secret_password".to_string()));
+        assert_eq!(generic.password, Some("secret_password".to_owned()));
     }
 
     #[test]
-    fn test_password_command_option() {
+    fn password_command_option() {
         let generic = get_generic_from_args(["test", "-P", "echo secret_password"]);
         assert_eq!(
             generic.password_command,
-            Some("echo secret_password".to_string())
+            Some("echo secret_password".to_owned())
         );
     }
 
     #[test]
-    fn test_debug_flag() {
+    fn debug_flag() {
         let generic = get_generic_from_args(["test", "-d"]);
         assert!(generic.debug);
     }
 
     #[test]
-    fn test_dry_run_flag() {
+    fn dry_run_flag() {
         let generic = get_generic_from_args(["test", "-n"]);
         assert!(generic.dry_run);
     }
 
     #[test]
-    fn test_combined_options() {
+    fn combined_options() {
         let generic = get_generic_from_args([
             "test",
             "-c",
@@ -122,12 +122,12 @@ mod tests {
         ]);
 
         assert_eq!(generic.config, Some(PathBuf::from("custom-config.toml")));
-        assert_eq!(generic.server, Some("imap.example.com".to_string()));
-        assert_eq!(generic.username, Some("user@example.com".to_string()));
-        assert_eq!(generic.password, Some("secret_password".to_string()));
+        assert_eq!(generic.server, Some("imap.example.com".to_owned()));
+        assert_eq!(generic.username, Some("user@example.com".to_owned()));
+        assert_eq!(generic.password, Some("secret_password".to_owned()));
         assert_eq!(
             generic.password_command,
-            Some("echo secret_password".to_string())
+            Some("echo secret_password".to_owned())
         );
         assert!(generic.debug);
         assert!(generic.dry_run);

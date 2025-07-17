@@ -1,6 +1,6 @@
 mod archive;
 mod clean;
-#[expect(clippy::module_inception)]
+#[expect(clippy::module_inception, reason = "ok")]
 mod commands;
 mod find_dups;
 mod list;
