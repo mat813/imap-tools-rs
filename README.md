@@ -168,3 +168,11 @@ Permit somewhat "raw" imap commands
 
 This is comparable to the list command, but it does not need a config file.
 
+#### create
+
+Permits direct creation of a mailbox
+
+#### delete
+
+Permits direct deletion of a mailbox
+

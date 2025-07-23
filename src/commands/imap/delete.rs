@@ -1,0 +1,37 @@
+use crate::libs::{args, base_config::BaseConfig, imap::Imap};
+use anyhow::Result;
+use clap::Args;
+
+#[derive(Args, Debug, Clone)]
+#[command(
+    about = "Create mailbox",
+    long_about = "This command creates a mailbox."
+)]
+pub struct Delete {
+    #[clap(flatten)]
+    config: args::Generic,
+
+    /// The mailbox to create
+    mailbox: String,
+}
+
+impl Delete {
+    #[expect(clippy::print_stdout, reason = "main")]
+    pub fn execute(&self) -> Result<()> {
+        let config = BaseConfig::new_with_args(&self.config)?;
+
+        let mut imap: Imap<()> = Imap::connect_base(&config)?;
+
+        let mailbox = &self.mailbox;
+
+        match imap.session.delete(mailbox) {
+            Ok(()) => println!("The mailbox {mailbox} has been removed"),
+            Err(imap::Error::No(no)) if no.information.contains("Mailbox doesn't exist") => {
+                println!("Cannot remove {mailbox:?}, it does not exist: {no}");
+            }
+            Err(e) => println!("An error occured while removing the mailbox: {e:?}"),
+        }
+
+        Ok(())
+    }
+}
