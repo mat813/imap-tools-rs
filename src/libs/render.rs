@@ -5,6 +5,7 @@ mod print;
 mod terminal;
 
 pub trait Renderer {
+    #[allow(dead_code, reason = "when the feature is not enabled")]
     fn is_usable() -> bool
     where
         Self: Sized,
