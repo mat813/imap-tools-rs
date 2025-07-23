@@ -1,4 +1,3 @@
-use crate::commands::imap::{create::Create, delete::Delete, list::List};
 use anyhow::Result;
 use clap::Subcommand;
 mod create;
@@ -8,13 +7,13 @@ mod list;
 #[derive(Subcommand, Debug, Clone)]
 pub enum Imap {
     #[command(aliases = &["ls"])]
-    List(List),
+    List(list::List),
 
     #[command(aliases = &["mkdir"])]
-    Create(Create),
+    Create(create::Create),
 
     #[command(aliases = &["rmdir"])]
-    Delete(Delete),
+    Delete(delete::Delete),
 }
 
 impl Imap {
