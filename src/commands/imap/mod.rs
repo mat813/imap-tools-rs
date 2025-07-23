@@ -5,7 +5,7 @@ mod delete;
 mod list;
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum Imap {
+pub enum ImapCommands {
     #[command(aliases = &["ls"])]
     List(list::List),
 
@@ -16,12 +16,12 @@ pub enum Imap {
     Delete(delete::Delete),
 }
 
-impl Imap {
-    pub fn execute(self) -> Result<()> {
-        match self {
-            Self::List(list) => list.execute(),
-            Self::Create(create) => create.execute(),
-            Self::Delete(delete) => delete.execute(),
+impl ImapCommands {
+    pub fn execute(&self) -> Result<()> {
+        match *self {
+            Self::List(ref list) => list.execute(),
+            Self::Create(ref create) => create.execute(),
+            Self::Delete(ref delete) => delete.execute(),
         }
     }
 }

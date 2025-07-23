@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::Subcommand;
 mod archive;
 mod clean;
@@ -6,7 +7,7 @@ mod imap;
 mod list;
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum Commands {
+pub enum MainCommands {
     #[command(aliases = &["move"])]
     Archive(archive::Archive),
 
@@ -20,5 +21,17 @@ pub enum Commands {
     List(list::List),
 
     #[command(subcommand)]
-    Imap(imap::Imap),
+    Imap(imap::ImapCommands),
+}
+
+impl MainCommands {
+    pub fn execute(&self) -> Result<()> {
+        match *self {
+            Self::Archive(ref archive) => archive.execute(),
+            Self::Clean(ref clean) => clean.execute(),
+            Self::FindDups(ref find_dups) => find_dups.execute(),
+            Self::List(ref list) => list.execute(),
+            Self::Imap(ref imap) => imap.execute(),
+        }
+    }
 }

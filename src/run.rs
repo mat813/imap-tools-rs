@@ -1,4 +1,4 @@
-use crate::commands::Commands;
+use crate::commands::MainCommands;
 use anyhow::Result;
 use clap::Parser;
 
@@ -13,7 +13,7 @@ You can remove duplicate emails, clean old emails, or archive them."
 )]
 struct MainArgs {
     #[command(subcommand)]
-    command: Commands,
+    command: MainCommands,
 }
 
 /// Dispatch-run our commands
@@ -22,11 +22,5 @@ struct MainArgs {
 pub fn run() -> Result<()> {
     let cli = MainArgs::parse();
 
-    match cli.command {
-        Commands::Archive(archive) => archive.execute(),
-        Commands::Clean(clean) => clean.execute(),
-        Commands::FindDups(find_dups) => find_dups.execute(),
-        Commands::List(list) => list.execute(),
-        Commands::Imap(imap) => imap.execute(),
-    }
+    cli.command.execute()
 }
