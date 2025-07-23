@@ -27,5 +27,6 @@ pub fn run() -> Result<()> {
         Commands::Clean(clean) => clean.execute(),
         Commands::FindDups(find_dups) => find_dups.execute(),
         Commands::List(list) => list.execute(),
+        Commands::Imap(imap) => imap.execute(),
     }
 }

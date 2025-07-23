@@ -159,3 +159,12 @@ Another example could be:
 ```
 
 If the mailbox is `INBOX/bob`, and the email is from september 2024, it will be moved into `INBOX/bob/old/2024/09`.
+
+### imap
+
+Permit somewhat "raw" imap commands
+
+#### list
+
+This is comparable to the list command, but it does not need a config file.
+

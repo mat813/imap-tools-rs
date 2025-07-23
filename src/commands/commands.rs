@@ -1,4 +1,6 @@
-use crate::commands::{archive::Archive, clean::Clean, find_dups::FindDups, list::List};
+use crate::commands::{
+    archive::Archive, clean::Clean, find_dups::FindDups, imap::Imap, list::List,
+};
 use clap::Subcommand;
 
 #[derive(Subcommand, Debug, Clone)]
@@ -14,4 +16,7 @@ pub enum Commands {
 
     #[command(aliases = &["ls"])]
     List(List),
+
+    #[command(subcommand)]
+    Imap(Imap),
 }
