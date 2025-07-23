@@ -24,7 +24,7 @@ pub fn new_renderer(
     headers: &[&'static str],
 ) -> Result<Box<dyn Renderer>> {
     #[cfg(feature = "ratatui")]
-    if terminal::Renderer::is_usable() {
+    if terminal::Renderer::is_usable() && option_env!("RENDERER").is_none_or(|v| v == "ratatui") {
         return Ok(Box::new(terminal::Renderer::new(title, format, headers)?));
     }
 
