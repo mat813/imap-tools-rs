@@ -1,39 +1,29 @@
-use crate::libs::{args::Generic, base_config::BaseConfig, filters::Filters};
-use anyhow::{anyhow, Result};
+use crate::libs::args::Generic;
+use anyhow::{anyhow, bail, Context as _, Result};
 use serde::{Deserialize, Serialize};
+use shell_words::split;
 use std::fmt::Debug;
+use std::process::Command;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
-pub struct Config<T>
-where
-    T: Clone + Debug + Serialize,
-{
-    #[serde(flatten)]
-    pub base: BaseConfig,
+pub struct BaseConfig {
+    pub server: Option<String>,
 
-    pub extra: Option<T>,
+    pub username: Option<String>,
 
-    pub filters: Option<Filters<T>>,
+    pub(self) password: Option<String>,
+
+    pub(self) password_command: Option<String>,
+
+    #[serde(default)]
+    pub debug: bool,
+
+    #[serde(default)]
+    pub dry_run: bool,
 }
 
-impl<T> Default for Config<T>
-where
-    T: Clone + Debug + Serialize,
-{
-    fn default() -> Self {
-        Self {
-            base: BaseConfig::default(),
-            extra: None,
-            filters: None,
-        }
-    }
-}
-
-impl<T> Config<T>
-where
-    T: Clone + Debug + Serialize + for<'de> Deserialize<'de>,
-{
+impl BaseConfig {
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
@@ -45,9 +35,64 @@ where
             Self::default()
         };
 
-        config.base = BaseConfig::new_with_args(args)?;
+        if let Some(ref server) = args.server {
+            config.server = Some(server.clone());
+        }
+
+        if let Some(ref username) = args.username {
+            config.username = Some(username.clone());
+        }
+
+        if let Some(ref password) = args.password {
+            config.password = Some(password.clone());
+        }
+
+        if let Some(ref password_command) = args.password_command {
+            config.password_command = Some(password_command.clone());
+        }
+
+        if args.debug {
+            config.debug = args.debug;
+        }
+
+        if args.dry_run {
+            config.dry_run = args.dry_run;
+        }
+
+        if config.server.is_none() {
+            bail!("The server must be set");
+        }
+
+        if config.username.is_none() {
+            bail!("The username must be set");
+        }
+
+        if config.password.is_none() && config.password_command.is_none() {
+            bail!("The password or password command must be set");
+        }
 
         Ok(config)
+    }
+
+    /// Figure out the password from literal or command
+    /// # Errors
+    /// Many errors can happen
+    pub fn password(&self) -> Result<String> {
+        #[expect(clippy::needless_borrowed_reference, reason = "ok")]
+        match (&self.password, &self.password_command) {
+            (&Some(ref pass), _) => Ok(pass.clone()),
+            (_, &Some(ref command)) => {
+                let args =
+                    split(command).with_context(|| format!("parsing command failed: {command}"))?;
+                let (exe, args) = args.split_first().context("password command is empty")?;
+                let output = Command::new(exe)
+                    .args(args)
+                    .output()
+                    .context("password command exec failed")?;
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            }
+            _ => Err(anyhow!("The password or password command must be set")),
+        }
     }
 }
 
@@ -83,13 +128,13 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
-        assert_eq!(config.base.server, Some("imap.example.com".to_owned()));
-        assert_eq!(config.base.username, Some("user@example.com".to_owned()));
-        assert_eq!(config.base.password().unwrap(), "password123".to_owned());
-        assert!(config.base.debug);
-        assert!(!config.base.dry_run);
+        assert_eq!(config.server, Some("imap.example.com".to_owned()));
+        assert_eq!(config.username, Some("user@example.com".to_owned()));
+        assert_eq!(config.password, Some("password123".to_owned()));
+        assert!(config.debug);
+        assert!(!config.dry_run);
     }
 
     #[test]
@@ -104,7 +149,7 @@ mod tests {
             dry_run: false,
         };
 
-        let result: Result<Config<()>> = Config::new_with_args(&args);
+        let result: Result<BaseConfig> = BaseConfig::new_with_args(&args);
         assert!(result.is_err());
         assert_eq!(
             format!("{:?}", result.unwrap_err()),
@@ -124,7 +169,7 @@ mod tests {
             dry_run: false,
         };
 
-        let result: Result<Config<()>> = Config::new_with_args(&args);
+        let result: Result<BaseConfig> = BaseConfig::new_with_args(&args);
         assert!(result.is_err());
         assert_eq!(
             format!("{:?}", result.unwrap_err()),
@@ -144,10 +189,10 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
         // Mock the command execution with a fake password output
-        let password = config.base.password().unwrap();
+        let password = config.password().unwrap();
         assert_eq!(password.trim(), "secret_password");
     }
 
@@ -163,10 +208,10 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
         // Mock the command execution with a fake password output
-        let result = config.base.password();
+        let result = config.password();
         assert!(result.is_err());
         assert_eq!(
             format!("{:?}", result.unwrap_err()),
@@ -186,10 +231,10 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
         // Mock the command execution with a fake password output
-        let result = config.base.password();
+        let result = config.password();
         assert!(result.is_err());
         assert_eq!(
             format!("{:?}", result.unwrap_err()),
@@ -209,10 +254,10 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
         // Mock the command execution with a fake password output
-        let result = config.base.password();
+        let result = config.password();
         assert!(result.is_err());
         assert_eq!(
             format!("{:?}", result.unwrap_err()),
@@ -232,10 +277,10 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
 
         // Mock the command execution with a fake password output
-        let password = config.base.password().unwrap();
+        let password = config.password().unwrap();
         assert_eq!(password.trim(), "secret_password");
     }
 
@@ -251,7 +296,7 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Result<Config<()>> = Config::new_with_args(&args);
+        let config: Result<BaseConfig> = BaseConfig::new_with_args(&args);
 
         assert!(config.is_err());
         assert_eq!(
@@ -278,7 +323,7 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Result<Config<()>> = Config::new_with_args(&args);
+        let config: Result<BaseConfig> = BaseConfig::new_with_args(&args);
         assert!(config.is_err());
         assert_eq!(
             format!("{:?}", config.unwrap_err()),
@@ -308,12 +353,12 @@ mod tests {
             dry_run: false,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
-        assert_eq!(config.base.server, Some("imap.example.com".to_owned()));
-        assert_eq!(config.base.username, Some("user@example.com".to_owned()));
-        assert_eq!(config.base.password().unwrap(), "password123".to_owned());
-        assert!(config.base.debug);
-        assert!(config.base.dry_run);
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
+        assert_eq!(config.server, Some("imap.example.com".to_owned()));
+        assert_eq!(config.username, Some("user@example.com".to_owned()));
+        assert_eq!(config.password, Some("password123".to_owned()));
+        assert!(config.debug);
+        assert!(config.dry_run);
     }
 
     #[test]
@@ -338,17 +383,14 @@ mod tests {
             dry_run: true,
         };
 
-        let config: Config<()> = Config::new_with_args(&args).unwrap();
-        assert_eq!(config.base.server, Some("override.example.com".to_owned()));
+        let config: BaseConfig = BaseConfig::new_with_args(&args).unwrap();
+        assert_eq!(config.server, Some("override.example.com".to_owned()));
         assert_eq!(
-            config.base.username,
+            config.username,
             Some("override_user@example.com".to_owned())
         );
-        assert_eq!(
-            config.base.password().unwrap(),
-            "override_password".to_owned()
-        );
-        assert!(config.base.debug);
-        assert!(config.base.dry_run);
+        assert_eq!(config.password, Some("override_password".to_owned()));
+        assert!(config.debug);
+        assert!(config.dry_run);
     }
 }

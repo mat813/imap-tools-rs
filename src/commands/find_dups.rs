@@ -40,7 +40,7 @@ impl FindDups {
         let config = Config::<MyExtra>::new_with_args(&self.config)?;
 
         let mut renderer = new_renderer(
-            if config.dry_run {
+            if config.base.dry_run {
                 "Mailbox Deduplication DRY-RUN"
             } else {
                 "Mailbox Deduplication"

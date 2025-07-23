@@ -1,4 +1,4 @@
-use crate::libs::{config::Config, filter::Filter};
+use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
 use anyhow::{anyhow, bail, Context as _, Result};
 use imap::{types::Uid, ImapConnection, Session};
 use imap_proto::NameAttribute;
@@ -22,7 +22,11 @@ where
     T: Clone + Debug + Serialize,
 {
     pub session: Session<Box<dyn ImapConnection>>,
-    config: Config<T>,
+
+    extra: Option<T>,
+
+    filters: Option<Filters<T>>,
+
     cached_capabilities: HashMap<String, bool>,
 }
 
@@ -42,37 +46,47 @@ impl<T> Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
-    /// Connect to the server and login with the given credentials.
-    /// # Errors
-    /// Many errors can happen
-    pub fn connect(config: &Config<T>) -> Result<Self> {
-        let server = config.server.as_ref().context("Missing server")?;
+    pub fn connect_base(base: &BaseConfig) -> Result<Self> {
+        let server = base.server.as_ref().context("Missing server")?;
 
         let mut client = imap::ClientBuilder::new(server.as_str(), 143)
             .connect()
             .with_context(|| format!("failed to connect to {server} on port 143"))?;
 
-        if config.debug {
+        if base.debug {
             client.debug = true;
         }
 
         let session = client
             .login(
-                config.username.as_ref().context("Missing username")?,
-                config.password()?,
+                base.username.as_ref().context("Missing username")?,
+                base.password()?,
             )
             .map_err(|err| err.0)
             .context("imap login failed")?;
 
         let mut ret = Self {
             session,
-            config: config.clone(),
+            extra: None,
+            filters: None,
             cached_capabilities: HashMap::new(),
         };
 
         if !ret.has_capability("UIDPLUS")? {
             return Err(anyhow!("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"));
         }
+
+        Ok(ret)
+    }
+
+    /// Connect to the server and login with the given credentials.
+    /// # Errors
+    /// Many errors can happen
+    pub fn connect(config: &Config<T>) -> Result<Self> {
+        let mut ret = Self::connect_base(&config.base)?;
+
+        ret.extra.clone_from(&config.extra);
+        ret.filters.clone_from(&config.filters);
 
         Ok(ret)
     }
@@ -111,7 +125,7 @@ where
     pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
-        for filter in self.config.filters.clone().unwrap_or_else(||
+        for filter in self.filters.clone().unwrap_or_else(||
             // If we don't have a filter, provide an empty one matching everything
             vec![Filter::default()])
         {
@@ -145,7 +159,7 @@ where
                 mailboxes.insert(
                     mailbox.name().to_owned(),
                     ListResult {
-                        extra: filter.extra.clone().or_else(|| self.config.extra.clone()),
+                        extra: filter.extra.clone().or_else(|| self.extra.clone()),
                     },
                 );
             }

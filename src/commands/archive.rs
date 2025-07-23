@@ -38,7 +38,7 @@ impl Archive {
             reason = "We need it for later"
         )]
         let mut renderer = new_renderer(
-            if config.dry_run {
+            if config.base.dry_run {
                 "Mailbox Archiving DRY-RUN"
             } else {
                 "Mailbox Archiving"
