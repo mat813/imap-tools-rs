@@ -5,7 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.0 (2025-07-23)
+
+### Chore
+
+ - <csr-id-00000851eda9e06d87dfcfceb80f76d3a00dbbd7/> update lock file
+ - <csr-id-0000083225da1f66fa4b61057fd0340bd00abcf5/> remove dupplicate feature
+
+### New Features
+
+ - <csr-id-0000088cab95089c8cfc124eb89f89bb9a1389ff/> create and delete mailboxes
+ - <csr-id-000008751a5ae8b4df669d7b778ecedb882a4266/> add imap sub commands, first is list mailboxes
+
+### Bug Fixes
+
+ - <csr-id-0000089ab170b383496e0ea32e2779dd8ca3f897/> allow disabling the ratatui renderer
+ - <csr-id-00000866226d9e10d3f29665b484103705ac15f5/> split out base configs from config
+ - <csr-id-00000848a58024180b3ca4f7c19d42555ce60b55/> clippy
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 20 calendar days.
+ - 44 days passed between releases.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Allow disabling the ratatui renderer (0000089)
+    - Create and delete mailboxes (0000088)
+    - Add imap sub commands, first is list mailboxes (0000087)
+    - Split out base configs from config (0000086)
+    - Update lock file (0000085)
+    - Clippy (0000084)
+    - Remove dupplicate feature (0000083)
+</details>
+
 ## v1.4.4 (2025-06-08)
+
+<csr-id-0000079a08f72310ae5e5a9fb2564d5da4d99864/>
 
 ### Chore
 
@@ -20,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -31,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.4.4 (812a963)
     - Some new lints (0000081)
     - Clippy rust 1.87 (0000080)
     - Update lock file (0000079)
