@@ -17,6 +17,10 @@ pub enum ImapCommands {
 }
 
 impl ImapCommands {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         match *self {
             Self::List(ref list) => list.execute(),

@@ -25,8 +25,14 @@ pub struct Clean {
 type MyExtra = BTreeMap<Size, u64>;
 
 impl Clean {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new(&self.config)?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?config);
 
         let mut imap = Imap::connect(&config)?;
 
@@ -65,6 +71,10 @@ impl Clean {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+    )]
     fn cleanup_mailbox(
         &self,
         imap: &mut Imap<MyExtra>,

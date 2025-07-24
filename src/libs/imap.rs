@@ -34,6 +34,7 @@ impl<T> Drop for Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     #[expect(clippy::print_stderr, reason = "ok")]
     fn drop(&mut self) {
         if let Err(e) = self.session.logout() {
@@ -46,7 +47,14 @@ impl<T> Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(base), ret, err(level = "info"))
+    )]
     pub fn connect_base(base: &BaseConfig) -> Result<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?base);
+
         let server = base.server.as_ref().context("Missing server")?;
 
         let mut client = imap::ClientBuilder::new(server.as_str(), 143)
@@ -79,6 +87,10 @@ where
         Ok(ret)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(config), ret, err(level = "info"))
+    )]
     /// Connect to the server and login with the given credentials.
     /// # Errors
     /// Many errors can happen
@@ -91,10 +103,14 @@ where
         Ok(ret)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+    )]
     /// Check if the imap server has some capability
     /// # Errors
     /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str>>(&mut self, cap: S) -> Result<bool> {
+    pub fn has_capability<S: AsRef<str> + Debug>(&mut self, cap: S) -> Result<bool> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
@@ -114,6 +130,10 @@ where
         Ok(has_capability)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+    )]
     /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is
     /// sorted and stable.
     ///
@@ -172,7 +192,14 @@ where
     }
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(ids), ret)
+)]
 pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
+    #[cfg(feature = "tracing")]
+    tracing::trace!(?ids);
+
     if ids.is_empty() {
         todo!("nothing in there"); // TODO: do something ?
     }

@@ -30,8 +30,14 @@ struct MyExtra {
 }
 
 impl Archive {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new(&self.config)?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?config);
 
         #[expect(
             clippy::literal_string_with_formatting_args,
@@ -68,6 +74,10 @@ impl Archive {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+    )]
     fn archive(
         &self,
         imap: &mut Imap<MyExtra>,
@@ -176,6 +186,10 @@ impl Archive {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(imap), ret, err(level = "info"))
+    )]
     fn compute_destinations(
         imap: &mut Imap<MyExtra>,
         mailbox: &str,
@@ -214,6 +228,7 @@ impl Archive {
         Ok(uids_and_sequence_by_mailbox)
     }
 
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
     fn archive_mbx(mailbox: &str, format_str: &str, date: DateTime<FixedOffset>) -> String {
         date.format(format_str).to_string().replace("%MBX", mailbox)
     }

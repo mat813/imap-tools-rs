@@ -15,7 +15,13 @@ impl<T> From<SingleOrArray<T>> for Vec<T>
 where
     T: Clone + Debug,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(value), ret)
+    )]
     fn from(value: SingleOrArray<T>) -> Self {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?value);
         match value {
             SingleOrArray::Single(s) => vec![s],
             SingleOrArray::Array(vec) => vec,
@@ -27,7 +33,13 @@ impl<'a, T> From<&'a SingleOrArray<T>> for Vec<&'a T>
 where
     T: Clone + Debug,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(value), ret)
+    )]
     fn from(value: &'a SingleOrArray<T>) -> Self {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?value);
         match *value {
             SingleOrArray::Single(ref s) => vec![s],
             SingleOrArray::Array(ref vec) => vec.iter().collect(),
@@ -40,7 +52,13 @@ impl<T> From<Vec<T>> for SingleOrArray<T>
 where
     T: Clone + Debug,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(v), ret)
+    )]
     fn from(v: Vec<T>) -> Self {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(value = ?v);
         if v.len() == 1 {
             #[expect(clippy::indexing_slicing, reason = "we just checked")]
             Self::Single(v[0].clone())

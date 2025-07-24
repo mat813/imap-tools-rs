@@ -34,10 +34,17 @@ impl<T> Config<T>
 where
     T: Clone + Debug + Serialize + for<'de> Deserialize<'de>,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(args), ret, err(level = "info"))
+    )]
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
     pub fn new(args: &Generic) -> Result<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?args);
+
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
                 .map_err(|err| anyhow!("config file parsing failed: {err:?}"))?

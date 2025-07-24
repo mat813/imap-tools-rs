@@ -46,6 +46,10 @@ impl<T> Serialize for Filter<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, serializer), err(level = "info"))
+    )]
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -59,6 +63,10 @@ impl<'de, T> Deserialize<'de> for Filter<T>
 where
     T: Deserialize<'de> + Clone + Debug + Serialize,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(deserializer), ret, err(level = "info"))
+    )]
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -97,7 +105,7 @@ mod internal {
     use std::fmt::Debug;
 
     /// Private structure without the regex
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Debug)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct Filter<T>
     where
@@ -116,18 +124,38 @@ mod internal {
     where
         T: Clone + Debug + Serialize,
     {
+        #[cfg_attr(
+            feature = "tracing",
+            tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+        )]
         pub fn make_include_filter_re(&self) -> Result<Option<Regex>> {
             Self::make_filter_re(self.include.as_ref(), self.include_re.as_ref())
         }
 
+        #[cfg_attr(
+            feature = "tracing",
+            tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+        )]
         pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>> {
             Self::make_filter_re(self.exclude.as_ref(), self.exclude_re.as_ref())
         }
 
+        #[cfg_attr(
+            feature = "tracing",
+            tracing::instrument(
+                level = "trace",
+                skip(filter, re_filter),
+                ret,
+                err(level = "info")
+            )
+        )]
         fn make_filter_re(
             filter: Option<&SingleOrArray<String>>,
             re_filter: Option<&SingleOrArray<String>>,
         ) -> Result<Option<Regex>> {
+            #[cfg(feature = "tracing")]
+            tracing::trace!(?filter, ?re_filter);
+
             let mut internal: Vec<String> = vec![];
 
             if let Some(exclude) = filter {
@@ -161,7 +189,14 @@ mod internal {
     where
         T: Clone + Debug + Serialize,
     {
+        #[cfg_attr(
+            feature = "tracing",
+            tracing::instrument(level = "trace", skip(filter), ret)
+        )]
         fn from(filter: &RealFilter<T>) -> Self {
+            #[cfg(feature = "tracing")]
+            tracing::trace!(?filter);
+
             Self {
                 reference: filter.reference.clone(),
                 pattern: filter.pattern.clone(),

@@ -24,10 +24,17 @@ pub struct BaseConfig {
 }
 
 impl BaseConfig {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(args), err(level = "info"))
+    )]
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
     pub fn new(args: &Generic) -> Result<Self> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?args);
+
         let config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
                 .map_err(|err| anyhow!("config file parsing failed: {err:?}"))?
@@ -38,6 +45,10 @@ impl BaseConfig {
         config.apply_args(args)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, args), ret, err(level = "info"))
+    )]
     pub fn apply_args(mut self, args: &Generic) -> Result<Self> {
         if let Some(ref server) = args.server {
             self.server = Some(server.clone());
@@ -78,6 +89,10 @@ impl BaseConfig {
         Ok(self)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+    )]
     /// Figure out the password from literal or command
     /// # Errors
     /// Many errors can happen

@@ -16,9 +16,15 @@ pub struct Delete {
 }
 
 impl Delete {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     #[expect(clippy::print_stdout, reason = "main")]
     pub fn execute(&self) -> Result<()> {
         let config = BaseConfig::new(&self.config)?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)?;
 

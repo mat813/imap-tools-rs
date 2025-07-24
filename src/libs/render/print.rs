@@ -3,6 +3,7 @@ use anyhow::{Context as _, Result};
 use std::{collections::HashMap, fmt::Display};
 use strfmt::strfmt;
 
+#[derive(Debug)]
 pub struct Renderer<'a> {
     format: &'a str,
     headers: Vec<&'a str>,
@@ -10,6 +11,15 @@ pub struct Renderer<'a> {
 }
 
 impl RendererTrait for Renderer<'_> {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            level = "trace",
+            skip(_title, format, headers),
+            ret,
+            err(level = "info")
+        )
+    )]
     fn new(_title: &'static str, format: &'static str, headers: &[&'static str]) -> Result<Self> {
         Ok(Self {
             format,
@@ -18,8 +28,15 @@ impl RendererTrait for Renderer<'_> {
         })
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
+    )]
     #[expect(clippy::print_stdout, reason = "we print")]
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
+        #[cfg(feature = "tracing")]
+        tracing::trace!(row = ?row.iter().map(|r| format!("{r}")).collect::<Vec<String>>());
+
         if !self.some_output {
             self.some_output = true;
 

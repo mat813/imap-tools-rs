@@ -21,10 +21,20 @@ pub struct Renderer<'a> {
 }
 
 impl RendererTrait for Renderer<'_> {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
     fn is_usable() -> bool {
         stdout().is_terminal()
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            level = "trace",
+            skip(title, _format, headers),
+            ret,
+            err(level = "info")
+        )
+    )]
     fn new(title: &'static str, _format: &'static str, headers: &[&'static str]) -> Result<Self> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
@@ -45,11 +55,19 @@ impl RendererTrait for Renderer<'_> {
         })
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
+    )]
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
         let str_row = row
             .iter()
             .map(std::string::ToString::to_string)
             .collect::<Vec<_>>();
+
+        #[cfg(feature = "tracing")]
+        tracing::trace!(row = ?str_row);
+
         let new_row = Row::new(str_row.iter().cloned().enumerate().map(|(idx, content)| {
             let mut style = Style::default();
             if idx == 0 {
@@ -104,6 +122,10 @@ impl RendererTrait for Renderer<'_> {
 }
 
 impl Renderer<'_> {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret)
+    )]
     fn column_widths(&self) -> Vec<Constraint> {
         let last_idx = self.column_widths.len() - 1;
         self.column_widths
@@ -121,6 +143,7 @@ impl Renderer<'_> {
 }
 
 impl Drop for Renderer<'_> {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     fn drop(&mut self) {
         ratatui::restore();
     }

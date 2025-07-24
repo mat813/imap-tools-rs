@@ -16,6 +16,10 @@ struct MainArgs {
     command: MainCommands,
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", err(level = "info"))
+)]
 /// Dispatch-run our commands
 /// # Errors
 /// forwards the errors from the commands to `main()`

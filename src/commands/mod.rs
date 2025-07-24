@@ -25,6 +25,10 @@ pub enum MainCommands {
 }
 
 impl MainCommands {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         match *self {
             Self::Archive(ref archive) => archive.execute(),

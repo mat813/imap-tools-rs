@@ -19,6 +19,10 @@ pub trait Renderer {
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<()>;
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(title, format, headers), err(level = "info"))
+)]
 pub fn new_renderer(
     title: &'static str,
     format: &'static str,

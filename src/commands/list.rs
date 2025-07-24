@@ -18,8 +18,14 @@ pub struct List {
 type MyExtra = serde_value::Value;
 
 impl List {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new(&self.config)?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?config);
 
         let mut imap = Imap::connect(&config)?;
 

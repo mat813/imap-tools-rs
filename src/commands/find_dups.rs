@@ -36,8 +36,14 @@ static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|
 });
 
 impl FindDups {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
     pub fn execute(&self) -> Result<()> {
         let config = Config::<MyExtra>::new(&self.config)?;
+        #[cfg(feature = "tracing")]
+        tracing::trace!(?config);
 
         let mut renderer = new_renderer(
             if config.base.dry_run {
@@ -58,6 +64,10 @@ impl FindDups {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+    )]
     fn process(
         &self,
         imap: &mut Imap<MyExtra>,
@@ -107,6 +117,10 @@ impl FindDups {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(messages), ret, , err(level = "info"), fields(messages = messages.len()))
+    )]
     fn find_duplicates(messages: &Fetches) -> Result<HashSet<Uid>> {
         let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
@@ -135,6 +149,10 @@ impl FindDups {
     }
 
     // Parses a Message-ID from the header
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(header), ret, fields(header = ?header.map(|h| std::str::from_utf8(h))))
+    )]
     fn parse_message_id(header: Option<&[u8]>) -> Option<String> {
         let header_text = std::str::from_utf8(header?).ok()?;
 
