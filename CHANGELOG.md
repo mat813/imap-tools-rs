@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.5.1 (2025-07-24)
+
+### Bug Fixes
+
+ - <csr-id-0000096e79d9b0e99da9bbac4b3844dde167f335/> add tracing
+ - <csr-id-0000095cb5dcc1e4924576e69a456a51f3bbba26/> repair all other commands
+ - <csr-id-00000945e170cc7288581aad74ed288b70afff93/> rework subcommands
+
+### Style
+
+ - <csr-id-00000933ceddd6506b398e4e3aa9e5b9fe85f466/> cleanup
+ - <csr-id-0000092f419a98d38c917ad480390da365aa4bad/> lint
+ - <csr-id-000009146c5e1f2fe4f7997e7adc855c1af6ec78/> ignore a warning
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 1 calendar day.
+ - 1 day passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add tracing (0000096)
+    - Repair all other commands (0000095)
+    - Rework subcommands (0000094)
+    - Cleanup (0000093)
+    - Lint (0000092)
+    - Ignore a warning (0000091)
+</details>
+
 ## v1.5.0 (2025-07-23)
+
+<csr-id-00000851eda9e06d87dfcfceb80f76d3a00dbbd7/>
+<csr-id-0000083225da1f66fa4b61057fd0340bd00abcf5/>
 
 ### Chore
 
@@ -27,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 20 calendar days.
+ - 8 commits contributed to the release over the course of 20 calendar days.
  - 44 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -39,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.5.0 (6f9fb47)
     - Allow disabling the ratatui renderer (0000089)
     - Create and delete mailboxes (0000088)
     - Add imap sub commands, first is list mailboxes (0000087)
