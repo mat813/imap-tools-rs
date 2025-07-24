@@ -31,7 +31,7 @@ struct MyExtra {
 
 impl Archive {
     pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new_with_args(&self.config)?;
+        let config = Config::<MyExtra>::new(&self.config)?;
 
         #[expect(
             clippy::literal_string_with_formatting_args,

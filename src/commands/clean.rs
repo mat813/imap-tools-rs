@@ -26,7 +26,7 @@ type MyExtra = BTreeMap<Size, u64>;
 
 impl Clean {
     pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new_with_args(&self.config)?;
+        let config = Config::<MyExtra>::new(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
 

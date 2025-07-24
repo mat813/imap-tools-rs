@@ -37,7 +37,7 @@ static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|
 
 impl FindDups {
     pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new_with_args(&self.config)?;
+        let config = Config::<MyExtra>::new(&self.config)?;
 
         let mut renderer = new_renderer(
             if config.base.dry_run {

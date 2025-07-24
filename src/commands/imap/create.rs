@@ -18,7 +18,7 @@ pub struct Create {
 impl Create {
     #[expect(clippy::print_stdout, reason = "main")]
     pub fn execute(&self) -> Result<()> {
-        let config = BaseConfig::new_with_args(&self.config)?;
+        let config = BaseConfig::new(&self.config)?;
 
         let mut imap: Imap<()> = Imap::connect_base(&config)?;
 

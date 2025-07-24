@@ -19,7 +19,7 @@ type MyExtra = serde_value::Value;
 
 impl List {
     pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new_with_args(&self.config)?;
+        let config = Config::<MyExtra>::new(&self.config)?;
 
         let mut imap = Imap::connect(&config)?;
 
