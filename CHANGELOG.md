@@ -5,7 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.6.0 (2025-07-29)
+
+### Chore
+
+ - <csr-id-00000990adacbe0f266bd62eaa94ffc497dda1fc/> update lock file
+
+### New Features
+
+ - <csr-id-00000980b2cc94f338803989527664c195c3bad1/> add a `du(1)` like tool
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 5 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update lock file (0000099)
+    - Add a `du(1)` like tool (0000098)
+</details>
+
 ## v1.5.1 (2025-07-24)
+
+<csr-id-00000933ceddd6506b398e4e3aa9e5b9fe85f466/>
+<csr-id-0000092f419a98d38c917ad480390da365aa4bad/>
+<csr-id-000009146c5e1f2fe4f7997e7adc855c1af6ec78/>
 
 ### Bug Fixes
 
@@ -23,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 1 calendar day.
+ - 7 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -35,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.5.1 (5bbfe01)
     - Add tracing (0000096)
     - Repair all other commands (0000095)
     - Rework subcommands (0000094)
