@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Subcommand;
 mod create;
 mod delete;
+mod disk_usage;
 mod list;
 
 #[derive(Subcommand, Debug, Clone)]
@@ -14,6 +15,9 @@ pub enum ImapCommands {
 
     #[command(aliases = &["rmdir"])]
     Delete(delete::Delete),
+
+    #[command(aliases = &["du"])]
+    DiskUsage(disk_usage::DiskUsage),
 }
 
 impl ImapCommands {
@@ -26,6 +30,7 @@ impl ImapCommands {
             Self::List(ref list) => list.execute(),
             Self::Create(ref create) => create.execute(),
             Self::Delete(ref delete) => delete.execute(),
+            Self::DiskUsage(ref du) => du.execute(),
         }
     }
 }
