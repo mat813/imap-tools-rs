@@ -19,7 +19,7 @@ inherits = "dev"
 [features]
 default = ["openssl"]
 openssl = ["imap/default"]
-ratatui = ["ratatui/default"]
+ratatui = ["dep:ratatui"]
 rustls = ["imap/rustls-tls"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
