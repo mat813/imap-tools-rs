@@ -1,5 +1,5 @@
 use crate::libs::args::Generic;
-use anyhow::{anyhow, bail, Context as _, Result};
+use eyre::{bail, eyre, OptionExt as _, Result, WrapErr as _};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::fmt::Debug;
@@ -37,7 +37,7 @@ impl BaseConfig {
 
         let config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
-                .map_err(|err| anyhow!("config file parsing failed: {err:?}"))?
+                .map_err(|err| eyre!("config file parsing failed: {err:?}"))?
         } else {
             Self::default()
         };
@@ -101,16 +101,16 @@ impl BaseConfig {
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
             (_, &Some(ref command)) => {
-                let args =
-                    split(command).with_context(|| format!("parsing command failed: {command}"))?;
-                let (exe, args) = args.split_first().context("password command is empty")?;
+                let args = split(command)
+                    .wrap_err_with(|| format!("parsing command failed: {command}"))?;
+                let (exe, args) = args.split_first().ok_or_eyre("password command is empty")?;
                 let output = Command::new(exe)
                     .args(args)
                     .output()
-                    .context("password command exec failed")?;
+                    .wrap_err("password command exec failed")?;
                 Ok(String::from_utf8_lossy(&output.stdout).to_string())
             }
-            _ => Err(anyhow!("The password or password command must be set")),
+            _ => bail!("The password or password command must be set"),
         }
     }
 }

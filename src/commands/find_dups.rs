@@ -4,8 +4,8 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
-use anyhow::{Context as _, Result};
 use clap::Args;
+use eyre::{OptionExt as _, Result, WrapErr as _};
 use imap::types::{Fetches, Uid};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -79,7 +79,7 @@ impl FindDups {
         let mbx = imap
             .session
             .examine(mailbox)
-            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
+            .wrap_err_with(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are less than 2 messages, there cannot possible be
         // duplicates, stop here
@@ -91,7 +91,7 @@ impl FindDups {
         let messages = imap
             .session
             .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
-            .context("imap uid fetch failed")?;
+            .wrap_err("imap uid fetch failed")?;
         let duplicates = Self::find_duplicates(&messages)?;
 
         // Delete duplicate messages
@@ -102,13 +102,13 @@ impl FindDups {
                 // Re-open the mailbox in read-write mode
                 imap.session
                     .select(mailbox)
-                    .with_context(|| format!("imap select {mailbox:?} failed"))?;
+                    .wrap_err_with(|| format!("imap select {mailbox:?} failed"))?;
 
                 imap.session
                     .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")
-                    .context("imap uid store failed")?;
+                    .wrap_err("imap uid store failed")?;
 
-                imap.session.close().context("imap close failed")?;
+                imap.session.close().wrap_err("imap close failed")?;
             }
 
             renderer.add_row(&[&mailbox, &duplicates.len(), &duplicate_set])?;
@@ -130,7 +130,7 @@ impl FindDups {
                 message_ids
                     .entry(id)
                     .or_default()
-                    .push(message.uid.context("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
+                    .push(message.uid.ok_or_eyre("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
             }
         }
 

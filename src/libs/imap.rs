@@ -1,5 +1,5 @@
 use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
-use anyhow::{anyhow, bail, Context as _, Result};
+use eyre::{bail, eyre, OptionExt as _, Result, WrapErr as _};
 use imap::{types::Uid, ImapConnection, Session};
 use imap_proto::NameAttribute;
 use serde::Serialize;
@@ -55,11 +55,11 @@ where
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
 
-        let server = base.server.as_ref().context("Missing server")?;
+        let server = base.server.as_ref().ok_or_eyre("Missing server")?;
 
         let mut client = imap::ClientBuilder::new(server.as_str(), 143)
             .connect()
-            .with_context(|| format!("failed to connect to {server} on port 143"))?;
+            .wrap_err_with(|| format!("failed to connect to {server} on port 143"))?;
 
         if base.debug {
             client.debug = true;
@@ -67,11 +67,11 @@ where
 
         let session = client
             .login(
-                base.username.as_ref().context("Missing username")?,
+                base.username.as_ref().ok_or_eyre("Missing username")?,
                 base.password()?,
             )
             .map_err(|err| err.0)
-            .context("imap login failed")?;
+            .wrap_err("imap login failed")?;
 
         let mut ret = Self {
             session,
@@ -81,7 +81,7 @@ where
         };
 
         if !ret.has_capability("UIDPLUS")? {
-            return Err(anyhow!("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"));
+            return Err(eyre!("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"));
         }
 
         Ok(ret)
@@ -121,7 +121,7 @@ where
         let has_capability = self
             .session
             .capabilities()
-            .context("imap capabilities failed")?
+            .wrap_err("imap capabilities failed")?
             .has_str(cap.as_ref());
 
         self.cached_capabilities
@@ -154,7 +154,7 @@ where
             for mailbox in self
                 .session
                 .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .with_context(|| format!("imap list failed with {filter:?}"))?
+                .wrap_err_with(|| format!("imap list failed with {filter:?}"))?
                 .iter()
                 // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))

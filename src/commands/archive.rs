@@ -4,9 +4,9 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
-use anyhow::{bail, Context as _, Result};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
+use eyre::{bail, OptionExt as _, Result, WrapErr as _};
 use imap::types::Uid;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -88,7 +88,7 @@ impl Archive {
         let mbx = imap
             .session
             .examine(mailbox)
-            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
+            .wrap_err_with(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are no messages, skip
         if mbx.exists == 0 {
@@ -103,7 +103,7 @@ impl Archive {
         let uids_to_move = imap
             .session
             .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
-            .context("imap uid search failed")?;
+            .wrap_err("imap uid search failed")?;
 
         // Only delete if the rule applies based on mailbox size and message age
         if !uids_to_move.is_empty() {
@@ -128,7 +128,7 @@ impl Archive {
             } else {
                 imap.session
                     .select(mailbox)
-                    .with_context(|| format!("imap select {mailbox:?} failed"))?;
+                    .wrap_err_with(|| format!("imap select {mailbox:?} failed"))?;
 
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
                     let quoted_mailbox =
@@ -145,27 +145,27 @@ impl Archive {
                     if imap
                         .session
                         .list(None, Some(quoted_mailbox))
-                        .with_context(|| format!("imap list pattern {quoted_mailbox:?} failed"))?
+                        .wrap_err_with(|| format!("imap list pattern {quoted_mailbox:?} failed"))?
                         .is_empty()
                     {
                         imap.session
                             .create(&archive_mailbox)
-                            .with_context(|| format!("imap create {archive_mailbox:?} failed"))?;
+                            .wrap_err_with(|| format!("imap create {archive_mailbox:?} failed"))?;
                     }
 
                     if imap.has_capability("MOVE")? {
                         // MV does COPY / MARK \Deleted / EXPUNGE all in one go
                         imap.session
                             .uid_mv(&sequence, quoted_mailbox)
-                            .with_context(|| format!("imap move to {quoted_mailbox:?} failed"))?;
+                            .wrap_err_with(|| format!("imap move to {quoted_mailbox:?} failed"))?;
                     } else {
                         // If we don't have MV, do it the old fashion way.
                         imap.session
                             .uid_copy(&sequence, quoted_mailbox)
-                            .with_context(|| format!("imap copy to {quoted_mailbox:?} failed"))?;
+                            .wrap_err_with(|| format!("imap copy to {quoted_mailbox:?} failed"))?;
                         imap.session
                             .uid_store(&sequence, "+FLAGS (\\Deleted)")
-                            .context("imap store failed")?;
+                            .wrap_err("imap store failed")?;
                     }
 
                     renderer.add_row(&[
@@ -179,7 +179,7 @@ impl Archive {
                 }
 
                 // Close the moved messages
-                imap.session.close().context("imap close failed")?;
+                imap.session.close().wrap_err("imap close failed")?;
             }
         }
 
@@ -199,7 +199,7 @@ impl Archive {
         let messages_to_move = imap
             .session
             .uid_fetch(uid_set, "INTERNALDATE")
-            .context("imap uid fetch failed")?;
+            .wrap_err("imap uid fetch failed")?;
 
         // First group uids by archive mailbox
         let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
@@ -214,7 +214,7 @@ impl Archive {
             uids_by_mailbox
                 .entry(mbx)
                 .or_default()
-                .insert(message.uid.context("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
+                .insert(message.uid.ok_or_eyre("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
         }
 
         // Then compute the emails sequence and length

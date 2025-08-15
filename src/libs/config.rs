@@ -1,5 +1,5 @@
 use crate::libs::{args::Generic, base_config::BaseConfig, filters::Filters};
-use anyhow::{anyhow, Result};
+use eyre::{eyre, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
@@ -47,7 +47,7 @@ where
 
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
-                .map_err(|err| anyhow!("config file parsing failed: {err:?}"))?
+                .map_err(|err| eyre!("config file parsing failed: {err:?}"))?
         } else {
             Self::default()
         };

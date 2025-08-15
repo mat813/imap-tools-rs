@@ -1,5 +1,5 @@
 use crate::libs::render::Renderer as RendererTrait;
-use anyhow::{Context as _, Result};
+use eyre::{Result, WrapErr as _};
 use std::{collections::HashMap, fmt::Display};
 use strfmt::strfmt;
 
@@ -47,7 +47,7 @@ impl RendererTrait for Renderer<'_> {
                 .map(|(idx, f)| (idx.to_string(), (*f).to_owned()))
                 .collect();
             let output = strfmt(self.format, &map)
-                .with_context(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
+                .wrap_err_with(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
             println!("{output}");
         }
         let map: HashMap<String, String> = row
@@ -56,7 +56,7 @@ impl RendererTrait for Renderer<'_> {
             .map(|(idx, f)| (idx.to_string(), f.to_string()))
             .collect();
         let output = strfmt(self.format, &map)
-            .with_context(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
+            .wrap_err_with(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
         println!("{output}");
 
         Ok(())

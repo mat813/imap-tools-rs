@@ -99,7 +99,7 @@ where
 mod internal {
     use super::Filter as RealFilter;
     use crate::libs::single_or_array::SingleOrArray;
-    use anyhow::{Context as _, Result};
+    use eyre::{Result, WrapErr as _};
     use regex::{escape, Regex};
     use serde::{Deserialize, Serialize};
     use std::fmt::Debug;
@@ -179,7 +179,7 @@ mod internal {
             } else {
                 let full_re = internal.join("|");
                 Regex::new(&full_re)
-                    .with_context(|| format!("regexp creation failed for {full_re:?}"))
+                    .wrap_err_with(|| format!("regexp creation failed for {full_re:?}"))
                     .map(Some)
             }
         }

@@ -1,6 +1,6 @@
 use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
-use anyhow::{Context as _, Result};
 use clap::Args;
+use eyre::{Result, WrapErr as _};
 use imap_proto::NameAttribute;
 use regex::Regex;
 
@@ -54,7 +54,7 @@ impl List {
         for mailbox in imap
             .session
             .list(self.reference.as_deref(), self.pattern.as_deref())
-            .with_context(|| {
+            .wrap_err_with(|| {
                 format!(
                     "imap list failed with ref:{:?} and pattern:{:?}",
                     self.reference, self.pattern

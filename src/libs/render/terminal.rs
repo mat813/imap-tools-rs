@@ -1,5 +1,5 @@
 use crate::libs::render::Renderer as RendererTrait;
-use anyhow::{Context as _, Result};
+use eyre::{Result, WrapErr as _};
 use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
@@ -40,8 +40,8 @@ impl RendererTrait for Renderer<'_> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
         })
-        .context("ratatui init failed")?;
-        terminal.clear().context("terminal clear failed")?;
+        .wrap_err("ratatui init failed")?;
+        terminal.clear().wrap_err("terminal clear failed")?;
         Ok(Self {
             terminal,
             table_rows: vec![],
@@ -88,7 +88,7 @@ impl RendererTrait for Renderer<'_> {
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
             let width = u16::try_from(width)
-                .with_context(|| format!("failed converting {width} in a u16"))?;
+                .wrap_err_with(|| format!("failed converting {width} in a u16"))?;
             if width > self.column_widths[idx] {
                 self.column_widths[idx] = width;
             }
@@ -96,14 +96,14 @@ impl RendererTrait for Renderer<'_> {
 
         // let area = self.terminal.get_frame().area();
         // self.terminal.set_cursor_position(area)?;
-        self.terminal.clear().context("terminal clear failed")?;
+        self.terminal.clear().wrap_err("terminal clear failed")?;
         let table_width = self.table_rows.len();
         let table_width = u16::try_from(table_width)
-            .with_context(|| format!("convert {table_width} into a u16 failed"))?;
+            .wrap_err_with(|| format!("convert {table_width} into a u16 failed"))?;
         self.terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(table_width + 3),
         })
-        .context("ratatui init failed")?;
+        .wrap_err("ratatui init failed")?;
 
         let rows = self.table_rows.clone();
         let widths = self.column_widths();
@@ -116,7 +116,7 @@ impl RendererTrait for Renderer<'_> {
                     .block(Block::default().title(self.title).borders(Borders::ALL));
                 frame.render_widget(table, frame.area());
             })
-            .context("termianl draw failed")?;
+            .wrap_err("termianl draw failed")?;
 
         Ok(())
     }

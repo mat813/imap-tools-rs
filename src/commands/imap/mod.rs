@@ -1,5 +1,5 @@
-use anyhow::Result;
 use clap::Subcommand;
+use eyre::Result;
 mod create;
 mod delete;
 mod disk_usage;

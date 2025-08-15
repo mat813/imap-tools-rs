@@ -1,6 +1,6 @@
 use crate::commands::MainCommands;
-use anyhow::Result;
 use clap::Parser;
+use eyre::Result;
 
 #[derive(Parser, Debug, Clone)]
 #[command(

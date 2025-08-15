@@ -1,6 +1,6 @@
 use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
-use anyhow::{bail, Context as _, Result};
 use clap::Args;
+use eyre::{bail, Result, WrapErr as _};
 use imap_proto::NameAttribute;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
@@ -15,7 +15,7 @@ pub enum Sort {
 }
 
 impl FromStr for Sort {
-    type Err = anyhow::Error;
+    type Err = eyre::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
@@ -82,7 +82,7 @@ impl DiskUsage {
         let mailboxes = imap
             .session
             .list(self.reference.as_deref(), self.pattern.as_deref())
-            .with_context(|| {
+            .wrap_err_with(|| {
                 format!(
                     "imap list failed with ref:{:?} and pattern:{:?}",
                     self.reference, self.pattern
@@ -142,7 +142,7 @@ impl DiskUsage {
             let total: u64 = imap
                 .session
                 .uid_fetch("1:*", "(RFC822.SIZE)")
-                .context("imap uid fetch failed")?
+                .wrap_err("imap uid fetch failed")?
                 .iter()
                 .map(|m| u64::from(m.size.unwrap_or(0)))
                 .sum();

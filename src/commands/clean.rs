@@ -4,9 +4,9 @@ use crate::libs::{
     imap::{ids_list_to_collapsed_sequence, Imap},
     render::{new_renderer, Renderer},
 };
-use anyhow::{bail, Context as _, Result};
 use chrono::{Duration, Utc};
 use clap::Args;
+use eyre::{bail, OptionExt as _, Result, WrapErr as _};
 use size::Size;
 use std::collections::BTreeMap;
 
@@ -85,7 +85,7 @@ impl Clean {
         let mbx = imap
             .session
             .examine(mailbox)
-            .with_context(|| format!("imap examine {mailbox:?} failed"))?;
+            .wrap_err_with(|| format!("imap examine {mailbox:?} failed"))?;
 
         // If there are not enough messages, skip
         if mbx.exists <= 300 {
@@ -95,7 +95,7 @@ impl Clean {
         let messages = imap
             .session
             .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
-            .context("imap uid fetch failed")?;
+            .wrap_err("imap uid fetch failed")?;
 
         let total_size = messages
             .iter()
@@ -105,7 +105,7 @@ impl Clean {
         let first_date = messages
             .iter()
             .next()
-            .context("Could not find the first message where there should be one")?
+            .ok_or_eyre("Could not find the first message where there should be one")?
             .internal_date()
             .unwrap_or_default();
 
@@ -124,7 +124,7 @@ impl Clean {
             let uids_to_delete = imap
                 .session
                 .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
-                .context("imap uid search failed")?; // Search messages by cutoff date
+                .wrap_err("imap uid search failed")?; // Search messages by cutoff date
 
             // Only delete if the rule applies based on mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
@@ -135,14 +135,14 @@ impl Clean {
                 if !self.config.dry_run {
                     imap.session
                         .select(mailbox)
-                        .with_context(|| format!("imap select {mailbox:?} failed"))?;
+                        .wrap_err_with(|| format!("imap select {mailbox:?} failed"))?;
 
                     imap.session
                         .uid_store(&sequence, "+FLAGS (\\Deleted)")
-                        .context("imap uid store failed")?;
+                        .wrap_err("imap uid store failed")?;
 
                     // Expunge to permanently remove messages marked for deletion
-                    imap.session.close().context("imap close failed")?;
+                    imap.session.close().wrap_err("imap close failed")?;
                 }
 
                 renderer.add_row(&[

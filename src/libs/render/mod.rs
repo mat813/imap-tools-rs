@@ -1,4 +1,4 @@
-use anyhow::Result;
+use eyre::Result;
 use std::fmt::Display;
 mod print;
 #[cfg(feature = "ratatui")]

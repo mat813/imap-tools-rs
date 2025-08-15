@@ -1,6 +1,6 @@
 use crate::libs::{args, config::Config, imap::Imap, render::new_renderer};
-use anyhow::Result;
 use clap::Args;
+use eyre::Result;
 
 #[derive(Args, Debug, Clone)]
 #[command(

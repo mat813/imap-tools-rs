@@ -8,7 +8,7 @@ mod run;
     feature = "tracing",
     tracing::instrument(level = "trace", err(level = "info"))
 )]
-fn main() -> anyhow::Result<()> {
+fn main() -> eyre::Result<()> {
     #[cfg(feature = "tracing")]
     {
         use tracing_subscriber::{
