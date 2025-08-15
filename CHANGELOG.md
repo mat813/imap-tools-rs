@@ -5,7 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.6.3 (2025-08-15)
+
+### Chore
+
+ - <csr-id-00001110d007118fe17b4e31859842d52ab3393d/> change how we depend on ratatui
+
+### Bug Fixes
+
+ - <csr-id-0000110050b1fa34a9cc9eac7313d0daed9b6724/> remove profile.release, it should be up to the user
+ - <csr-id-0000109054556ff12d31e0f2a325ea0e2eaf8731/> move from anyhow to eyre
+ - <csr-id-00001080001740f8d3a5c569b001a1b85361dad9/> simplify the tracing/not tracing for main
+ - <csr-id-00001070c404e36f4c579d6dd26ed4dde9106656/> update clap to 4.5.45
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Change how we depend on ratatui (0000111)
+    - Remove profile.release, it should be up to the user (0000110)
+    - Move from anyhow to eyre (0000109)
+    - Simplify the tracing/not tracing for main (0000108)
+    - Update clap to 4.5.45 (0000107)
+</details>
+
 ## v1.6.2 (2025-08-15)
+
+<csr-id-00001050acaba101d9e86a2ee7de8fb57881f157/>
 
 ### Chore
 
@@ -19,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 16 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -31,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.6.2 (b3d0e47)
     - Update lock file (0000105)
     - Fix build with tracing (0000104)
 </details>
