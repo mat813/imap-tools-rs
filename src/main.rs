@@ -4,10 +4,13 @@ mod commands;
 mod libs;
 mod run;
 
-#[cfg(feature = "tracing")]
-#[tracing::instrument(level = "trace", err(level = "info"))]
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", err(level = "info"))
+)]
 fn main() -> anyhow::Result<()> {
-    if cfg!(feature = "tracing") {
+    #[cfg(feature = "tracing")]
+    {
         use tracing_subscriber::{
             fmt::format::FmtSpan, layer::SubscriberExt as _, util::SubscriberInitExt as _,
             Layer as _,
@@ -26,10 +29,5 @@ fn main() -> anyhow::Result<()> {
             .init();
     }
 
-    run::run()
-}
-
-#[cfg(not(feature = "tracing"))]
-fn main() -> anyhow::Result<()> {
     run::run()
 }
