@@ -3,7 +3,7 @@ use anyhow::{Context as _, Result};
 use std::{collections::HashMap, fmt::Display};
 use strfmt::strfmt;
 
-#[derive(Debug)]
+#[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {
     format: &'a str,
     headers: Vec<&'a str>,

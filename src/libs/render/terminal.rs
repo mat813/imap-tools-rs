@@ -12,6 +12,7 @@ use std::{
     io::{stdout, IsTerminal as _, Stdout},
 };
 
+#[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
     table_rows: Vec<Row<'a>>,
