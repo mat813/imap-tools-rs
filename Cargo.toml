@@ -21,7 +21,7 @@ default = ["openssl"]
 openssl = ["imap/default"]
 ratatui = ["dep:ratatui"]
 rustls = ["imap/rustls-tls"]
-tracing = ["dep:tracing", "dep:tracing-subscriber"]
+tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 
 [dependencies]
 chrono = "=0.4.41"
