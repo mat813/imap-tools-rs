@@ -120,6 +120,7 @@ mod tests {
     #![expect(clippy::unwrap_used, reason = "test")]
 
     use super::*;
+    use insta::{assert_debug_snapshot, assert_snapshot};
     use std::fs::File;
     use std::io::Write as _;
 
@@ -149,9 +150,21 @@ mod tests {
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
 
-        assert_eq!(config.server, Some("imap.example.com".to_owned()));
-        assert_eq!(config.username, Some("user@example.com".to_owned()));
-        assert_eq!(config.password, Some("password123".to_owned()));
+        assert_debug_snapshot!(config.server, @r#"
+        Some(
+            "imap.example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.username, @r#"
+        Some(
+            "user@example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.password, @r#"
+        Some(
+            "password123",
+        )
+        "#);
         assert!(config.debug);
         assert!(!config.dry_run);
     }
@@ -170,10 +183,11 @@ mod tests {
 
         let result: Result<BaseConfig> = BaseConfig::new(&args);
         assert!(result.is_err());
-        assert_eq!(
-            format!("{:?}", result.unwrap_err()),
-            "The server must be set"
-        );
+        assert_debug_snapshot!(result, @r#"
+        Err(
+            "The server must be set",
+        )
+        "#);
     }
 
     #[test]
@@ -190,10 +204,11 @@ mod tests {
 
         let result: Result<BaseConfig> = BaseConfig::new(&args);
         assert!(result.is_err());
-        assert_eq!(
-            format!("{:?}", result.unwrap_err()),
-            "The username must be set"
-        );
+        assert_debug_snapshot!(result, @r#"
+        Err(
+            "The username must be set",
+        )
+        "#);
     }
 
     #[test]
@@ -212,7 +227,7 @@ mod tests {
 
         // Mock the command execution with a fake password output
         let password = config.password().unwrap();
-        assert_eq!(password.trim(), "secret_password");
+        assert_snapshot!(password.trim(), @"secret_password");
     }
 
     #[test]
@@ -232,10 +247,14 @@ mod tests {
         // Mock the command execution with a fake password output
         let result = config.password();
         assert!(result.is_err());
-        assert_eq!(
-            format!("{:?}", result.unwrap_err()),
-            "parsing command failed: echo \"secret_password\n\nCaused by:\n    missing closing quote"
-        );
+        assert_debug_snapshot!(result, @r#"
+        Err(
+            Error {
+                msg: "parsing command failed: echo \"secret_password",
+                source: ParseError,
+            },
+        )
+        "#);
     }
 
     #[test]
@@ -255,10 +274,18 @@ mod tests {
         // Mock the command execution with a fake password output
         let result = config.password();
         assert!(result.is_err());
-        assert_eq!(
-            format!("{:?}", result.unwrap_err()),
-            "password command exec failed\n\nCaused by:\n    No such file or directory (os error 2)"
-        );
+        assert_debug_snapshot!(result, @r#"
+        Err(
+            Error {
+                msg: "password command exec failed",
+                source: Os {
+                    code: 2,
+                    kind: NotFound,
+                    message: "No such file or directory",
+                },
+            },
+        )
+        "#);
     }
 
     #[test]
@@ -278,10 +305,11 @@ mod tests {
         // Mock the command execution with a fake password output
         let result = config.password();
         assert!(result.is_err());
-        assert_eq!(
-            format!("{:?}", result.unwrap_err()),
-            "password command is empty"
-        );
+        assert_debug_snapshot!(result, @r#"
+        Err(
+            "password command is empty",
+        )
+        "#);
     }
 
     #[test]
@@ -300,7 +328,7 @@ mod tests {
 
         // Mock the command execution with a fake password output
         let password = config.password().unwrap();
-        assert_eq!(password.trim(), "secret_password");
+        assert_snapshot!(password.trim(), @"secret_password");
     }
 
     #[test]
@@ -318,10 +346,11 @@ mod tests {
         let config: Result<BaseConfig> = BaseConfig::new(&args);
 
         assert!(config.is_err());
-        assert_eq!(
-            format!("{:?}", config.unwrap_err()),
-            "The password or password command must be set"
-        );
+        assert_debug_snapshot!( config, @r#"
+        Err(
+            "The password or password command must be set",
+        )
+        "#);
     }
 
     #[test]
@@ -344,9 +373,13 @@ mod tests {
 
         let config: Result<BaseConfig> = BaseConfig::new(&args);
         assert!(config.is_err());
-        assert_eq!(
-            format!("{:?}", config.unwrap_err()),
-            "config file parsing failed: TomlDeserialize(Error { inner: ErrorInner { kind: NewlineInString, line: Some(1), col: 34, message: \"\", key: [] } })"
+        assert_debug_snapshot!(
+            config,
+            @r#"
+        Err(
+            "config file parsing failed: TomlDeserialize(Error { inner: ErrorInner { kind: NewlineInString, line: Some(1), col: 34, message: \"\", key: [] } })",
+        )
+        "#
         );
     }
 
@@ -373,9 +406,21 @@ mod tests {
         };
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
-        assert_eq!(config.server, Some("imap.example.com".to_owned()));
-        assert_eq!(config.username, Some("user@example.com".to_owned()));
-        assert_eq!(config.password, Some("password123".to_owned()));
+        assert_debug_snapshot!(config.server, @r#"
+        Some(
+            "imap.example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.username, @r#"
+        Some(
+            "user@example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.password, @r#"
+        Some(
+            "password123",
+        )
+        "#);
         assert!(config.debug);
         assert!(config.dry_run);
     }
@@ -403,12 +448,21 @@ mod tests {
         };
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
-        assert_eq!(config.server, Some("override.example.com".to_owned()));
-        assert_eq!(
-            config.username,
-            Some("override_user@example.com".to_owned())
-        );
-        assert_eq!(config.password, Some("override_password".to_owned()));
+        assert_debug_snapshot!(config.server, @r#"
+        Some(
+            "override.example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.username, @r#"
+        Some(
+            "override_user@example.com",
+        )
+        "#);
+        assert_debug_snapshot!(config.password, @r#"
+        Some(
+            "override_password",
+        )
+        "#);
         assert!(config.debug);
         assert!(config.dry_run);
     }
