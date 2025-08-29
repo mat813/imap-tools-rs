@@ -26,7 +26,7 @@ tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 [dependencies]
 chrono = "=0.4.41"
 clap = { version = "=4.5.45", features = ["derive"] }
-eyre = "0.6.12"
+eyre = "=0.6.12"
 imap = { version = "=3.0.0-alpha.15", default-features = false }
 imap-proto = "=0.16.5"
 indicatif = "=0.18.0"
@@ -42,7 +42,7 @@ tracing = { version = "=0.1.41", features = ["log"], optional = true }
 tracing-subscriber = { version = "=0.3.19", features = ["env-filter"], optional = true }
 
 [dev-dependencies]
-insta = "1.43.1"
+insta = "=1.43.1"
 tempfile = "=3.20.0"
 
 [lints.clippy]
