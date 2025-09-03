@@ -5,7 +5,77 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.6.4 (2025-09-03)
+
+### Chore
+
+ - <csr-id-9ff6ff5365313777a61bee7bde5653524e5f60bc/> lock file maintenance
+ - <csr-id-ecc3cb5213043626609e447f978a2b542f7aab16/> update rust crate tempfile to v3.21.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.20.0 | 3.21.0 |
+ - <csr-id-00001140da2c96458e8fc615ff8305bbb11dd82e/> add regex logging when tracing
+
+### Bug Fixes
+
+ - <csr-id-21e4be3cc4dbe1e1b2b4330771e42bc8a338bed2/> update rust crate clap to v4.5.47
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.46 | 4.5.47 |
+ - <csr-id-93b2b9673b33c3f37b60b129c78b342aabae1667/> update rust crate tracing-subscriber to v0.3.20
+   | datasource | package            | from   | to     |
+   | ---------- | ------------------ | ------ | ------ |
+   | crate      | tracing-subscriber | 0.3.19 | 0.3.20 |
+ - <csr-id-5b371f28d58d8abd45235e7c8641c0a278b9a1be/> update rust crate regex to v1.11.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | regex   | 1.11.1 | 1.11.2 |
+ - <csr-id-fabc3d92074eb0d1e530afcd7a6dd4fc0aed1bac/> update rust crate clap to v4.5.46
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.45 | 4.5.46 |
+ - <csr-id-651d05e45fc27335431af016387c6165b8b583f6/> pin dependencies
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | eyre    | 0.6.12 | 0.6.12 |
+   | crate      | insta   | 1.43.1 | 1.43.1 |
+ - <csr-id-00001130921ac6cb739cf83568f466baebe5c969/> the imap crate is not optional
+
+### Test
+
+ - <csr-id-00001150c4edbb89701be58395bccf8296d3986c/> fix tests
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release.
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update rust crate clap to v4.5.47 (21e4be3)
+    - Lock file maintenance (9ff6ff5)
+    - Update rust crate tempfile to v3.21.0 (ecc3cb5)
+    - Update rust crate tracing-subscriber to v0.3.20 (93b2b96)
+    - Update rust crate regex to v1.11.2 (5b371f2)
+    - Update rust crate clap to v4.5.46 (fabc3d9)
+    - Pin dependencies (651d05e)
+    - Add renovate.json (7b9458f)
+    - Fix tests (0000115)
+    - Add regex logging when tracing (0000114)
+    - The imap crate is not optional (0000113)
+</details>
+
 ## v1.6.3 (2025-08-15)
+
+<csr-id-00001110d007118fe17b4e31859842d52ab3393d/>
 
 ### Chore
 
@@ -22,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
+ - 6 commits contributed to the release.
  - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -33,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.6.3 (daccb93)
     - Change how we depend on ratatui (0000111)
     - Remove profile.release, it should be up to the user (0000110)
     - Move from anyhow to eyre (0000109)
