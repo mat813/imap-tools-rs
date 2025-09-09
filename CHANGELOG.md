@@ -5,7 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.6.5 (2025-09-09)
+
+### Chore
+
+ - <csr-id-43a8096756660aa001193477b579250b6c6c2fdc/> lock file maintenance
+ - <csr-id-066d7a780284a2d0ebd18fbc1343a9adfb8cd7a1/> update rust crate insta to v1.43.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.43.1 | 1.43.2 |
+
+### Bug Fixes
+
+ - <csr-id-bc3398124b79069761022a4a5cc5406b3245e470/> update rust crate chrono to v0.4.42
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | chrono  | 0.4.41 | 0.4.42 |
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 4 calendar days.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update rust crate chrono to v0.4.42 (bc33981)
+    - Lock file maintenance (43a8096)
+    - Update rust crate insta to v1.43.2 (066d7a7)
+</details>
+
 ## v1.6.4 (2025-09-03)
+
+<csr-id-9ff6ff5365313777a61bee7bde5653524e5f60bc/>
+<csr-id-ecc3cb5213043626609e447f978a2b542f7aab16/>
+<csr-id-00001140da2c96458e8fc615ff8305bbb11dd82e/>
+<csr-id-00001150c4edbb89701be58395bccf8296d3986c/>
 
 ### Chore
 
@@ -49,7 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
+ - 12 commits contributed to the release over the course of 17 calendar days.
+ - 18 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -60,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.6.4 (88c1c77)
     - Update rust crate clap to v4.5.47 (21e4be3)
     - Lock file maintenance (9ff6ff5)
     - Update rust crate tempfile to v3.21.0 (ecc3cb5)
