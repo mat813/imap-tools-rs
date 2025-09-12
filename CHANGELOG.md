@@ -5,7 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.7.0 (2025-09-12)
+
+### Chore
+
+ - <csr-id-60464dd1d7a5919c9f75b3e2740b292d421c4e1a/> update rust crate tempfile to v3.22.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.21.0 | 3.22.0 |
+
+### New Features
+
+ - <csr-id-000013001d64b23c7deb513b9df8b3b48baa1e17/> allow changing the tls mode
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 3 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Allow changing the tls mode (0000130)
+    - Update rust crate tempfile to v3.22.0 (60464dd)
+</details>
+
 ## v1.6.5 (2025-09-09)
+
+<csr-id-43a8096756660aa001193477b579250b6c6c2fdc/>
+<csr-id-066d7a780284a2d0ebd18fbc1343a9adfb8cd7a1/>
 
 ### Chore
 
@@ -26,7 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 4 calendar days.
+ - 4 commits contributed to the release.
+ - 5 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -37,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.6.5 (0780ed5)
     - Update rust crate chrono to v0.4.42 (bc33981)
     - Lock file maintenance (43a8096)
     - Update rust crate insta to v1.43.2 (066d7a7)
