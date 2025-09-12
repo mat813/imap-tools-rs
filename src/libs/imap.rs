@@ -57,7 +57,13 @@ where
 
         let server = base.server.as_ref().ok_or_eyre("Missing server")?;
 
-        let mut client = imap::ClientBuilder::new(server.as_str(), 143)
+        let mut builder = imap::ClientBuilder::new(server.as_str(), 143);
+
+        if let Some(ref mode) = base.mode {
+            builder = builder.mode(mode.clone().into());
+        }
+
+        let mut client = builder
             .connect()
             .wrap_err_with(|| format!("failed to connect to {server} on port 143"))?;
 

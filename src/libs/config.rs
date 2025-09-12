@@ -82,46 +82,76 @@ mod tests {
     fn new_with_args_minimal_config() {
         // Create a minimal args with required fields only
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
             password: Some("password123".to_owned()),
-            password_command: None,
             debug: true,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
 
-        assert_debug_snapshot!(config.base.server, @r#"
-        Some(
-            "imap.example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.username, @r#"
-        Some(
-            "user@example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.password(), @r#"
-        Ok(
-            "password123",
-        )
-        "#);
-        assert!(config.base.debug);
-        assert!(!config.base.dry_run);
+        if cfg!(any(feature = "rustls", feature = "openssl")) {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "imap.example.com",
+                    ),
+                    username: Some(
+                        "user@example.com",
+                    ),
+                    password: Some(
+                        "password123",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            AutoTls,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: false,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        } else {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "imap.example.com",
+                    ),
+                    username: Some(
+                        "user@example.com",
+                    ),
+                    password: Some(
+                        "password123",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            Plaintext,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: false,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        }
     }
 
     #[test]
     fn new_with_args_missing_server_error() {
         let args = Generic {
-            config: None,
-            server: None,
             username: Some("user@example.com".to_owned()),
             password: Some("password123".to_owned()),
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let result: Result<Config<()>> = Config::new(&args);
@@ -136,13 +166,9 @@ mod tests {
     #[test]
     fn new_with_args_missing_username_error() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
-            username: None,
             password: Some("password123".to_owned()),
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let result: Result<Config<()>> = Config::new(&args);
@@ -157,13 +183,10 @@ mod tests {
     #[test]
     fn password_fn_command_execution() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: None,
             password_command: Some("echo secret_password".to_owned()),
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
@@ -176,13 +199,10 @@ mod tests {
     #[test]
     fn password_fn_command_cannot_be_parsed() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: None,
             password_command: Some(r#"echo "secret_password"#.to_owned()),
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
@@ -203,13 +223,10 @@ mod tests {
     #[test]
     fn password_fn_command_fails() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: None,
             password_command: Some("exit 1".to_owned()),
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
@@ -234,13 +251,10 @@ mod tests {
     #[test]
     fn password_fn_command_empty() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: None,
             password_command: Some(String::new()),
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
@@ -258,13 +272,10 @@ mod tests {
     #[test]
     fn password_fn_static() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
             password: Some("secret_password".to_owned()),
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
@@ -277,13 +288,9 @@ mod tests {
     #[test]
     fn password_error_when_missing() {
         let args = Generic {
-            config: None,
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: None,
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Result<Config<()>> = Config::new(&args);
@@ -306,12 +313,7 @@ mod tests {
 
         let args = Generic {
             config: Some(config_path),
-            server: None,
-            username: None,
-            password: None,
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Result<Config<()>> = Config::new(&args);
@@ -337,32 +339,63 @@ mod tests {
 
         let args = Generic {
             config: Some(config_path),
-            server: None,
-            username: None,
-            password: None,
-            password_command: None,
-            debug: false,
-            dry_run: false,
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
-        assert_debug_snapshot!(config.base.server, @r#"
-        Some(
-            "imap.example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.username, @r#"
-        Some(
-            "user@example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.password(), @r#"
-        Ok(
-            "password123",
-        )
-        "#);
-        assert!(config.base.debug);
-        assert!(config.base.dry_run);
+        if cfg!(any(feature = "rustls", feature = "openssl")) {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "imap.example.com",
+                    ),
+                    username: Some(
+                        "user@example.com",
+                    ),
+                    password: Some(
+                        "password123",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            AutoTls,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: true,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        } else {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "imap.example.com",
+                    ),
+                    username: Some(
+                        "user@example.com",
+                    ),
+                    password: Some(
+                        "password123",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            Plaintext,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: true,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        }
     }
 
     #[test]
@@ -373,6 +406,7 @@ mod tests {
         password = "password123"
         debug = false
         dry-run = false
+        mode = "none"
     "#;
 
         let (_temp_dir, config_path) = write_temp_config(config_content);
@@ -382,24 +416,73 @@ mod tests {
             server: Some("override.example.com".to_owned()),
             username: Some("override_user@example.com".to_owned()),
             password: Some("override_password".to_owned()),
-            password_command: None,
             debug: true,
             dry_run: true,
+            mode: Some(
+                if cfg!(any(feature = "rustls", feature = "openssl")) {
+                    "tls"
+                } else {
+                    "plaintext"
+                }
+                .parse()
+                .unwrap(),
+            ),
+            ..Default::default()
         };
 
         let config: Config<()> = Config::new(&args).unwrap();
-        assert_debug_snapshot!(config.base.server, @r#"
-        Some(
-            "override.example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.username, @r#"
-        Some(
-            "override_user@example.com",
-        )
-        "#);
-        assert_debug_snapshot!(config.base.password().unwrap(), @r#""override_password""#);
-        assert!(config.base.debug);
-        assert!(config.base.dry_run);
+        if cfg!(any(feature = "rustls", feature = "openssl")) {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "override.example.com",
+                    ),
+                    username: Some(
+                        "override_user@example.com",
+                    ),
+                    password: Some(
+                        "override_password",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            Tls,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: true,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        } else {
+            assert_debug_snapshot!(config, @r#"
+            Config {
+                base: BaseConfig {
+                    server: Some(
+                        "override.example.com",
+                    ),
+                    username: Some(
+                        "override_user@example.com",
+                    ),
+                    password: Some(
+                        "override_password",
+                    ),
+                    password_command: None,
+                    mode: Some(
+                        Mode(
+                            Plaintext,
+                        ),
+                    ),
+                    debug: true,
+                    dry_run: true,
+                },
+                extra: None,
+                filters: None,
+            }
+            "#);
+        }
     }
 }
