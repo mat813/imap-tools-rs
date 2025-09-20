@@ -5,7 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.7.1 (2025-09-20)
+
+### Chore
+
+ - <csr-id-16631a116dc25494df73dbb808e59c38740f3b13/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-124ce70ce3e40a4af4d0143162a99c8c18aa4584/> update rust crate clap to v4.5.48
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.47 | 4.5.48 |
+ - <csr-id-da659088291c12bf7c7b176cfddf11d5c6698c74/> update rust crate serde to v1.0.225
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.224 | 1.0.225 |
+ - <csr-id-5a37c4f93c422dc34f7796d9e2b9cba0930426ee/> update rust crate serde to v1.0.224
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.223 | 1.0.224 |
+ - <csr-id-c704eaba3871caaf7a2b42c180b653653aa8ffc7/> update rust crate serde to v1.0.223
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.221 | 1.0.223 |
+ - <csr-id-94581536ffc675037a2044d0c4d70e150a7dd2ae/> update rust crate serde to v1.0.221
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.220 | 1.0.221 |
+ - <csr-id-7a0702aa56456f0fb119222327e55bd047fdb31d/> update rust crate serde to v1.0.220
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.219 | 1.0.220 |
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 5 calendar days.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update rust crate clap to v4.5.48 (124ce70)
+    - Update rust crate serde to v1.0.225 (da65908)
+    - Update rust crate serde to v1.0.224 (5a37c4f)
+    - Lock file maintenance (16631a1)
+    - Update rust crate serde to v1.0.223 (c704eab)
+    - Update rust crate serde to v1.0.221 (9458153)
+    - Update rust crate serde to v1.0.220 (7a0702a)
+</details>
+
 ## v1.7.0 (2025-09-12)
+
+<csr-id-60464dd1d7a5919c9f75b3e2740b292d421c4e1a/>
 
 ### Chore
 
@@ -22,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 3 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -34,6 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.7.0 (e2569aa)
     - Allow changing the tls mode (0000130)
     - Update rust crate tempfile to v3.22.0 (60464dd)
 </details>
