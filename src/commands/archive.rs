@@ -8,6 +8,7 @@ use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
 use eyre::{bail, OptionExt as _, Result, WrapErr as _};
 use imap::types::Uid;
+use imap_proto::NameAttribute;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 
@@ -141,17 +142,22 @@ impl Archive {
                             &archive_mailbox
                         };
 
-                    // If archive mailbox does not exist, create it
-                    if imap
+                    let names = imap
                         .session
                         .list(None, Some(quoted_mailbox))
-                        .wrap_err_with(|| format!("imap list pattern {quoted_mailbox:?} failed"))?
-                        .is_empty()
+                        .wrap_err_with(|| format!("imap list pattern {quoted_mailbox:?} failed"))?;
+
+                    // If archive mailbox does not exist, or is a simple folder that is not a mailbox, create it
+                    if names.is_empty()
+                        || names
+                            .iter()
+                            .all(|n| n.attributes().contains(&NameAttribute::NoSelect))
                     {
                         imap.session
                             .create(&archive_mailbox)
                             .wrap_err_with(|| format!("imap create {archive_mailbox:?} failed"))?;
                     }
+                    drop(names);
 
                     if imap.has_capability("MOVE")? {
                         // MV does COPY / MARK \Deleted / EXPUNGE all in one go
