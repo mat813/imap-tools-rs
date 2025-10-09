@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.7.3 (2025-10-09)
+
+### Chore
+
+ - <csr-id-cc78cb2238449a23d80e556ffcec3d9d96ac0b81/> lock file maintenance
+ - <csr-id-84c22964727ed4dd818b3804ea67c847fc907a06/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-0000150073bee007fc38ef2f69d63946633af27c/> create the archive mbx when it is a simple NoSelect folder
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 10 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Create the archive mbx when it is a simple NoSelect folder (0000150)
+    - Lock file maintenance (cc78cb2)
+    - Lock file maintenance (84c2296)
+</details>
+
 ## v1.7.2 (2025-09-28)
+
+<csr-id-81e9ab2f0a2617982ccffc958503c276e4f1b1e4/>
+<csr-id-928b2c36ae221c16b16076f4d15e2815b454efad/>
 
 ### Chore
 
@@ -42,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 6 calendar days.
+ - 8 commits contributed to the release.
+ - 7 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -53,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.7.2 (8813108)
     - Update rust crate serde to v1.0.228 (a65afbd)
     - Update rust crate imap-proto to v0.16.6 (2338c61)
     - Update rust crate serde to v1.0.227 (0af5f73)
