@@ -42,7 +42,7 @@ tracing = { version = "=0.1.44", features = ["log"], optional = true }
 tracing-subscriber = { version = "=0.3.22", features = ["env-filter"], optional = true }
 
 [dev-dependencies]
-insta = "=1.44.3"
+insta = "=1.45.1"
 tempfile = "=3.24.0"
 
 [lints.clippy]
