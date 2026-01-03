@@ -5,7 +5,155 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.7.4 (2026-01-03)
+
+### Chore
+
+ - <csr-id-592e571cb6ef432ab17998dcc7adac6117191d81/> update rust crate insta to v1.45.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.44.3 | 1.45.1 |
+ - <csr-id-a6635f40cdd01ccf7b68bf4344a9967ee7c059ad/> update rust crate tempfile to v3.24.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.23.0 | 3.24.0 |
+ - <csr-id-a576bbaaeb17ea69bda5b080b7401ff176e7369d/> lock file maintenance
+ - <csr-id-65cf3dde105b783c1cbf392647d32f9aea8b6793/> lock file maintenance
+ - <csr-id-540f7474029a9c9b09e0d5de7602b0773913d383/> lock file maintenance
+ - <csr-id-993c83eb6c284d5528c78bcadcc0c5e4aa089c35/> lock file maintenance
+ - <csr-id-7a005d4cb69eaef31543efa74ab8afb6ad560f01/> update rust crate insta to v1.44.3
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.44.2 | 1.44.3 |
+ - <csr-id-97a26adb5223c5b571b52e6ef2dff2f06e119a5d/> update rust crate insta to v1.44.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.44.1 | 1.44.2 |
+ - <csr-id-db011e80c8ca787c95b20d5fb6c265cc1a765d74/> lock file maintenance
+ - <csr-id-5c545371fa5310bee12c55ea67fc1d464d6ae90f/> update rust crate insta to v1.44.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.43.2 | 1.44.1 |
+ - <csr-id-ed6e1259eee99f75c9dadc7d1d0c3b79ddb0de23/> lock file maintenance
+ - <csr-id-9d065bc3e7ebf5e25fe50a3bdea87db693c75f48/> lock file maintenance
+ - <csr-id-60ce5af7c76593f4f7a81f1d8c1060aadaef3a15/> lock file maintenance
+ - <csr-id-cd62621313b5f0d2d22caed9dacbb73a47f8f2f5/> lock file maintenance
+ - <csr-id-8cd1bb84bab91784bd1df38aa59c9457e63e9ff0/> lock file maintenance
+ - <csr-id-344a77d99bb670fd7d1b307bd93c112e6354ce11/> lock file maintenance
+ - <csr-id-2fa69f3b2b74fde8a8bd8bd9662bc13d629a67a0/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-96a1c92bf8e33c1ecc046d408f896fa3a6ac9ba9/> update rust crate clap to v4.5.54
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.53 | 4.5.54 |
+ - <csr-id-2f447df3fc9e9cc517a9b0d66da20c6802335640/> update rust crate ratatui to v0.30.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | ratatui | 0.29.0 | 0.30.0 |
+ - <csr-id-54cce0674e4483623ebc1f04de982da190216608/> update rust crate tracing to v0.1.44
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tracing | 0.1.43 | 0.1.44 |
+ - <csr-id-ba049979c7d7f77d3ee0dffffa906f62b573beca/> update rust crate shell-words to v1.1.1
+   | datasource | package     | from  | to    |
+   | ---------- | ----------- | ----- | ----- |
+   | crate      | shell-words | 1.1.0 | 1.1.1 |
+ - <csr-id-b99dac99a118a14c5d4fd8ce47b48eb96be6d6d9/> update tokio-tracing monorepo
+   | datasource | package            | from   | to     |
+   | ---------- | ------------------ | ------ | ------ |
+   | crate      | tracing            | 0.1.41 | 0.1.43 |
+   | crate      | tracing-subscriber | 0.3.20 | 0.3.22 |
+ - <csr-id-1e312aaa308f50add0472c2fc890f68d081c6d28/> update rust crate clap to v4.5.53
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.52 | 4.5.53 |
+ - <csr-id-f14d60276a6046eb39f50c12ed7c72c52a744c10/> update rust crate clap to v4.5.52
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.51 | 4.5.52 |
+ - <csr-id-60b608baee5de33ca9255ded6010d613e585d6ab/> update rust crate indicatif to v0.18.3
+   | datasource | package   | from   | to     |
+   | ---------- | --------- | ------ | ------ |
+   | crate      | indicatif | 0.18.2 | 0.18.3 |
+ - <csr-id-4e71a91bcc5bd27c738a5c1d384e301789c4337d/> update rust crate clap to v4.5.51
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.50 | 4.5.51 |
+ - <csr-id-b57e19394af005567adc550026c653b6b0975e4f/> update rust crate indicatif to v0.18.2
+   | datasource | package   | from   | to     |
+   | ---------- | --------- | ------ | ------ |
+   | crate      | indicatif | 0.18.1 | 0.18.2 |
+ - <csr-id-6eddff7a42baaa9029e3de02cfabccea71042a16/> update rust crate indicatif to v0.18.1
+   | datasource | package   | from   | to     |
+   | ---------- | --------- | ------ | ------ |
+   | crate      | indicatif | 0.18.0 | 0.18.1 |
+ - <csr-id-9d0bba833262d2f7e70b3914430f6ca8d2b95b87/> update rust crate clap to v4.5.50
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.49 | 4.5.50 |
+ - <csr-id-63099a3ce035a5da2e23c2922156df8bbbe31929/> update rust crate clap to v4.5.49
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.48 | 4.5.49 |
+ - <csr-id-f44306213295ea1c728dc5f2ff25374b2b1e0d0e/> update rust crate regex to v1.12.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | regex   | 1.11.3 | 1.12.2 |
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 31 commits contributed to the release over the course of 82 calendar days.
+ - 31 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update rust crate clap to v4.5.54 (96a1c92)
+    - Update rust crate ratatui to v0.30.0 (2f447df)
+    - Update rust crate insta to v1.45.1 (592e571)
+    - Update rust crate tempfile to v3.24.0 (a6635f4)
+    - Lock file maintenance (a576bba)
+    - Lock file maintenance (65cf3dd)
+    - Update rust crate tracing to v0.1.44 (54cce06)
+    - Update rust crate shell-words to v1.1.1 (ba04997)
+    - Lock file maintenance (540f747)
+    - Lock file maintenance (993c83e)
+    - Update tokio-tracing monorepo (b99dac9)
+    - Update rust crate insta to v1.44.3 (7a005d4)
+    - Update rust crate insta to v1.44.2 (97a26ad)
+    - Lock file maintenance (db011e8)
+    - Update rust crate insta to v1.44.1 (5c54537)
+    - Update rust crate clap to v4.5.53 (1e312aa)
+    - Update rust crate clap to v4.5.52 (f14d602)
+    - Lock file maintenance (ed6e125)
+    - Lock file maintenance (9d065bc)
+    - Update rust crate indicatif to v0.18.3 (60b608b)
+    - Lock file maintenance (60ce5af)
+    - Lock file maintenance (cd62621)
+    - Update rust crate clap to v4.5.51 (4e71a91)
+    - Update rust crate indicatif to v0.18.2 (b57e193)
+    - Lock file maintenance (8cd1bb8)
+    - Update rust crate indicatif to v0.18.1 (6eddff7)
+    - Update rust crate clap to v4.5.50 (9d0bba8)
+    - Lock file maintenance (344a77d)
+    - Update rust crate clap to v4.5.49 (63099a3)
+    - Update rust crate regex to v1.12.2 (f443062)
+    - Lock file maintenance (2fa69f3)
+</details>
+
 ## v1.7.3 (2025-10-09)
+
+<csr-id-cc78cb2238449a23d80e556ffcec3d9d96ac0b81/>
+<csr-id-84c22964727ed4dd818b3804ea67c847fc907a06/>
 
 ### Chore
 
@@ -20,7 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
+ - 4 commits contributed to the release.
  - 10 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -32,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.7.3 (839532d)
     - Create the archive mbx when it is a simple NoSelect folder (0000150)
     - Lock file maintenance (cc78cb2)
     - Lock file maintenance (84c2296)
