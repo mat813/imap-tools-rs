@@ -231,11 +231,11 @@ mod tests {
 
         let result: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
         assert!(result.is_err());
-        assert_debug_snapshot!(result, @r#"
+        assert_debug_snapshot!(result, @"
         Err(
-            "The server must be set",
+            The server must be set, at src/libs/base_config.rs:98:13,
         )
-        "#);
+        ");
     }
 
     #[test]
@@ -248,11 +248,11 @@ mod tests {
 
         let result: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
         assert!(result.is_err());
-        assert_debug_snapshot!(result, @r#"
+        assert_debug_snapshot!(result, @"
         Err(
-            "The username must be set",
+            The username must be set, at src/libs/base_config.rs:102:13,
         )
-        "#);
+        ");
     }
 
     #[test]
@@ -287,10 +287,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Error {
-                msg: "parsing command failed: echo \"secret_password",
-                source: ParseError,
-            },
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:127:22
+            |
+            |-> missing closing quote, at src/libs/base_config.rs:127:22,
         )
         "#);
     }
@@ -309,18 +308,13 @@ mod tests {
         // Mock the command execution with a fake password output
         let result = config.password();
         assert!(result.is_err());
-        assert_debug_snapshot!(result, @r#"
+        assert_debug_snapshot!(result, @"
         Err(
-            Error {
-                msg: "password command exec failed",
-                source: Os {
-                    code: 2,
-                    kind: NotFound,
-                    message: "No such file or directory",
-                },
-            },
+            password command exec failed, at src/libs/base_config.rs:134:22
+            |
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:134:22,
         )
-        "#);
+        ");
     }
 
     #[test]
@@ -337,11 +331,11 @@ mod tests {
         // Mock the command execution with a fake password output
         let result = config.password();
         assert!(result.is_err());
-        assert_debug_snapshot!(result, @r#"
+        assert_debug_snapshot!(result, @"
         Err(
-            "password command is empty",
+            password command is empty, at src/libs/base_config.rs:130:22,
         )
-        "#);
+        ");
     }
 
     #[test]
@@ -371,11 +365,11 @@ mod tests {
         let config: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
 
         assert!(config.is_err());
-        assert_debug_snapshot!( config, @r#"
+        assert_debug_snapshot!( config, @"
         Err(
-            "The password or password command must be set",
+            The password or password command must be set, at src/libs/base_config.rs:106:13,
         )
-        "#);
+        ");
     }
 
     #[test]
@@ -395,11 +389,13 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(
             config,
-            @r#"
+            @"
         Err(
-            "config file parsing failed: TomlDeserialize(Error { inner: ErrorInner { kind: NewlineInString, line: Some(1), col: 34, message: \"\", key: [] } })",
+            config file parsing failed, at src/libs/base_config.rs:52:18
+            |
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:52:18,
         )
-        "#
+        "
         );
     }
 
