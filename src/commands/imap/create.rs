@@ -1,6 +1,11 @@
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 use clap::Args;
-use eyre::Result;
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
+
+#[derive(Debug, Display)]
+pub struct ImapCreateCommandError(&'static str);
+impl std::error::Error for ImapCreateCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
@@ -21,12 +26,13 @@ impl Create {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     #[expect(clippy::print_stdout, reason = "main")]
-    pub fn execute(&self) -> Result<()> {
-        let config = BaseConfig::new(&self.config)?;
+    pub fn execute(&self) -> Result<(), ImapCreateCommandError> {
+        let config = BaseConfig::new(&self.config).or_raise(|| ImapCreateCommandError("config"))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> = Imap::connect_base(&config)?;
+        let mut imap: Imap<()> =
+            Imap::connect_base(&config).or_raise(|| ImapCreateCommandError("connect"))?;
 
         let mailbox = &self.mailbox;
 

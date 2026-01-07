@@ -1,6 +1,7 @@
 use crate::commands::MainCommands;
 use clap::Parser;
-use eyre::Result;
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -16,6 +17,11 @@ struct MainArgs {
     command: MainCommands,
 }
 
+#[derive(Debug, Display)]
+pub struct RunError;
+
+impl std::error::Error for RunError {}
+
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", err(level = "info"))
@@ -23,8 +29,8 @@ struct MainArgs {
 /// Dispatch-run our commands
 /// # Errors
 /// forwards the errors from the commands to `main()`
-pub fn run() -> Result<()> {
+pub fn run() -> Result<(), RunError> {
     let cli = MainArgs::parse();
 
-    cli.command.execute()
+    cli.command.execute().or_raise(|| RunError)
 }

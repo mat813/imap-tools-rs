@@ -1,5 +1,6 @@
 use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
-use eyre::{bail, eyre, OptionExt as _, Result, WrapErr as _};
+use derive_more::Display;
+use exn::{bail, OptionExt as _, Result, ResultExt as _};
 use imap::{types::Uid, ImapConnection, Session};
 use imap_proto::NameAttribute;
 use serde::Serialize;
@@ -7,6 +8,10 @@ use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
 };
+
+#[derive(Debug, Display)]
+pub struct ImapError(String);
+impl std::error::Error for ImapError {}
 
 #[derive(Clone, Debug)]
 pub struct ListResult<T>
@@ -51,11 +56,14 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(base), ret, err(level = "info"))
     )]
-    pub fn connect_base(base: &BaseConfig) -> Result<Self> {
+    pub fn connect_base(base: &BaseConfig) -> Result<Self, ImapError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
 
-        let server = base.server.as_ref().ok_or_eyre("Missing server")?;
+        let server = base
+            .server
+            .as_ref()
+            .ok_or_raise(|| ImapError("Missing server".to_owned()))?;
 
         let mut builder = imap::ClientBuilder::new(server.as_str(), 143);
 
@@ -65,7 +73,7 @@ where
 
         let mut client = builder
             .connect()
-            .wrap_err_with(|| format!("failed to connect to {server} on port 143"))?;
+            .or_raise(|| ImapError(format!("failed to connect to {server} on port 143")))?;
 
         if base.debug {
             client.debug = true;
@@ -73,11 +81,14 @@ where
 
         let session = client
             .login(
-                base.username.as_ref().ok_or_eyre("Missing username")?,
-                base.password()?,
+                base.username
+                    .as_ref()
+                    .ok_or_raise(|| ImapError("Missing username".to_owned()))?,
+                base.password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?,
             )
             .map_err(|err| err.0)
-            .wrap_err("imap login failed")?;
+            .or_raise(|| ImapError("imap login failed".to_owned()))?;
 
         let mut ret = Self {
             session,
@@ -87,7 +98,7 @@ where
         };
 
         if !ret.has_capability("UIDPLUS")? {
-            return Err(eyre!("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"));
+            bail!(ImapError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned()));
         }
 
         Ok(ret)
@@ -100,7 +111,7 @@ where
     /// Connect to the server and login with the given credentials.
     /// # Errors
     /// Many errors can happen
-    pub fn connect(config: &Config<T>) -> Result<Self> {
+    pub fn connect(config: &Config<T>) -> Result<Self, ImapError> {
         let mut ret = Self::connect_base(&config.base)?;
 
         ret.extra.clone_from(&config.extra);
@@ -116,7 +127,7 @@ where
     /// Check if the imap server has some capability
     /// # Errors
     /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str> + Debug>(&mut self, cap: S) -> Result<bool> {
+    pub fn has_capability<S: AsRef<str> + Debug>(&mut self, cap: S) -> Result<bool, ImapError> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
@@ -127,7 +138,7 @@ where
         let has_capability = self
             .session
             .capabilities()
-            .wrap_err("imap capabilities failed")?
+            .or_raise(|| ImapError("imap capabilities failed".to_owned()))?
             .has_str(cap.as_ref());
 
         self.cached_capabilities
@@ -148,7 +159,7 @@ where
     ///
     /// # Errors
     /// Many errors can happen
-    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>> {
+    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, ImapError> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
         for filter in self.filters.clone().unwrap_or_else(||
@@ -160,7 +171,7 @@ where
             for mailbox in self
                 .session
                 .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .wrap_err_with(|| format!("imap list failed with {filter:?}"))?
+                .or_raise(|| ImapError(format!("imap list failed with {filter:?}")))?
                 .iter()
                 // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -190,7 +201,9 @@ where
                 );
             }
             if !found {
-                bail!("This filter did not return anything {filter:?}");
+                bail!(ImapError(format!(
+                    "This filter did not return anything {filter:?}"
+                )));
             }
         }
 

@@ -1,7 +1,17 @@
-use crate::libs::{args::Generic, base_config::BaseConfig, filters::Filters};
-use eyre::{eyre, Result};
+use crate::libs::{
+    args::Generic,
+    base_config::{BaseConfig, SerdeAnyWrapper},
+    filters::Filters,
+};
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+
+#[derive(Debug, Display)]
+pub struct ConfigError(&'static str);
+
+impl std::error::Error for ConfigError {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
@@ -41,18 +51,22 @@ where
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
-    pub fn new(args: &Generic) -> Result<Self> {
+    pub fn new(args: &Generic) -> Result<Self, ConfigError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?args);
 
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
-                .map_err(|err| eyre!("config file parsing failed: {err:?}"))?
+                .map_err(SerdeAnyWrapper)
+                .or_raise(|| ConfigError("config file parsing failed"))?
         } else {
             Self::default()
         };
 
-        config.base = config.base.apply_args(args)?;
+        config.base = config
+            .base
+            .apply_args(args)
+            .or_raise(|| ConfigError("base"))?;
 
         Ok(config)
     }
@@ -154,7 +168,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result: Result<Config<()>> = Config::new(&args);
+        let result: Result<Config<()>, ConfigError> = Config::new(&args);
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
@@ -171,7 +185,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result: Result<Config<()>> = Config::new(&args);
+        let result: Result<Config<()>, ConfigError> = Config::new(&args);
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
@@ -293,7 +307,7 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Result<Config<()>> = Config::new(&args);
+        let config: Result<Config<()>, ConfigError> = Config::new(&args);
 
         assert!(config.is_err());
         assert_debug_snapshot!(config, @r#"
@@ -316,7 +330,7 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Result<Config<()>> = Config::new(&args);
+        let config: Result<Config<()>, ConfigError> = Config::new(&args);
         assert!(config.is_err());
         assert_debug_snapshot!(config, @r#"
         Err(

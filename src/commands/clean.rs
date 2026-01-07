@@ -6,9 +6,14 @@ use crate::libs::{
 };
 use chrono::{Duration, Utc};
 use clap::Args;
-use eyre::{bail, OptionExt as _, Result, WrapErr as _};
+use derive_more::Display;
+use exn::{bail, OptionExt as _, Result, ResultExt as _};
 use size::Size;
 use std::collections::BTreeMap;
+
+#[derive(Debug, Display)]
+pub struct CleanError(String);
+impl std::error::Error for CleanError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
@@ -29,12 +34,13 @@ impl Clean {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new(&self.config)?;
+    pub fn execute(&self) -> Result<(), CleanError> {
+        let config =
+            Config::<MyExtra>::new(&self.config).or_raise(|| CleanError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap = Imap::connect(&config)?;
+        let mut imap = Imap::connect(&config).or_raise(|| CleanError("connect".to_owned()))?;
 
         #[expect(
             clippy::literal_string_with_formatting_args,
@@ -57,14 +63,18 @@ impl Clean {
                 "Days",
                 "Sequence",
             ],
-        )?;
+        )
+        .or_raise(|| CleanError("new renderer".to_owned()))?;
 
-        for (mailbox, result) in imap.list()? {
+        for (mailbox, result) in imap.list().or_raise(|| CleanError("list".to_owned()))? {
             match result.extra {
                 Some(ref extra) => {
-                    self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)?;
+                    self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)
+                        .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
                 }
-                None => bail!("Mailbox {mailbox} does not have an extra parameter"),
+                None => bail!(CleanError(format!(
+                    "Mailbox {mailbox} does not have an extra parameter"
+                ))),
             }
         }
 
@@ -81,11 +91,11 @@ impl Clean {
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
-    ) -> Result<()> {
+    ) -> Result<(), CleanError> {
         let mbx = imap
             .session
             .examine(mailbox)
-            .wrap_err_with(|| format!("imap examine {mailbox:?} failed"))?;
+            .or_raise(|| CleanError(format!("imap examine {mailbox:?} failed")))?;
 
         // If there are not enough messages, skip
         if mbx.exists <= 300 {
@@ -95,7 +105,7 @@ impl Clean {
         let messages = imap
             .session
             .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
-            .wrap_err("imap uid fetch failed")?;
+            .or_raise(|| CleanError("imap uid fetch failed".to_owned()))?;
 
         let total_size = messages
             .iter()
@@ -105,7 +115,9 @@ impl Clean {
         let first_date = messages
             .iter()
             .next()
-            .ok_or_eyre("Could not find the first message where there should be one")?
+            .ok_or_raise(|| {
+                CleanError("Could not find the first message where there should be one".to_owned())
+            })?
             .internal_date()
             .unwrap_or_default();
 
@@ -124,7 +136,7 @@ impl Clean {
             let uids_to_delete = imap
                 .session
                 .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
-                .wrap_err("imap uid search failed")?; // Search messages by cutoff date
+                .or_raise(|| CleanError("imap uid search failed".to_owned()))?; // Search messages by cutoff date
 
             // Only delete if the rule applies based on mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
@@ -135,26 +147,30 @@ impl Clean {
                 if !self.config.dry_run {
                     imap.session
                         .select(mailbox)
-                        .wrap_err_with(|| format!("imap select {mailbox:?} failed"))?;
+                        .or_raise(|| CleanError(format!("imap select {mailbox:?} failed")))?;
 
                     imap.session
                         .uid_store(&sequence, "+FLAGS (\\Deleted)")
-                        .wrap_err("imap uid store failed")?;
+                        .or_raise(|| CleanError("imap uid store failed".to_owned()))?;
 
                     // Expunge to permanently remove messages marked for deletion
-                    imap.session.close().wrap_err("imap close failed")?;
+                    imap.session
+                        .close()
+                        .or_raise(|| CleanError("imap close failed".to_owned()))?;
                 }
 
-                renderer.add_row(&[
-                    &mailbox,
-                    &mbx.exists,
-                    &Size::from_bytes(total_size).format(),
-                    &uids_to_delete.len(),
-                    &first_date.format("%d-%b-%Y"),
-                    &cutoff_str,
-                    &cutoff_date.signed_duration_since(first_date).num_days(),
-                    &sequence,
-                ])?;
+                renderer
+                    .add_row(&[
+                        &mailbox,
+                        &mbx.exists,
+                        &Size::from_bytes(total_size).format(),
+                        &uids_to_delete.len(),
+                        &first_date.format("%d-%b-%Y"),
+                        &cutoff_str,
+                        &cutoff_date.signed_duration_since(first_date).num_days(),
+                        &sequence,
+                    ])
+                    .or_raise(|| CleanError("add row".to_owned()))?;
 
                 break;
             }

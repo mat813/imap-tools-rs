@@ -1,11 +1,16 @@
 use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
 use clap::Args;
-use eyre::{bail, Result, WrapErr as _};
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
 use imap_proto::NameAttribute;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use size::Size;
 use std::str::FromStr;
+
+#[derive(Debug, Display)]
+pub struct ImapDuCommandError(String);
+impl std::error::Error for ImapDuCommandError {}
 
 #[derive(Debug, Clone, Default)]
 pub enum Sort {
@@ -15,13 +20,13 @@ pub enum Sort {
 }
 
 impl FromStr for Sort {
-    type Err = eyre::Error;
+    type Err = ImapDuCommandError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
             "size" => Ok(Self::Size),
             "name" => Ok(Self::Name),
-            _ => bail!("Invalid sort {s}"),
+            _ => Err(ImapDuCommandError(format!("Invalid sort {s}"))),
         }
     }
 }
@@ -64,29 +69,32 @@ impl DiskUsage {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<()> {
-        let config = BaseConfig::new(&self.config)?;
+    pub fn execute(&self) -> Result<(), ImapDuCommandError> {
+        let config =
+            BaseConfig::new(&self.config).or_raise(|| ImapDuCommandError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> = Imap::connect_base(&config)?;
+        let mut imap: Imap<()> =
+            Imap::connect_base(&config).or_raise(|| ImapDuCommandError("connect".to_owned()))?;
 
         #[expect(
             clippy::literal_string_with_formatting_args,
             reason = "We need it for later"
         )]
-        let mut renderer = new_renderer("Mailbox Size", "{0:<42} {1}", &["Mailbox", "Attributes"])?;
+        let mut renderer = new_renderer("Mailbox Size", "{0:<42} {1}", &["Mailbox", "Attributes"])
+            .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
 
         let mut result: Vec<(String, u64)> = vec![];
 
         let mailboxes = imap
             .session
             .list(self.reference.as_deref(), self.pattern.as_deref())
-            .wrap_err_with(|| {
-                format!(
+            .or_raise(|| {
+                ImapDuCommandError(format!(
                     "imap list failed with ref:{:?} and pattern:{:?}",
                     self.reference, self.pattern
-                )
+                ))
             })?;
 
         let mailboxes = mailboxes
@@ -113,7 +121,8 @@ impl DiskUsage {
             })
             .collect::<Vec<_>>();
 
-        let len_mbox = u64::try_from(mailboxes.len())?;
+        let len_mbox = u64::try_from(mailboxes.len())
+            .or_raise(|| ImapDuCommandError("parse length".to_owned()))?;
 
         let bar = self.progress.then(|| ProgressBar::new(len_mbox));
 
@@ -121,7 +130,7 @@ impl DiskUsage {
             b.set_style(
                 ProgressStyle::with_template(
                     "[{elapsed_precise}/{duration_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-                )?
+                ).or_raise(|| ImapDuCommandError("new progress style".to_owned()))?
                 .progress_chars("##-"),
             );
         }
@@ -132,7 +141,10 @@ impl DiskUsage {
                 b.set_message(mailbox.name().to_owned());
             }
 
-            let mbx = imap.session.examine(mailbox.name())?;
+            let mbx = imap
+                .session
+                .examine(mailbox.name())
+                .or_raise(|| ImapDuCommandError("imap examine".to_owned()))?;
 
             if mbx.exists == 0 {
                 result.push((mailbox.name().to_owned(), 0));
@@ -142,7 +154,7 @@ impl DiskUsage {
             let total: u64 = imap
                 .session
                 .uid_fetch("1:*", "(RFC822.SIZE)")
-                .wrap_err("imap uid fetch failed")?
+                .or_raise(|| ImapDuCommandError("imap uid fetch".to_owned()))?
                 .iter()
                 .map(|m| u64::from(m.size.unwrap_or(0)))
                 .sum();
@@ -160,7 +172,9 @@ impl DiskUsage {
         });
 
         for (mbx, total) in result {
-            renderer.add_row(&[&mbx, &Size::from_bytes(total).format()])?;
+            renderer
+                .add_row(&[&mbx, &Size::from_bytes(total).format()])
+                .or_raise(|| ImapDuCommandError("renderer add row".to_owned()))?;
         }
 
         Ok(())

@@ -1,8 +1,13 @@
 use crate::libs::{args::Generic, mode::Mode};
-use eyre::{bail, eyre, OptionExt as _, Result, WrapErr as _};
+use derive_more::Display;
+use exn::{bail, OptionExt as _, Result, ResultExt as _};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 use std::process::Command;
+
+#[derive(Debug, Display)]
+pub struct BaseConfigError(String);
+impl std::error::Error for BaseConfigError {}
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
@@ -25,6 +30,10 @@ pub struct BaseConfig {
     pub dry_run: bool,
 }
 
+#[derive(Debug, Display)]
+pub struct SerdeAnyWrapper(pub serde_any::Error);
+impl std::error::Error for SerdeAnyWrapper {}
+
 impl BaseConfig {
     #[cfg_attr(
         feature = "tracing",
@@ -33,13 +42,14 @@ impl BaseConfig {
     /// Creates from a file and arguments
     /// # Errors
     /// Many errors can happen
-    pub fn new(args: &Generic) -> Result<Self> {
+    pub fn new(args: &Generic) -> Result<Self, BaseConfigError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?args);
 
         let config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
-                .map_err(|err| eyre!("config file parsing failed: {err:?}"))?
+                .map_err(SerdeAnyWrapper)
+                .or_raise(|| BaseConfigError("config file parsing failed".to_owned()))?
         } else {
             Self::default()
         };
@@ -51,7 +61,7 @@ impl BaseConfig {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self, args), ret, err(level = "info"))
     )]
-    pub fn apply_args(mut self, args: &Generic) -> Result<Self> {
+    pub fn apply_args(mut self, args: &Generic) -> Result<Self, BaseConfigError> {
         if let Some(ref server) = args.server {
             self.server = Some(server.clone());
         }
@@ -85,15 +95,17 @@ impl BaseConfig {
         }
 
         if self.server.is_none() {
-            bail!("The server must be set");
+            bail!(BaseConfigError("The server must be set".to_owned()));
         }
 
         if self.username.is_none() {
-            bail!("The username must be set");
+            bail!(BaseConfigError("The username must be set".to_owned()));
         }
 
         if self.password.is_none() && self.password_command.is_none() {
-            bail!("The password or password command must be set");
+            bail!(BaseConfigError(
+                "The password or password command must be set".to_owned()
+            ));
         }
 
         Ok(self)
@@ -106,21 +118,25 @@ impl BaseConfig {
     /// Figure out the password from literal or command
     /// # Errors
     /// Many errors can happen
-    pub fn password(&self) -> Result<String> {
+    pub fn password(&self) -> Result<String, BaseConfigError> {
         #[expect(clippy::needless_borrowed_reference, reason = "ok")]
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
             (_, &Some(ref command)) => {
                 let args = split(command)
-                    .wrap_err_with(|| format!("parsing command failed: {command}"))?;
-                let (exe, args) = args.split_first().ok_or_eyre("password command is empty")?;
+                    .or_raise(|| BaseConfigError(format!("parsing command failed: {command}")))?;
+                let (exe, args) = args
+                    .split_first()
+                    .ok_or_raise(|| BaseConfigError("password command is empty".to_owned()))?;
                 let output = Command::new(exe)
                     .args(args)
                     .output()
-                    .wrap_err("password command exec failed")?;
+                    .or_raise(|| BaseConfigError("password command exec failed".to_owned()))?;
                 Ok(String::from_utf8_lossy(&output.stdout).to_string())
             }
-            _ => bail!("The password or password command must be set"),
+            _ => bail!(BaseConfigError(
+                "The password or password command must be set".to_owned()
+            )),
         }
     }
 }
@@ -213,7 +229,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result: Result<BaseConfig> = BaseConfig::new(&args);
+        let result: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
@@ -230,7 +246,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result: Result<BaseConfig> = BaseConfig::new(&args);
+        let result: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
@@ -352,7 +368,7 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Result<BaseConfig> = BaseConfig::new(&args);
+        let config: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
 
         assert!(config.is_err());
         assert_debug_snapshot!( config, @r#"
@@ -375,7 +391,7 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Result<BaseConfig> = BaseConfig::new(&args);
+        let config: Result<BaseConfig, BaseConfigError> = BaseConfig::new(&args);
         assert!(config.is_err());
         assert_debug_snapshot!(
             config,

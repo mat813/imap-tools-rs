@@ -1,8 +1,13 @@
 use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
 use clap::Args;
-use eyre::{Result, WrapErr as _};
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
 use imap_proto::NameAttribute;
 use regex::Regex;
+
+#[derive(Debug, Display)]
+pub struct ImapListCommandError(String);
+impl std::error::Error for ImapListCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
@@ -38,27 +43,30 @@ impl List {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<()> {
-        let config = BaseConfig::new(&self.config)?;
+    pub fn execute(&self) -> Result<(), ImapListCommandError> {
+        let config =
+            BaseConfig::new(&self.config).or_raise(|| ImapListCommandError("config".into()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> = Imap::connect_base(&config)?;
+        let mut imap: Imap<()> =
+            Imap::connect_base(&config).or_raise(|| ImapListCommandError("connect".into()))?;
 
         #[expect(
             clippy::literal_string_with_formatting_args,
             reason = "We need it for later"
         )]
-        let mut renderer = new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Attributes"])?;
+        let mut renderer = new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Attributes"])
+            .or_raise(|| ImapListCommandError("new renderer".to_owned()))?;
 
         for mailbox in imap
             .session
             .list(self.reference.as_deref(), self.pattern.as_deref())
-            .wrap_err_with(|| {
-                format!(
+            .or_raise(|| {
+                ImapListCommandError(format!(
                     "imap list failed with ref:{:?} and pattern:{:?}",
                     self.reference, self.pattern
-                )
+                ))
             })?
             .iter()
             // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
@@ -82,7 +90,9 @@ impl List {
                 }
             })
         {
-            renderer.add_row(&[&mailbox.name(), &format!("{:?}", mailbox.attributes())])?;
+            renderer
+                .add_row(&[&mailbox.name(), &format!("{:?}", mailbox.attributes())])
+                .or_raise(|| ImapListCommandError("renderer add row".to_owned()))?;
         }
 
         Ok(())

@@ -99,10 +99,15 @@ where
 mod internal {
     use super::Filter as RealFilter;
     use crate::libs::single_or_array::SingleOrArray;
-    use eyre::{Result, WrapErr as _};
+    use derive_more::Display;
+    use exn::{Result, ResultExt as _};
     use regex::{escape, Regex};
     use serde::{Deserialize, Serialize};
     use std::fmt::Debug;
+
+    #[derive(Debug, Display)]
+    pub struct FilterError(String);
+    impl std::error::Error for FilterError {}
 
     /// Private structure without the regex
     #[derive(Deserialize, Serialize, Debug)]
@@ -128,7 +133,7 @@ mod internal {
             feature = "tracing",
             tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
         )]
-        pub fn make_include_filter_re(&self) -> Result<Option<Regex>> {
+        pub fn make_include_filter_re(&self) -> Result<Option<Regex>, FilterError> {
             Self::make_filter_re(self.include.as_ref(), self.include_re.as_ref())
         }
 
@@ -136,7 +141,7 @@ mod internal {
             feature = "tracing",
             tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
         )]
-        pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>> {
+        pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>, FilterError> {
             Self::make_filter_re(self.exclude.as_ref(), self.exclude_re.as_ref())
         }
 
@@ -152,7 +157,7 @@ mod internal {
         fn make_filter_re(
             filter: Option<&SingleOrArray<String>>,
             re_filter: Option<&SingleOrArray<String>>,
-        ) -> Result<Option<Regex>> {
+        ) -> Result<Option<Regex>, FilterError> {
             #[cfg(feature = "tracing")]
             tracing::trace!(?filter, ?re_filter);
 
@@ -179,7 +184,7 @@ mod internal {
             } else {
                 let full_re = internal.join("|");
                 Regex::new(&full_re)
-                    .wrap_err_with(|| format!("regexp creation failed for {full_re:?}"))
+                    .or_raise(|| FilterError(format!("regexp creation failed for {full_re:?}")))
                     .map(Some)
             }
         }

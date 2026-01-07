@@ -1,5 +1,6 @@
 use clap::Subcommand;
-use eyre::Result;
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
 mod archive;
 mod clean;
 mod find_dups;
@@ -24,18 +25,27 @@ pub enum MainCommands {
     Imap(imap::ImapCommands),
 }
 
+#[derive(Debug, Display)]
+pub struct MainCommandError(&'static str);
+
+impl std::error::Error for MainCommandError {}
+
 impl MainCommands {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<()> {
+    pub fn execute(&self) -> Result<(), MainCommandError> {
         match *self {
-            Self::Archive(ref archive) => archive.execute(),
-            Self::Clean(ref clean) => clean.execute(),
-            Self::FindDups(ref find_dups) => find_dups.execute(),
-            Self::List(ref list) => list.execute(),
-            Self::Imap(ref imap) => imap.execute(),
+            Self::Archive(ref archive) => {
+                archive.execute().or_raise(|| MainCommandError("archive"))
+            }
+            Self::Clean(ref clean) => clean.execute().or_raise(|| MainCommandError("clean")),
+            Self::FindDups(ref find_dups) => find_dups
+                .execute()
+                .or_raise(|| MainCommandError("find-dups")),
+            Self::List(ref list) => list.execute().or_raise(|| MainCommandError("list")),
+            Self::Imap(ref imap) => imap.execute().or_raise(|| MainCommandError("imap")),
         }
     }
 }

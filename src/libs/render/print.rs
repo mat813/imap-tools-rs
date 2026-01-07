@@ -1,5 +1,5 @@
-use crate::libs::render::Renderer as RendererTrait;
-use eyre::{Result, WrapErr as _};
+use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use exn::{Result, ResultExt as _};
 use std::{collections::HashMap, fmt::Display};
 use strfmt::strfmt;
 
@@ -20,7 +20,11 @@ impl RendererTrait for Renderer<'_> {
             err(level = "info")
         )
     )]
-    fn new(_title: &'static str, format: &'static str, headers: &[&'static str]) -> Result<Self> {
+    fn new(
+        _title: &'static str,
+        format: &'static str,
+        headers: &[&'static str],
+    ) -> Result<Self, RendererError> {
         Ok(Self {
             format,
             headers: headers.into(),
@@ -33,7 +37,7 @@ impl RendererTrait for Renderer<'_> {
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
     #[expect(clippy::print_stdout, reason = "we print")]
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
+    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?row.iter().map(|r| format!("{r}")).collect::<Vec<String>>());
 
@@ -47,7 +51,7 @@ impl RendererTrait for Renderer<'_> {
                 .map(|(idx, f)| (idx.to_string(), (*f).to_owned()))
                 .collect();
             let output = strfmt(self.format, &map)
-                .wrap_err_with(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
+                .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
             println!("{output}");
         }
         let map: HashMap<String, String> = row
@@ -56,7 +60,7 @@ impl RendererTrait for Renderer<'_> {
             .map(|(idx, f)| (idx.to_string(), f.to_string()))
             .collect();
         let output = strfmt(self.format, &map)
-            .wrap_err_with(|| format!("strfmt failed {:?} {:?}", self.format, map))?;
+            .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
         println!("{output}");
 
         Ok(())

@@ -5,10 +5,15 @@ use crate::libs::{
     render::{new_renderer, Renderer},
 };
 use clap::Args;
-use eyre::{OptionExt as _, Result, WrapErr as _};
+use derive_more::Display;
+use exn::{OptionExt as _, Result, ResultExt as _};
 use imap::types::{Fetches, Uid};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+
+#[derive(Debug, Display)]
+pub struct DuError(String);
+impl std::error::Error for DuError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
@@ -40,8 +45,9 @@ impl FindDups {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<()> {
-        let config = Config::<MyExtra>::new(&self.config)?;
+    pub fn execute(&self) -> Result<(), DuError> {
+        let config =
+            Config::<MyExtra>::new(&self.config).or_raise(|| DuError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
@@ -53,12 +59,14 @@ impl FindDups {
             },
             "[{0}] {1} {2}",
             &["Mailbox", "Dups", "Sequence"],
-        )?;
+        )
+        .or_raise(|| DuError("new renderer".to_owned()))?;
 
-        let mut imap = Imap::connect(&config)?;
+        let mut imap = Imap::connect(&config).or_raise(|| DuError("connect".to_owned()))?;
 
-        for (mailbox, _result) in imap.list()? {
-            self.process(&mut imap, &mut renderer, &mailbox)?;
+        for (mailbox, _result) in imap.list().or_raise(|| DuError("imap list".to_owned()))? {
+            self.process(&mut imap, &mut renderer, &mailbox)
+                .or_raise(|| DuError("process".to_owned()))?;
         }
 
         Ok(())
@@ -73,13 +81,13 @@ impl FindDups {
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
-    ) -> Result<()> {
+    ) -> Result<(), DuError> {
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
         let mbx = imap
             .session
             .examine(mailbox)
-            .wrap_err_with(|| format!("imap examine {mailbox:?} failed"))?;
+            .or_raise(|| DuError(format!("imap examine {mailbox:?} failed")))?;
 
         // If there are less than 2 messages, there cannot possible be
         // duplicates, stop here
@@ -91,8 +99,9 @@ impl FindDups {
         let messages = imap
             .session
             .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
-            .wrap_err("imap uid fetch failed")?;
-        let duplicates = Self::find_duplicates(&messages)?;
+            .or_raise(|| DuError("imap uid fetch failed".to_owned()))?;
+        let duplicates =
+            Self::find_duplicates(&messages).or_raise(|| DuError("find dupplicates".to_owned()))?;
 
         // Delete duplicate messages
         if !duplicates.is_empty() {
@@ -102,16 +111,20 @@ impl FindDups {
                 // Re-open the mailbox in read-write mode
                 imap.session
                     .select(mailbox)
-                    .wrap_err_with(|| format!("imap select {mailbox:?} failed"))?;
+                    .or_raise(|| DuError(format!("imap select {mailbox:?} failed")))?;
 
                 imap.session
                     .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")
-                    .wrap_err("imap uid store failed")?;
+                    .or_raise(|| DuError("imap uid store failed".to_owned()))?;
 
-                imap.session.close().wrap_err("imap close failed")?;
+                imap.session
+                    .close()
+                    .or_raise(|| DuError("imap close failed".to_owned()))?;
             }
 
-            renderer.add_row(&[&mailbox, &duplicates.len(), &duplicate_set])?;
+            renderer
+                .add_row(&[&mailbox, &duplicates.len(), &duplicate_set])
+                .or_raise(|| DuError("renderer add row".to_owned()))?;
         }
 
         Ok(())
@@ -121,7 +134,7 @@ impl FindDups {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(messages), ret, , err(level = "info"), fields(messages = messages.len()))
     )]
-    fn find_duplicates(messages: &Fetches) -> Result<HashSet<Uid>> {
+    fn find_duplicates(messages: &Fetches) -> Result<HashSet<Uid>, DuError> {
         let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
         // Collect message IDs with sequence numbers
@@ -130,7 +143,7 @@ impl FindDups {
                 message_ids
                     .entry(id)
                     .or_default()
-                    .push(message.uid.ok_or_eyre("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety")?);
+                    .push(message.uid.ok_or_raise(|| DuError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned()))?);
             }
         }
 

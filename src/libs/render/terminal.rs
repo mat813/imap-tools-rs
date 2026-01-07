@@ -1,5 +1,5 @@
-use crate::libs::render::Renderer as RendererTrait;
-use eyre::{Result, WrapErr as _};
+use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use exn::{Result, ResultExt as _};
 use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
@@ -36,12 +36,18 @@ impl RendererTrait for Renderer<'_> {
             err(level = "info")
         )
     )]
-    fn new(title: &'static str, _format: &'static str, headers: &[&'static str]) -> Result<Self> {
+    fn new(
+        title: &'static str,
+        _format: &'static str,
+        headers: &[&'static str],
+    ) -> Result<Self, RendererError> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
         })
-        .wrap_err("ratatui init failed")?;
-        terminal.clear().wrap_err("terminal clear failed")?;
+        .or_raise(|| RendererError("ratatui init failed".to_owned()))?;
+        terminal
+            .clear()
+            .or_raise(|| RendererError("terminal clear failed".to_owned()))?;
         Ok(Self {
             terminal,
             table_rows: vec![],
@@ -60,7 +66,7 @@ impl RendererTrait for Renderer<'_> {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<()> {
+    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
         let str_row = row
             .iter()
             .map(std::string::ToString::to_string)
@@ -88,7 +94,7 @@ impl RendererTrait for Renderer<'_> {
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
             let width = u16::try_from(width)
-                .wrap_err_with(|| format!("failed converting {width} in a u16"))?;
+                .or_raise(|| RendererError(format!("failed converting {width} in a u16")))?;
             if width > self.column_widths[idx] {
                 self.column_widths[idx] = width;
             }
@@ -96,14 +102,16 @@ impl RendererTrait for Renderer<'_> {
 
         // let area = self.terminal.get_frame().area();
         // self.terminal.set_cursor_position(area)?;
-        self.terminal.clear().wrap_err("terminal clear failed")?;
+        self.terminal
+            .clear()
+            .or_raise(|| RendererError("terminal clear failed".to_owned()))?;
         let table_width = self.table_rows.len();
         let table_width = u16::try_from(table_width)
-            .wrap_err_with(|| format!("convert {table_width} into a u16 failed"))?;
+            .or_raise(|| RendererError(format!("convert {table_width} into a u16 failed")))?;
         self.terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(table_width + 3),
         })
-        .wrap_err("ratatui init failed")?;
+        .or_raise(|| RendererError("ratatui init failed".to_owned()))?;
 
         let rows = self.table_rows.clone();
         let widths = self.column_widths();
@@ -116,7 +124,7 @@ impl RendererTrait for Renderer<'_> {
                     .block(Block::default().title(self.title).borders(Borders::ALL));
                 frame.render_widget(table, frame.area());
             })
-            .wrap_err("termianl draw failed")?;
+            .or_raise(|| RendererError("termianl draw failed".to_owned()))?;
 
         Ok(())
     }
