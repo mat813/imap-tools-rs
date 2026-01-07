@@ -5,7 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.8.0 (2026-01-07)
+
+### Chore
+
+ - <csr-id-5fbcadda9869538e56aa1c2ace0013f091c7866d/> lock file maintenance
+ - <csr-id-98488715fa04344a1f1fea433b984dd129b48a87/> update rust crate insta to v1.46.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.45.1 | 1.46.0 |
+
+### New Features
+
+ - <csr-id-00001870d16b9cbb2a84f45d9d5205057045c67f/> move from eyre to exn for better errors
+
+### Style
+
+ - <csr-id-000018605e94ee60885a4f1b0c64333736e6fe47/> rename lint
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 3 days passed between releases.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Move from eyre to exn for better errors (0000187)
+    - Rename lint (0000186)
+    - Lock file maintenance (5fbcadd)
+    - Update rust crate insta to v1.46.0 (9848871)
+</details>
+
 ## v1.7.4 (2026-01-03)
+
+<csr-id-592e571cb6ef432ab17998dcc7adac6117191d81/>
+<csr-id-a6635f40cdd01ccf7b68bf4344a9967ee7c059ad/>
+<csr-id-a576bbaaeb17ea69bda5b080b7401ff176e7369d/>
+<csr-id-65cf3dde105b783c1cbf392647d32f9aea8b6793/>
+<csr-id-540f7474029a9c9b09e0d5de7602b0773913d383/>
+<csr-id-993c83eb6c284d5528c78bcadcc0c5e4aa089c35/>
+<csr-id-7a005d4cb69eaef31543efa74ab8afb6ad560f01/>
+<csr-id-97a26adb5223c5b571b52e6ef2dff2f06e119a5d/>
+<csr-id-db011e80c8ca787c95b20d5fb6c265cc1a765d74/>
+<csr-id-5c545371fa5310bee12c55ea67fc1d464d6ae90f/>
+<csr-id-ed6e1259eee99f75c9dadc7d1d0c3b79ddb0de23/>
+<csr-id-9d065bc3e7ebf5e25fe50a3bdea87db693c75f48/>
+<csr-id-60ce5af7c76593f4f7a81f1d8c1060aadaef3a15/>
+<csr-id-cd62621313b5f0d2d22caed9dacbb73a47f8f2f5/>
+<csr-id-8cd1bb84bab91784bd1df38aa59c9457e63e9ff0/>
+<csr-id-344a77d99bb670fd7d1b307bd93c112e6354ce11/>
+<csr-id-2fa69f3b2b74fde8a8bd8bd9662bc13d629a67a0/>
 
 ### Chore
 
@@ -106,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 31 commits contributed to the release over the course of 82 calendar days.
+ - 32 commits contributed to the release.
  - 31 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -117,6 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.7.4 (c8ee31e)
     - Update rust crate clap to v4.5.54 (96a1c92)
     - Update rust crate ratatui to v0.30.0 (2f447df)
     - Update rust crate insta to v1.45.1 (592e571)
