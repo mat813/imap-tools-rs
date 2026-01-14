@@ -24,7 +24,7 @@ rustls = ["imap/rustls-tls"]
 tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 
 [dependencies]
-chrono = "=0.4.42"
+chrono = "=0.4.43"
 clap = { version = "=4.5.54", features = ["derive"] }
 derive_more = { version = "=2.1.1", features = ["display", "from", "into"] }
 exn = "=0.2.1"
