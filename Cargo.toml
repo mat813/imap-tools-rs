@@ -27,7 +27,7 @@ tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 chrono = "=0.4.43"
 clap = { version = "=4.5.56", features = ["derive"] }
 derive_more = { version = "=2.1.1", features = ["display", "from", "into"] }
-exn = "=0.2.1"
+exn = "=0.3.0"
 imap = { version = "=3.0.0-alpha.15", default-features = false }
 imap-proto = "=0.16.6"
 indicatif = "=0.18.3"
