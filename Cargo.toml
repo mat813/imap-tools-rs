@@ -32,7 +32,7 @@ imap = { version = "=3.0.0-alpha.15", default-features = false }
 imap-proto = "=0.16.6"
 indicatif = "=0.18.3"
 ratatui = { version = "=0.30.0", optional = true }
-regex = "=1.12.2"
+regex = "=1.12.3"
 serde = { version = "=1.0.228", features = ["derive"] }
 serde-value = "=0.7.0"
 serde_any = { version = "=0.5.0", default-features = false, features = ["json", "toml", "yaml"] }
