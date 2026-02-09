@@ -44,7 +44,7 @@ tracing-subscriber = { version = "=0.3.22", features = ["env-filter"], optional 
 
 [dev-dependencies]
 insta = "=1.46.3"
-tempfile = "=3.24.0"
+tempfile = "=3.25.0"
 
 [lints.clippy]
 # https://github.com/rust-lang/rust-clippy/issues/11916
