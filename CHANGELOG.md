@@ -5,7 +5,107 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.8.1 (2026-02-11)
+
+### Chore
+
+ - <csr-id-025d5088a490cc9ae9cf7efb3c650ec4e1d4772c/> update rust crate tempfile to v3.25.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.24.0 | 3.25.0 |
+ - <csr-id-cdef790c16cd063356dd38bf077fc7a2b7eb6e90/> lock file maintenance
+ - <csr-id-f7d1266e3fac234eef0a629608cbdb32a93cb487/> update rust crate insta to v1.46.3
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.46.2 | 1.46.3 |
+ - <csr-id-a407af20d3cee41e9ad12a5f9fd98cb66434178c/> lock file maintenance
+ - <csr-id-d69389789e7aa40b9cde8cc4472e8d14c75a7244/> update rust crate insta to v1.46.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.46.1 | 1.46.2 |
+ - <csr-id-afcdcfbcbb6ef27ca3cabb3fde57721978e8ccd4/> lock file maintenance
+ - <csr-id-54204abcd19c14bdd8209f563b363ceadef61b69/> lock file maintenance
+ - <csr-id-25db08f1d861ad2733417539f3491bc4565aad58/> update rust crate insta to v1.46.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.46.0 | 1.46.1 |
+ - <csr-id-aa0f49343c9819d99af9f4c5e30d27dfed19a2fd/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-3889e63425ec793d1dda3adfa46b4d5d4318a387/> update rust crate regex to v1.12.3
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | regex   | 1.12.2 | 1.12.3 |
+ - <csr-id-9afcc7b40f0734a6aa273702b11074961d58042a/> update rust crate clap to v4.5.57
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.56 | 4.5.57 |
+ - <csr-id-1cb079faa0550c802392823e66201edc2e6bf8a7/> update rust crate exn to v0.3.0
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | exn     | 0.2.1 | 0.3.0 |
+ - <csr-id-a5d21f25811d9baa8f7c83182e44a5d39f200f42/> update rust crate clap to v4.5.56
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.55 | 4.5.56 |
+ - <csr-id-e243172cfc559ef988a4f2980b375dd697fb1dd1/> update rust crate clap to v4.5.55
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.54 | 4.5.55 |
+ - <csr-id-671ed29add33e120aec35ef5e10db62f3d3695f9/> update rust crate chrono to v0.4.43
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | chrono  | 0.4.42 | 0.4.43 |
+ - <csr-id-a026b620e035b944647fd05a62144a0fba6d3abc/> pin dependencies
+   | datasource | package     | from  | to    |
+   | ---------- | ----------- | ----- | ----- |
+   | crate      | derive_more | 2.1.1 | 2.1.1 |
+   | crate      | exn         | 0.2.1 | 0.2.1 |
+
+### Test
+
+ - <csr-id-0000189076babb842e0fceb6e2d652d303aaccf9/> fix tests
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release.
+ - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update rust crate tempfile to v3.25.0 (025d508)
+    - Lock file maintenance (cdef790)
+    - Update rust crate regex to v1.12.3 (3889e63)
+    - Update rust crate clap to v4.5.57 (9afcc7b)
+    - Update rust crate insta to v1.46.3 (f7d1266)
+    - Lock file maintenance (a407af2)
+    - Update rust crate exn to v0.3.0 (1cb079f)
+    - Update rust crate insta to v1.46.2 (d693897)
+    - Update rust crate clap to v4.5.56 (a5d21f2)
+    - Update rust crate clap to v4.5.55 (e243172)
+    - Lock file maintenance (afcdcfb)
+    - Lock file maintenance (54204ab)
+    - Update rust crate insta to v1.46.1 (25db08f)
+    - Update rust crate chrono to v0.4.43 (671ed29)
+    - Lock file maintenance (aa0f493)
+    - Pin dependencies (a026b62)
+    - Fix tests (0000189)
+</details>
+
 ## v1.8.0 (2026-01-07)
+
+<csr-id-5fbcadda9869538e56aa1c2ace0013f091c7866d/>
+<csr-id-98488715fa04344a1f1fea433b984dd129b48a87/>
+<csr-id-000018605e94ee60885a4f1b0c64333736e6fe47/>
 
 ### Chore
 
@@ -27,7 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
+ - 5 commits contributed to the release.
  - 3 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -39,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.8.0 (2094c07)
     - Move from eyre to exn for better errors (0000187)
     - Rename lint (0000186)
     - Lock file maintenance (5fbcadd)
