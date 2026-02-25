@@ -78,8 +78,7 @@ mod tests {
 
     use super::*;
     use insta::{assert_debug_snapshot, assert_snapshot};
-    use std::fs::File;
-    use std::io::Write as _;
+    use std::{fs::File, io::Write as _};
 
     // Helper to create temporary config files with given content.
     // We have to return the directory too otherwise it goes out of scope, gets
