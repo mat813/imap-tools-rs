@@ -224,7 +224,7 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
     }
 
     // Collect and sort the IDs
-    let mut sorted_ids: Vec<Uid> = ids.iter().copied().collect();
+    let mut sorted_ids: Vec<_> = ids.iter().copied().collect();
     sorted_ids.sort_unstable();
 
     // Collect ranges from the sorted list
@@ -285,25 +285,25 @@ mod tests {
 
     #[test]
     fn continuous_range() {
-        let ids: HashSet<Uid> = [1, 2, 3, 4, 5].iter().copied().collect();
+        let ids: HashSet<_> = [1, 2, 3, 4, 5].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:5");
     }
 
     #[test]
     fn multiple_disjoint_ranges() {
-        let ids: HashSet<Uid> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
+        let ids: HashSet<_> = [1, 2, 3, 7, 8, 10, 11].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1:3,7:8,10:11");
     }
 
     #[test]
     fn mixed_ranges_and_single_ids() {
-        let ids: HashSet<Uid> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
+        let ids: HashSet<_> = [1, 3, 4, 6, 7, 10, 12].iter().copied().collect();
         assert_eq!(ids_list_to_collapsed_sequence(&ids), "1,3:4,6:7,10,12");
     }
 
     #[test]
     fn unsorted_input() {
-        let ids: HashSet<Uid> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
+        let ids: HashSet<_> = [10, 1, 4, 5, 12, 6, 22, 23, 24, 31]
             .iter()
             .copied()
             .collect();

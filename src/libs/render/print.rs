@@ -39,25 +39,25 @@ impl RendererTrait for Renderer<'_> {
     #[expect(clippy::print_stdout, reason = "we print")]
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
         #[cfg(feature = "tracing")]
-        tracing::trace!(row = ?row.iter().map(|r| format!("{r}")).collect::<Vec<String>>());
+        tracing::trace!(row = ?row.iter().map(std::string::ToString::to_string).collect::<Vec<_>>());
 
         if !self.some_output {
             self.some_output = true;
 
-            let map: HashMap<String, String> = self
+            let map: HashMap<_, _> = self
                 .headers
                 .iter()
                 .enumerate()
-                .map(|(idx, f)| (idx.to_string(), (*f).to_owned()))
+                .map(|(idx, f)| (idx, *f))
                 .collect();
             let output = strfmt(self.format, &map)
                 .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
             println!("{output}");
         }
-        let map: HashMap<String, String> = row
+        let map: HashMap<_, _> = row
             .iter()
             .enumerate()
-            .map(|(idx, f)| (idx.to_string(), f.to_string()))
+            .map(|(idx, f)| (idx, f.to_string()))
             .collect();
         let output = strfmt(self.format, &map)
             .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;

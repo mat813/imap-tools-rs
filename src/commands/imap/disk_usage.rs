@@ -97,7 +97,7 @@ impl DiskUsage {
                 ))
             })?;
 
-        let mailboxes = mailboxes
+        let mailboxes: Vec<_> = mailboxes
             .iter()
             // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
             .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -119,7 +119,7 @@ impl DiskUsage {
                     self.exclude_re.iter().all(|re| !re.is_match(mbx.name()))
                 }
             })
-            .collect::<Vec<_>>();
+            .collect();
 
         let len_mbox = u64::try_from(mailboxes.len())
             .or_raise(|| ImapDuCommandError("parse length".to_owned()))?;

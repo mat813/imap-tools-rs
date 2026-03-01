@@ -164,7 +164,7 @@ mod internal {
             let mut internal: Vec<String> = vec![];
 
             if let Some(exclude) = filter {
-                let mut exclude_escaped: Vec<String> = Into::<Vec<&String>>::into(exclude)
+                let mut exclude_escaped: Vec<_> = Into::<Vec<&String>>::into(exclude)
                     .iter()
                     .map(|s| escape(s))
                     .collect();
@@ -172,7 +172,7 @@ mod internal {
             }
 
             if let Some(exclude_re) = re_filter {
-                let mut exclude_re_escaped: Vec<String> = Into::<Vec<&String>>::into(exclude_re)
+                let mut exclude_re_escaped: Vec<_> = Into::<Vec<&String>>::into(exclude_re)
                     .iter()
                     .map(|s| format!("(?:{s})"))
                     .collect();

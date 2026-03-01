@@ -67,10 +67,7 @@ impl RendererTrait for Renderer<'_> {
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
-        let str_row = row
-            .iter()
-            .map(std::string::ToString::to_string)
-            .collect::<Vec<_>>();
+        let str_row: Vec<_> = row.iter().map(std::string::ToString::to_string).collect();
 
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?str_row);
