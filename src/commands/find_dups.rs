@@ -101,7 +101,7 @@ impl FindDups {
             .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
             .or_raise(|| DuError("imap uid fetch failed".to_owned()))?;
         let duplicates =
-            Self::find_duplicates(&messages).or_raise(|| DuError("find dupplicates".to_owned()))?;
+            Self::find_duplicates(&messages).or_raise(|| DuError("find duplicates".to_owned()))?;
 
         // Delete duplicate messages
         if !duplicates.is_empty() {

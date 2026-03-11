@@ -9,14 +9,14 @@ impl std::error::Error for ImapDeleteCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Create mailbox",
-    long_about = "This command creates a mailbox."
+    about = "Delete mailbox",
+    long_about = "This command deletes a mailbox."
 )]
 pub struct Delete {
     #[clap(flatten)]
     config: args::Generic,
 
-    /// The mailbox to create
+    /// The mailbox to delete
     mailbox: String,
 }
 
