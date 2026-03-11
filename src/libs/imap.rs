@@ -104,13 +104,52 @@ where
         Ok(ret)
     }
 
+    /// Test-only: connect to a specific port in plaintext mode (no TLS).
+    /// Useful for connecting to a mock IMAP server.
+    #[cfg(test)]
+    pub fn connect_base_on_port(base: &BaseConfig, port: u16) -> Result<Self, ImapError> {
+        let server = base
+            .server
+            .as_ref()
+            .ok_or_raise(|| ImapError("Missing server".to_owned()))?;
+
+        let client = imap::ClientBuilder::new(server.as_str(), port)
+            .mode(imap::ConnectionMode::Plaintext)
+            .connect()
+            .or_raise(|| ImapError(format!("failed to connect to {server} on port {port}")))?;
+
+        let session = client
+            .login(
+                base.username
+                    .as_ref()
+                    .ok_or_raise(|| ImapError("Missing username".to_owned()))?,
+                base.password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?,
+            )
+            .map_err(|err| err.0)
+            .or_raise(|| ImapError("imap login failed".to_owned()))?;
+
+        let mut ret = Self {
+            session,
+            extra: None,
+            filters: None,
+            cached_capabilities: HashMap::new(),
+        };
+
+        if !ret.has_capability("UIDPLUS")? {
+            bail!(ImapError("The server does not support UIDPLUS".to_owned()));
+        }
+
+        Ok(ret)
+    }
+
+    /// Connect to the server and login with the given credentials.
+    /// # Errors
+    /// Many errors can happen
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(config), ret, err(level = "info"))
     )]
-    /// Connect to the server and login with the given credentials.
-    /// # Errors
-    /// Many errors can happen
     pub fn connect(config: &Config<T>) -> Result<Self, ImapError> {
         let mut ret = Self::connect_base(&config.base)?;
 

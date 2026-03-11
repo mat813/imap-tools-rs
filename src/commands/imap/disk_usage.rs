@@ -1,4 +1,9 @@
-use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
+use crate::libs::{
+    args,
+    base_config::BaseConfig,
+    imap::Imap,
+    render::{new_renderer, Renderer},
+};
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
@@ -85,6 +90,14 @@ impl DiskUsage {
         let mut renderer = new_renderer("Mailbox Size", "{0:<42} {1}", &["Mailbox", "Attributes"])
             .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
 
+        self.run(&mut imap, &mut renderer)
+    }
+
+    fn run(
+        &self,
+        imap: &mut Imap<()>,
+        renderer: &mut Box<dyn Renderer>,
+    ) -> Result<(), ImapDuCommandError> {
         let mut result: Vec<(String, u64)> = vec![];
 
         let mailboxes = imap
@@ -178,5 +191,114 @@ impl DiskUsage {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use super::*;
+    use crate::test_helpers::{MockExchange, MockServer};
+
+    fn test_base() -> BaseConfig {
+        BaseConfig::new(&args::Generic {
+            server: Some("127.0.0.1".to_owned()),
+            username: Some("test".to_owned()),
+            password: Some("test".to_owned()),
+            ..Default::default()
+        })
+        .expect("test base config")
+    }
+
+    fn default_du() -> DiskUsage {
+        DiskUsage {
+            config: args::Generic {
+                server: Some("127.0.0.1".to_owned()),
+                username: Some("test".to_owned()),
+                password: Some("test".to_owned()),
+                ..Default::default()
+            },
+            include_re: vec![],
+            exclude_re: vec![],
+            sort: Sort::Name,
+            progress: false,
+            pattern: Some("*".to_owned()),
+            reference: None,
+        }
+    }
+
+    #[test]
+    fn disk_usage_empty_mailbox() {
+        // INBOX has 0 messages → size reported as 0, no UID FETCH needed
+        let server = MockServer::start(
+            &[],
+            vec![
+                // LIST
+                MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+                // EXAMINE INBOX → 0 messages
+                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let cmd = default_du();
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn disk_usage_sums_message_sizes() {
+        // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
+        let server = MockServer::start(
+            &[],
+            vec![
+                // LIST
+                MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+                // EXAMINE INBOX → 2 messages
+                MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID FETCH 1:* (RFC822.SIZE)
+                MockExchange::ok(vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
+                ]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let cmd = default_du();
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn disk_usage_skips_noselect_folders() {
+        // [Gmail] is NoSelect → filtered out; only INBOX is examined
+        let server = MockServer::start(
+            &[],
+            vec![
+                // LIST → NoSelect folder + real mailbox
+                MockExchange::ok(vec![
+                    "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                    "* LIST () \"/\" INBOX\r\n".into(),
+                ]),
+                // EXAMINE INBOX (only INBOX is examined, [Gmail] is skipped)
+                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let cmd = default_du();
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
 }

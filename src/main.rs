@@ -6,6 +6,8 @@ use exn::{Result, ResultExt as _};
 mod commands;
 mod libs;
 mod run;
+#[cfg(test)]
+mod test_helpers;
 
 #[derive(Debug, Display)]
 struct MainError;

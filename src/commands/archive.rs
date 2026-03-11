@@ -264,3 +264,106 @@ impl Archive {
         date.format(format_str).to_string().replace("%MBX", mailbox)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use super::*;
+    use crate::{
+        libs::args,
+        test_helpers::{MockExchange, MockServer},
+    };
+    use chrono::{FixedOffset, TimeZone as _};
+
+    fn test_base() -> crate::libs::base_config::BaseConfig {
+        crate::libs::base_config::BaseConfig::new(&args::Generic {
+            server: Some("127.0.0.1".to_owned()),
+            username: Some("test".to_owned()),
+            password: Some("test".to_owned()),
+            ..Default::default()
+        })
+        .expect("test base config")
+    }
+
+    #[test]
+    fn archive_mbx_date_format() {
+        let date = FixedOffset::east_opt(0)
+            .expect("valid offset")
+            .with_ymd_and_hms(2020, 1, 15, 0, 0, 0)
+            .single()
+            .expect("valid date");
+        // %% in chrono format produces a literal %, so %%MBX → %MBX → replaced with mailbox name
+        assert_eq!(
+            Archive::archive_mbx("INBOX", "Archives/%Y/%m/%%MBX", date),
+            "Archives/2020/01/INBOX"
+        );
+        assert_eq!(
+            Archive::archive_mbx("Sent", "Arch/%Y/%%MBX", date),
+            "Arch/2020/Sent"
+        );
+    }
+
+    #[test]
+    fn archive_skips_empty_mailbox() {
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE INBOX → 0 messages
+                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let extra = MyExtra {
+            format: "Archives/%Y/%m/%%MBX".to_owned(),
+            days: 30,
+        };
+        let archive = Archive {
+            config: args::Generic::default(),
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = archive.archive(&mut imap, &mut renderer, "INBOX", &extra);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn archive_dry_run_moves_old_messages() {
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE INBOX → 5 messages
+                MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID SEARCH → UIDs 1, 2, 3
+                MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+                // UID FETCH INTERNALDATE → 3 old messages (all Jan 2020)
+                MockExchange::ok(vec![
+                    "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let extra = MyExtra {
+            format: "Archives/%Y/%m/%%MBX".to_owned(),
+            days: 30,
+        };
+        let archive = Archive {
+            config: args::Generic {
+                dry_run: true,
+                ..Default::default()
+            },
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = archive.archive(&mut imap, &mut renderer, "INBOX", &extra);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+}

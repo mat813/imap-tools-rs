@@ -1,4 +1,9 @@
-use crate::libs::{args, base_config::BaseConfig, imap::Imap, render::new_renderer};
+use crate::libs::{
+    args,
+    base_config::BaseConfig,
+    imap::Imap,
+    render::{new_renderer, Renderer},
+};
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
@@ -59,6 +64,14 @@ impl List {
         let mut renderer = new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Attributes"])
             .or_raise(|| ImapListCommandError("new renderer".to_owned()))?;
 
+        self.run(&mut imap, &mut renderer)
+    }
+
+    fn run(
+        &self,
+        imap: &mut Imap<()>,
+        renderer: &mut Box<dyn Renderer>,
+    ) -> Result<(), ImapListCommandError> {
         for mailbox in imap
             .session
             .list(self.reference.as_deref(), self.pattern.as_deref())
@@ -96,5 +109,122 @@ impl List {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use super::*;
+    use crate::test_helpers::{MockExchange, MockServer};
+
+    fn test_base() -> BaseConfig {
+        BaseConfig::new(&args::Generic {
+            server: Some("127.0.0.1".to_owned()),
+            username: Some("test".to_owned()),
+            password: Some("test".to_owned()),
+            ..Default::default()
+        })
+        .expect("test base config")
+    }
+
+    fn default_list() -> List {
+        List {
+            config: args::Generic {
+                server: Some("127.0.0.1".to_owned()),
+                username: Some("test".to_owned()),
+                password: Some("test".to_owned()),
+                ..Default::default()
+            },
+            include_re: vec![],
+            exclude_re: vec![],
+            no_select: false,
+            pattern: Some("*".to_owned()),
+            reference: None,
+        }
+    }
+
+    #[test]
+    fn list_returns_all_regular_mailboxes() {
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ])],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let cmd = default_list();
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn list_excludes_noselect_by_default() {
+        // [Gmail] is NoSelect → filtered out; INBOX is kept
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(vec![
+                "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                "* LIST () \"/\" INBOX\r\n".into(),
+            ])],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let cmd = default_list();
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn list_no_select_flag_includes_noselect_folders() {
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(vec![
+                "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                "* LIST () \"/\" INBOX\r\n".into(),
+            ])],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_list();
+        cmd.no_select = true;
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn list_include_re_filters_mailboxes() {
+        // include_re = "^INBOX$" → only INBOX is kept, Sent is discarded
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ])],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_list();
+        #[expect(clippy::trivial_regex, reason = "il faut une re")]
+        {
+            cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
+        }
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
 }

@@ -161,6 +161,11 @@ impl FindDups {
         Ok(duplicates)
     }
 
+    #[cfg(test)]
+    pub(super) fn parse_message_id_pub(header: Option<&[u8]>) -> Option<String> {
+        Self::parse_message_id(header)
+    }
+
     // Parses a Message-ID from the header
     #[cfg_attr(
         feature = "tracing",
@@ -180,5 +185,109 @@ impl FindDups {
         // If the length of the message id is too short, say it's None
 
         (s.len() > 4).then_some(s)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use super::*;
+    use crate::{
+        libs::args,
+        test_helpers::{MockExchange, MockServer},
+    };
+
+    fn test_base() -> crate::libs::base_config::BaseConfig {
+        crate::libs::base_config::BaseConfig::new(&args::Generic {
+            server: Some("127.0.0.1".to_owned()),
+            username: Some("test".to_owned()),
+            password: Some("test".to_owned()),
+            ..Default::default()
+        })
+        .expect("test base config")
+    }
+
+    #[test]
+    fn parse_message_id_valid() {
+        let header = b"Message-ID: <abc123@example.com>\r\n\r\n";
+        let result = FindDups::parse_message_id_pub(Some(header));
+        assert_eq!(result, Some("<abc123@example.com>".to_owned()));
+    }
+
+    #[test]
+    fn parse_message_id_case_insensitive() {
+        let header = b"message-id: <ABC@EXAMPLE.COM>\r\n\r\n";
+        let result = FindDups::parse_message_id_pub(Some(header));
+        assert_eq!(result, Some("<ABC@EXAMPLE.COM>".to_owned()));
+    }
+
+    #[test]
+    fn parse_message_id_missing() {
+        let header = b"Subject: hello\r\n\r\n";
+        let result = FindDups::parse_message_id_pub(Some(header));
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn parse_message_id_none_input() {
+        assert_eq!(FindDups::parse_message_id_pub(None), None);
+    }
+
+    #[test]
+    fn process_skips_mailbox_with_one_message() {
+        // exists = 1 < 2 → returns immediately without UID FETCH
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(vec![
+                "* 1 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ])],
+        );
+        let base = test_base();
+        let mut imap: Imap<serde_value::Value> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let find_dups = FindDups {
+            config: args::Generic::default(),
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = find_dups.process(&mut imap, &mut renderer, "INBOX");
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn process_dry_run_finds_duplicates() {
+        use crate::test_helpers::header_fetch_line;
+
+        // 3 messages: uid 2 and 3 share the same Message-ID
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE → 3 messages (examine is read-only)
+                MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID FETCH BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)]
+                MockExchange::ok(vec![
+                    header_fetch_line(1, 1, "<unique@example.com>"),
+                    header_fetch_line(2, 2, "<dup@example.com>"),
+                    header_fetch_line(3, 3, "<dup@example.com>"),
+                ]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<serde_value::Value> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let find_dups = FindDups {
+            config: args::Generic {
+                dry_run: true,
+                ..Default::default()
+            },
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = find_dups.process(&mut imap, &mut renderer, "INBOX");
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
 }
