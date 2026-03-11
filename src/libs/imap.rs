@@ -219,9 +219,7 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
     #[cfg(feature = "tracing")]
     tracing::trace!(?ids);
 
-    if ids.is_empty() {
-        todo!("nothing in there"); // TODO: do something ?
-    }
+    debug_assert!(!ids.is_empty(), "ids must not be empty");
 
     // Collect and sort the IDs
     let mut sorted_ids: Vec<_> = ids.iter().copied().collect();
@@ -269,11 +267,10 @@ mod tests {
     use std::collections::HashSet; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
 
     #[test]
-    #[should_panic(expected = "not yet implemented: nothing in there")]
+    #[should_panic(expected = "ids must not be empty")]
     fn empty_set() {
         let ids: HashSet<Uid> = HashSet::new();
-        // Assuming `ids_list_to_collapsed_sequence` returns an empty string for an empty set
-        assert_eq!(ids_list_to_collapsed_sequence(&ids), "");
+        ids_list_to_collapsed_sequence(&ids);
     }
 
     #[test]
