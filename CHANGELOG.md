@@ -5,7 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.8.2 (2026-03-11)
+
+### Chore
+
+ - <csr-id-6cd247154bb9af506101b12f7c41e4165c908646/> update rust crate tempfile to v3.27.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.26.0 | 3.27.0 |
+ - <csr-id-a0f5cb71df8ae2028e41e786c82574e72fc2a860/> lock file maintenance
+ - <csr-id-92c9a4b85fb6d7315a688662f433ca73842c561e/> lock file maintenance
+ - <csr-id-00002160ca4d84a323511a864797a3d75e49dea6/> don't use turbofish on assignments
+ - <csr-id-7372968dbf42f8384bb52c7188e34d52f4be3461/> update rust crate tempfile to v3.26.0
+   | datasource | package  | from   | to     |
+   | ---------- | -------- | ------ | ------ |
+   | crate      | tempfile | 3.25.0 | 3.26.0 |
+ - <csr-id-f766398b0568492f0cf2ec31f758c72abcc8b66f/> lock file maintenance
+ - <csr-id-669b32174bf6a4e7e8a2d78339af1f46a8776970/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-00002220c2ef62b8f604cef1ba98f4f27b3f2945/> don't panic needlessly, an imap error will be raised if it happens
+ - <csr-id-00002210aad6f21242f5f3a12a545cdefdb156b0/> don't truncate non utf-8 password
+ - <csr-id-000022001faa05e3756a9f83eec26b8e319a9da1/> small typos
+ - <csr-id-fde4b3abf251261e517937b58672e26b78562ab8/> update rust crate chrono to v0.4.44
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | chrono  | 0.4.43 | 0.4.44 |
+ - <csr-id-1d21d24e94ca3805d8f335df325eadef2a8f78c8/> update rust crate clap to v4.5.60
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.59 | 4.5.60 |
+ - <csr-id-e37213389427824a1a99c1233df40af7da139b36/> update rust crate clap to v4.5.59
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.58 | 4.5.59 |
+ - <csr-id-6737a9c57c232ecaf2ebd144ee4d3e1cfaa9cd7f/> update rust crate indicatif to v0.18.4
+   | datasource | package   | from   | to     |
+   | ---------- | --------- | ------ | ------ |
+   | crate      | indicatif | 0.18.3 | 0.18.4 |
+ - <csr-id-2b80aba9403ea701b8cda470b1fb006035311a66/> update rust crate clap to v4.5.58
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.57 | 4.5.58 |
+
+### Style
+
+ - <csr-id-0000214074a9643c092afe589811cfb449beb9b5/> fmt
+
+### Test
+
+ - <csr-id-00002230801c1907bbb2bd8ffeff176b96aec18e/> add tests for commands
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release.
+ - 28 days passed between releases.
+ - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add tests for commands (0000223)
+    - Don't panic needlessly, an imap error will be raised if it happens (0000222)
+    - Don't truncate non utf-8 password (0000221)
+    - Small typos (0000220)
+    - Update rust crate tempfile to v3.27.0 (6cd2471)
+    - Lock file maintenance (a0f5cb7)
+    - Lock file maintenance (92c9a4b)
+    - Don't use turbofish on assignments (0000216)
+    - Update rust crate tempfile to v3.26.0 (7372968)
+    - Fmt (0000214)
+    - Update rust crate chrono to v0.4.44 (fde4b3a)
+    - Lock file maintenance (f766398)
+    - Update rust crate clap to v4.5.60 (1d21d24)
+    - Update rust crate clap to v4.5.59 (e372133)
+    - Lock file maintenance (669b321)
+    - Update rust crate indicatif to v0.18.4 (6737a9c)
+    - Update rust crate clap to v4.5.58 (2b80aba)
+</details>
+
 ## v1.8.1 (2026-02-11)
+
+<csr-id-025d5088a490cc9ae9cf7efb3c650ec4e1d4772c/>
+<csr-id-cdef790c16cd063356dd38bf077fc7a2b7eb6e90/>
+<csr-id-f7d1266e3fac234eef0a629608cbdb32a93cb487/>
+<csr-id-a407af20d3cee41e9ad12a5f9fd98cb66434178c/>
+<csr-id-d69389789e7aa40b9cde8cc4472e8d14c75a7244/>
+<csr-id-afcdcfbcbb6ef27ca3cabb3fde57721978e8ccd4/>
+<csr-id-54204abcd19c14bdd8209f563b363ceadef61b69/>
+<csr-id-25db08f1d861ad2733417539f3491bc4565aad58/>
+<csr-id-aa0f49343c9819d99af9f4c5e30d27dfed19a2fd/>
+<csr-id-0000189076babb842e0fceb6e2d652d303aaccf9/>
 
 ### Chore
 
@@ -71,7 +169,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release.
+ - 18 commits contributed to the release over the course of 34 calendar days.
+ - 34 days passed between releases.
  - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -82,6 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.8.1 (891031d)
     - Update rust crate tempfile to v3.25.0 (025d508)
     - Lock file maintenance (cdef790)
     - Update rust crate regex to v1.12.3 (3889e63)
