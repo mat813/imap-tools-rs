@@ -132,7 +132,17 @@ impl BaseConfig {
                     .args(args)
                     .output()
                     .or_raise(|| BaseConfigError("password command exec failed".to_owned()))?;
-                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+                let mut password = String::from_utf8(output.stdout).or_raise(|| {
+                    BaseConfigError("password command output is not valid UTF-8".to_owned())
+                })?;
+                // Strip trailing newline added by most password commands
+                if password.ends_with('\n') {
+                    password.pop();
+                    if password.ends_with('\r') {
+                        password.pop();
+                    }
+                }
+                Ok(password)
             }
             _ => bail!(BaseConfigError(
                 "The password or password command must be set".to_owned()
