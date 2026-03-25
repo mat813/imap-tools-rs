@@ -5,7 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.8.3 (2026-03-25)
+
+### Chore
+
+ - <csr-id-5ec2513a91c5964a1e61a088676bafb7d7b09386/> lock file maintenance
+ - <csr-id-08f403cb52e2f47fc51104c71bd38de733ee96e3/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-00002360ba0713fc288176861ddba155f42c632f/> return a more meaningfull error in the exhaustive case
+ - <csr-id-000023505ea491e64e135fdbc8260cb654522699/> define a constant for minimum message id length
+ - <csr-id-00002340ed950a6500a4ef10bffdf1db91950545/> always keep the first message
+ - <csr-id-000023300f86464b084361900ece130c76b083be/> bail if no internal_date instead of archiving to jan 1970
+ - <csr-id-00002320978c1cd0a520f874578c175d83a09f1e/> don't advertise tls if not compiled in
+ - <csr-id-0000231030cd91a8547b958c3c501698d068f683/> refactor to avoid duplicate code
+ - <csr-id-000023007303dbdd05d0297625c3573a864c6594/> allow specifying the port number
+ - <csr-id-37bb74be771543b2da51780aed279c8adcb54840/> update rust crate tracing-subscriber to v0.3.23
+   | datasource | package            | from   | to     |
+   | ---------- | ------------------ | ------ | ------ |
+   | crate      | tracing-subscriber | 0.3.22 | 0.3.23 |
+ - <csr-id-fd7793d1faa0a07c84b4a358b6261bb0248a96e2/> update rust crate clap to v4.6.0
+   | datasource | package | from   | to    |
+   | ---------- | ------- | ------ | ----- |
+   | crate      | clap    | 4.5.61 | 4.6.0 |
+ - <csr-id-5ad3ceebf323f4f6f1e712baed8006243b18a509/> update rust crate clap to v4.5.61
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | clap    | 4.5.60 | 4.5.61 |
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release.
+ - 13 days passed between releases.
+ - 12 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Return a more meaningfull error in the exhaustive case (0000236)
+    - Define a constant for minimum message id length (0000235)
+    - Always keep the first message (0000234)
+    - Bail if no internal_date instead of archiving to jan 1970 (0000233)
+    - Don't advertise tls if not compiled in (0000232)
+    - Refactor to avoid duplicate code (0000231)
+    - Allow specifying the port number (0000230)
+    - Lock file maintenance (5ec2513)
+    - Lock file maintenance (08f403c)
+    - Update rust crate tracing-subscriber to v0.3.23 (37bb74b)
+    - Update rust crate clap to v4.6.0 (fd7793d)
+    - Update rust crate clap to v4.5.61 (5ad3cee)
+</details>
+
 ## v1.8.2 (2026-03-11)
+
+<csr-id-6cd247154bb9af506101b12f7c41e4165c908646/>
+<csr-id-a0f5cb71df8ae2028e41e786c82574e72fc2a860/>
+<csr-id-92c9a4b85fb6d7315a688662f433ca73842c561e/>
+<csr-id-00002160ca4d84a323511a864797a3d75e49dea6/>
+<csr-id-7372968dbf42f8384bb52c7188e34d52f4be3461/>
+<csr-id-f766398b0568492f0cf2ec31f758c72abcc8b66f/>
+<csr-id-669b32174bf6a4e7e8a2d78339af1f46a8776970/>
+<csr-id-0000214074a9643c092afe589811cfb449beb9b5/>
+<csr-id-00002230801c1907bbb2bd8ffeff176b96aec18e/>
 
 ### Chore
 
@@ -61,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release.
+ - 18 commits contributed to the release.
  - 28 days passed between releases.
  - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -73,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.8.2 (cf14130)
     - Add tests for commands (0000223)
     - Don't panic needlessly, an imap error will be raised if it happens (0000222)
     - Don't truncate non utf-8 password (0000221)
