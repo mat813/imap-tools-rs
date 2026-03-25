@@ -15,20 +15,23 @@ impl FromStr for Mode {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let v = s.to_ascii_lowercase();
-        let mode =
-            match v.as_str() {
-                "auto_tls" | "autotls" => ConnectionMode::AutoTls,
-                "auto" => ConnectionMode::Auto,
-                "plaintext" | "none" => ConnectionMode::Plaintext,
-                #[cfg(any(feature = "rustls", feature = "openssl"))]
-                "tls" => ConnectionMode::Tls,
-                #[cfg(any(feature = "rustls", feature = "openssl"))]
-                "start_tls" | "starttls" => ConnectionMode::StartTls,
-                _ => return Err(ModeError(
-                    "Invalid connection mode, expects auto_tls, auto, plaintext, tls and start_tls"
-                        .to_owned(),
-                )),
-            };
+        let mode = match v.as_str() {
+            "auto_tls" | "autotls" => ConnectionMode::AutoTls,
+            "auto" => ConnectionMode::Auto,
+            "plaintext" | "none" => ConnectionMode::Plaintext,
+            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            "tls" => ConnectionMode::Tls,
+            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            "start_tls" | "starttls" => ConnectionMode::StartTls,
+            _ => return Err(ModeError(
+                if cfg!(any(feature = "rustls", feature = "openssl")) {
+                    "Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls"
+                } else {
+                    "Invalid connection mode, expects: auto_tls, auto, plaintext"
+                }
+                .to_owned(),
+            )),
+        };
         Ok(Self(mode))
     }
 }
