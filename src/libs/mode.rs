@@ -59,7 +59,11 @@ impl Serialize for Mode {
             ConnectionMode::Tls => "tls",
             #[cfg(any(feature = "rustls", feature = "openssl"))]
             ConnectionMode::StartTls => "start_tls",
-            _ => todo!(),
+            ref m => {
+                return Err(serde::ser::Error::custom(format!(
+                    "cannot serialize unknown ConnectionMode variant: {m:?}",
+                )));
+            }
         };
         serializer.serialize_str(s)
     }
