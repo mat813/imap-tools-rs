@@ -111,6 +111,7 @@ mod tests {
                     server: Some(
                         "imap.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "user@example.com",
                     ),
@@ -137,6 +138,7 @@ mod tests {
                     server: Some(
                         "imap.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "user@example.com",
                     ),
@@ -173,7 +175,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:69:14
             |
-            |-> The server must be set, at src/libs/base_config.rs:98:13,
+            |-> The server must be set, at src/libs/base_config.rs:105:13,
         )
         ");
     }
@@ -192,7 +194,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:69:14
             |
-            |-> The username must be set, at src/libs/base_config.rs:102:13,
+            |-> The username must be set, at src/libs/base_config.rs:109:13,
         )
         ");
     }
@@ -229,9 +231,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:127:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:127:22,
+            |-> missing closing quote, at src/libs/base_config.rs:134:22,
         )
         "#);
     }
@@ -252,9 +254,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:134:22
+            password command exec failed, at src/libs/base_config.rs:141:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:134:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
         )
         ");
     }
@@ -275,7 +277,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:130:22,
+            password command is empty, at src/libs/base_config.rs:137:22,
         )
         ");
     }
@@ -311,7 +313,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:69:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:106:13,
+            |-> The password or password command must be set, at src/libs/base_config.rs:113:13,
         )
         ");
     }
@@ -365,6 +367,7 @@ mod tests {
                     server: Some(
                         "imap.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "user@example.com",
                     ),
@@ -391,6 +394,7 @@ mod tests {
                     server: Some(
                         "imap.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "user@example.com",
                     ),
@@ -453,6 +457,7 @@ mod tests {
                     server: Some(
                         "override.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "override_user@example.com",
                     ),
@@ -479,6 +484,7 @@ mod tests {
                     server: Some(
                         "override.example.com",
                     ),
+                    port: None,
                     username: Some(
                         "override_user@example.com",
                     ),

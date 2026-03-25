@@ -65,7 +65,8 @@ where
             .as_ref()
             .ok_or_raise(|| ImapError("Missing server".to_owned()))?;
 
-        let mut builder = imap::ClientBuilder::new(server.as_str(), 143);
+        let port = base.port.unwrap_or(143);
+        let mut builder = imap::ClientBuilder::new(server.as_str(), port);
 
         if let Some(ref mode) = base.mode {
             builder = builder.mode(mode.clone().into());

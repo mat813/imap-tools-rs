@@ -14,6 +14,9 @@ impl std::error::Error for BaseConfigError {}
 pub struct BaseConfig {
     pub server: Option<String>,
 
+    #[serde(default)]
+    pub port: Option<u16>,
+
     pub username: Option<String>,
 
     pub(self) password: Option<String>,
@@ -64,6 +67,10 @@ impl BaseConfig {
     pub fn apply_args(mut self, args: &Generic) -> Result<Self, BaseConfigError> {
         if let Some(ref server) = args.server {
             self.server = Some(server.clone());
+        }
+
+        if let Some(port) = args.port {
+            self.port = Some(port);
         }
 
         if let Some(ref username) = args.username {
@@ -189,6 +196,7 @@ mod tests {
                 server: Some(
                     "imap.example.com",
                 ),
+                port: None,
                 username: Some(
                     "user@example.com",
                 ),
@@ -211,6 +219,7 @@ mod tests {
                 server: Some(
                     "imap.example.com",
                 ),
+                port: None,
                 username: Some(
                     "user@example.com",
                 ),
@@ -242,7 +251,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:98:13,
+            The server must be set, at src/libs/base_config.rs:105:13,
         )
         ");
     }
@@ -259,7 +268,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:102:13,
+            The username must be set, at src/libs/base_config.rs:109:13,
         )
         ");
     }
@@ -296,9 +305,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:127:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:127:22,
+            |-> missing closing quote, at src/libs/base_config.rs:134:22,
         )
         "#);
     }
@@ -319,9 +328,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:134:22
+            password command exec failed, at src/libs/base_config.rs:141:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:134:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
         )
         ");
     }
@@ -342,7 +351,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:130:22,
+            password command is empty, at src/libs/base_config.rs:137:22,
         )
         ");
     }
@@ -376,7 +385,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:106:13,
+            The password or password command must be set, at src/libs/base_config.rs:113:13,
         )
         ");
     }
@@ -400,9 +409,9 @@ mod tests {
             config,
             @"
         Err(
-            config file parsing failed, at src/libs/base_config.rs:52:18
+            config file parsing failed, at src/libs/base_config.rs:55:18
             |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:52:18,
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:55:18,
         )
         "
         );
@@ -432,6 +441,7 @@ mod tests {
                 server: Some(
                     "imap.example.com",
                 ),
+                port: None,
                 username: Some(
                     "user@example.com",
                 ),
@@ -454,6 +464,7 @@ mod tests {
                 server: Some(
                     "imap.example.com",
                 ),
+                port: None,
                 username: Some(
                     "user@example.com",
                 ),
@@ -511,6 +522,7 @@ mod tests {
                 server: Some(
                     "override.example.com",
                 ),
+                port: None,
                 username: Some(
                     "override_user@example.com",
                 ),
@@ -533,6 +545,7 @@ mod tests {
                 server: Some(
                     "override.example.com",
                 ),
+                port: None,
                 username: Some(
                     "override_user@example.com",
                 ),

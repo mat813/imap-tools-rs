@@ -12,6 +12,10 @@ pub struct Generic {
     #[arg(short = 's', long)]
     pub server: Option<String>,
 
+    /// The port to connect to (default: 143).
+    #[arg(long)]
+    pub port: Option<u16>,
+
     /// The username to use for the connection.
     #[arg(short = 'u', long)]
     pub username: Option<String>,
