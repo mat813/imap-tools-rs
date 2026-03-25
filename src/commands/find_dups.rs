@@ -30,6 +30,9 @@ pub struct FindDups {
 
 type MyExtra = serde_value::Value;
 
+// "<*@*>"
+const MIN_MESSAGE_ID_LEN: usize = 5;
+
 // Define the regex as a static global variable
 static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
     // Regular expression to capture Message-ID values across line breaks
@@ -187,7 +190,7 @@ impl FindDups {
             .map(|m| m.as_str().to_owned())?;
         // If the length of the message id is too short, say it's None
 
-        (s.len() > 4).then_some(s)
+        (s.len() >= MIN_MESSAGE_ID_LEN).then_some(s)
     }
 }
 
