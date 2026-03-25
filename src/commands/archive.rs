@@ -239,7 +239,12 @@ impl Archive {
             let mbx = Self::archive_mbx(
                 mailbox,
                 &extra.format,
-                message.internal_date().unwrap_or_default(),
+                message.internal_date().ok_or_raise(|| {
+                    ArchiveError(format!(
+                        "server did not return INTERNALDATE for UID {:?}",
+                        message.uid
+                    ))
+                })?,
             );
 
             uids_by_mailbox
