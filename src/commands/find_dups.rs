@@ -152,9 +152,12 @@ impl FindDups {
 
         for ids in message_ids.values() {
             if ids.len() > 1 {
-                // Keep the first message and mark the rest as duplicates
+                // Sort ascending so the lowest UID (oldest message) is kept
+                let mut sorted = ids.clone();
+                sorted.sort_unstable();
+                // Keep the oldest, mark the rest as duplicates
                 #[expect(clippy::indexing_slicing, reason = "we just tested it's ok")]
-                duplicates.extend(&ids[1..]);
+                duplicates.extend(&sorted[1..]);
             }
         }
 
