@@ -123,7 +123,7 @@ impl RendererTrait for Renderer<'_> {
                     .block(Block::default().title(self.title).borders(Borders::ALL));
                 frame.render_widget(table, frame.area());
             })
-            .or_raise(|| RendererError("termianl draw failed".to_owned()))?;
+            .or_raise(|| RendererError("terminal draw failed".to_owned()))?;
 
         Ok(())
     }

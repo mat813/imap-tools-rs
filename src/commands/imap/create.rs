@@ -51,7 +51,7 @@ impl Create {
                 writeln!(out, "Cannot create {mailbox:?}, it already exist: {no}")
                     .or_raise(|| ImapCreateCommandError("write output"))?;
             },
-            Err(e) => writeln!(out, "An error occured while creating the mailbox: {e:?}")
+            Err(e) => writeln!(out, "An error occurred while creating the mailbox: {e:?}")
                 .or_raise(|| ImapCreateCommandError("write output"))?,
         }
 

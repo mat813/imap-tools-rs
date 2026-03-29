@@ -51,7 +51,7 @@ impl Delete {
                 writeln!(out, "Cannot remove {mailbox:?}, it does not exist: {no}")
                     .or_raise(|| ImapDeleteCommandError("write output"))?;
             },
-            Err(e) => writeln!(out, "An error occured while removing the mailbox: {e:?}")
+            Err(e) => writeln!(out, "An error occurred while removing the mailbox: {e:?}")
                 .or_raise(|| ImapDeleteCommandError("write output"))?,
         }
 
