@@ -24,7 +24,6 @@ fmt:
   stage: test
   image: docker.io/rustlang/rust:nightly
   needs: []
-  image: rust:latest
   before_script:
     - rustup component add rustfmt
   script:
