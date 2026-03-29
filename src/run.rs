@@ -1,7 +1,8 @@
-use crate::commands::MainCommands;
 use clap::Parser;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
+
+use crate::commands::MainCommands;
 
 #[derive(Parser, Debug, Clone)]
 #[command(

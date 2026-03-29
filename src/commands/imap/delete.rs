@@ -1,7 +1,8 @@
-use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
+
+use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, Display)]
 pub struct ImapDeleteCommandError(&'static str);
@@ -49,7 +50,7 @@ impl Delete {
             Err(imap::Error::No(no)) if no.information.contains("Mailbox doesn't exist") => {
                 writeln!(out, "Cannot remove {mailbox:?}, it does not exist: {no}")
                     .or_raise(|| ImapDeleteCommandError("write output"))?;
-            }
+            },
             Err(e) => writeln!(out, "An error occured while removing the mailbox: {e:?}")
                 .or_raise(|| ImapDeleteCommandError("write output"))?,
         }

@@ -1,15 +1,17 @@
-use crate::libs::{
-    args,
-    config::Config,
-    imap::{ids_list_to_collapsed_sequence, Imap},
-    render::{new_renderer, Renderer},
-};
+use std::collections::BTreeMap;
+
 use chrono::{Duration, Utc};
 use clap::Args;
 use derive_more::Display;
-use exn::{bail, OptionExt as _, Result, ResultExt as _};
+use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use size::Size;
-use std::collections::BTreeMap;
+
+use crate::libs::{
+    args,
+    config::Config,
+    imap::{Imap, ids_list_to_collapsed_sequence},
+    render::{Renderer, new_renderer},
+};
 
 #[derive(Debug, Display)]
 pub struct CleanError(String);
@@ -71,7 +73,7 @@ impl Clean {
                 Some(ref extra) => {
                     self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)
                         .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
-                }
+                },
                 None => bail!(CleanError(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
                 ))),
@@ -208,13 +210,10 @@ mod tests {
     #[test]
     fn cleanup_skips_small_mailbox() {
         // exists = 50 ≤ 300 → should return immediately without UID FETCH
-        let server = MockServer::start(
-            &[],
-            vec![MockExchange::ok(vec![
-                "* 50 EXISTS\r\n".into(),
-                "* 0 RECENT\r\n".into(),
-            ])],
-        );
+        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
+            "* 50 EXISTS\r\n".into(),
+            "* 0 RECENT\r\n".into(),
+        ])]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");

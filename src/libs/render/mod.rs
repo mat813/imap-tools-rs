@@ -1,6 +1,7 @@
+use std::fmt::Display;
+
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
-use std::fmt::Display;
 mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;

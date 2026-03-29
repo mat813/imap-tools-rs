@@ -1,6 +1,7 @@
-use regex::Regex;
-use serde::{de, Deserialize, Deserializer, Serialize};
 use std::fmt::Debug;
+
+use regex::Regex;
+use serde::{Deserialize, Deserializer, Serialize, de};
 
 #[derive(Debug, Clone)]
 pub struct Filter<T>
@@ -97,13 +98,15 @@ where
 }
 
 mod internal {
-    use super::Filter as RealFilter;
-    use crate::libs::single_or_array::SingleOrArray;
+    use std::fmt::Debug;
+
     use derive_more::Display;
     use exn::{Result, ResultExt as _};
-    use regex::{escape, Regex};
+    use regex::{Regex, escape};
     use serde::{Deserialize, Serialize};
-    use std::fmt::Debug;
+
+    use super::Filter as RealFilter;
+    use crate::libs::single_or_array::SingleOrArray;
 
     #[derive(Debug, Display)]
     pub struct FilterError(String);
@@ -219,10 +222,11 @@ mod internal {
 mod tests {
     #![expect(clippy::unwrap_used, reason = "test")]
 
-    use crate::libs::filter::Filter;
     use regex::Regex;
     use serde::{Deserialize, Serialize};
-    use serde_any::{from_str, to_string, Format};
+    use serde_any::{Format, from_str, to_string};
+
+    use crate::libs::filter::Filter;
 
     #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
     struct ExtraConfig {

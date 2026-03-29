@@ -1,15 +1,17 @@
-use crate::libs::{
-    args,
-    config::Config,
-    imap::{ids_list_to_collapsed_sequence, Imap},
-    render::{new_renderer, Renderer},
-};
+use std::collections::{HashMap, HashSet};
+
 use clap::Args;
 use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _};
 use imap::types::{Fetches, Uid};
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
+
+use crate::libs::{
+    args,
+    config::Config,
+    imap::{Imap, ids_list_to_collapsed_sequence},
+    render::{Renderer, new_renderer},
+};
 
 #[derive(Debug, Display)]
 pub struct DuError(String);
@@ -243,13 +245,10 @@ mod tests {
     #[test]
     fn process_skips_mailbox_with_one_message() {
         // exists = 1 < 2 → returns immediately without UID FETCH
-        let server = MockServer::start(
-            &[],
-            vec![MockExchange::ok(vec![
-                "* 1 EXISTS\r\n".into(),
-                "* 0 RECENT\r\n".into(),
-            ])],
-        );
+        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
+            "* 1 EXISTS\r\n".into(),
+            "* 0 RECENT\r\n".into(),
+        ])]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -268,19 +267,16 @@ mod tests {
         use crate::test_helpers::header_fetch_line;
 
         // 3 messages: uid 2 and 3 share the same Message-ID
-        let server = MockServer::start(
-            &[],
-            vec![
-                // EXAMINE → 3 messages (examine is read-only)
-                MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-                // UID FETCH BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)]
-                MockExchange::ok(vec![
-                    header_fetch_line(1, 1, "<unique@example.com>"),
-                    header_fetch_line(2, 2, "<dup@example.com>"),
-                    header_fetch_line(3, 3, "<dup@example.com>"),
-                ]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // EXAMINE → 3 messages (examine is read-only)
+            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID FETCH BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)]
+            MockExchange::ok(vec![
+                header_fetch_line(1, 1, "<unique@example.com>"),
+                header_fetch_line(2, 2, "<dup@example.com>"),
+                header_fetch_line(3, 3, "<dup@example.com>"),
+            ]),
+        ]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");

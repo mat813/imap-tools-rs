@@ -1,7 +1,8 @@
-use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
+
+use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, Display)]
 pub struct ImapCreateCommandError(&'static str);
@@ -49,7 +50,7 @@ impl Create {
             Err(imap::Error::No(no)) if no.information.contains("Mailbox already exist") => {
                 writeln!(out, "Cannot create {mailbox:?}, it already exist: {no}")
                     .or_raise(|| ImapCreateCommandError("write output"))?;
-            }
+            },
             Err(e) => writeln!(out, "An error occured while creating the mailbox: {e:?}")
                 .or_raise(|| ImapCreateCommandError("write output"))?,
         }

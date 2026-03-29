@@ -39,7 +39,7 @@ impl MainCommands {
         match *self {
             Self::Archive(ref archive) => {
                 archive.execute().or_raise(|| MainCommandError("archive"))
-            }
+            },
             Self::Clean(ref clean) => clean.execute().or_raise(|| MainCommandError("clean")),
             Self::FindDups(ref find_dups) => find_dups
                 .execute()

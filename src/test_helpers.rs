@@ -95,12 +95,12 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                             .as_bytes(),
                     )
                     .expect("write capability");
-            }
+            },
             "LOGIN" => {
                 writer
                     .write_all(format!("{tag} OK LOGIN completed\r\n").as_bytes())
                     .expect("write login");
-            }
+            },
             "LOGOUT" => {
                 writer
                     .write_all(
@@ -108,7 +108,7 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                     )
                     .expect("write logout");
                 break;
-            }
+            },
             _ => {
                 let exchange = script
                     .pop_front()
@@ -119,7 +119,7 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                 writer
                     .write_all(format!("{tag} {}\r\n", exchange.tagged).as_bytes())
                     .expect("write tagged");
-            }
+            },
         }
     }
 }

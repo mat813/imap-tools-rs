@@ -1,17 +1,19 @@
-use crate::libs::{
-    args,
-    config::Config,
-    imap::{ids_list_to_collapsed_sequence, Imap},
-    render::{new_renderer, Renderer},
-};
+use std::collections::{BTreeMap, HashSet};
+
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
 use derive_more::Display;
-use exn::{bail, OptionExt as _, Result, ResultExt as _};
+use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use imap::types::Uid;
 use imap_proto::NameAttribute;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
+
+use crate::libs::{
+    args,
+    config::Config,
+    imap::{Imap, ids_list_to_collapsed_sequence},
+    render::{Renderer, new_renderer},
+};
 
 #[derive(Debug, Display)]
 pub struct ArchiveError(String);
@@ -78,7 +80,7 @@ impl Archive {
                 Some(ref extra) => {
                     self.archive(&mut imap, &mut renderer, &mailbox, extra)
                         .or_raise(|| ArchiveError("archive".to_owned()))?;
-                }
+                },
                 None => bail!(ArchiveError(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
                 ))),
@@ -274,12 +276,13 @@ impl Archive {
 mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
+    use chrono::{FixedOffset, TimeZone as _};
+
     use super::*;
     use crate::{
         libs::args,
         test_helpers::{MockExchange, MockServer},
     };
-    use chrono::{FixedOffset, TimeZone as _};
 
     fn test_base() -> crate::libs::base_config::BaseConfig {
         crate::libs::base_config::BaseConfig::new(&args::Generic {
@@ -311,13 +314,10 @@ mod tests {
 
     #[test]
     fn archive_skips_empty_mailbox() {
-        let server = MockServer::start(
-            &[],
-            vec![
-                // EXAMINE INBOX → 0 messages
-                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // EXAMINE INBOX → 0 messages
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+        ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -337,21 +337,18 @@ mod tests {
 
     #[test]
     fn archive_dry_run_moves_old_messages() {
-        let server = MockServer::start(
-            &[],
-            vec![
-                // EXAMINE INBOX → 5 messages
-                MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-                // UID SEARCH → UIDs 1, 2, 3
-                MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
-                // UID FETCH INTERNALDATE → 3 old messages (all Jan 2020)
-                MockExchange::ok(vec![
-                    "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                    "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                    "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // EXAMINE INBOX → 5 messages
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID SEARCH → UIDs 1, 2, 3
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            // UID FETCH INTERNALDATE → 3 old messages (all Jan 2020)
+            MockExchange::ok(vec![
+                "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
+            ]),
+        ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");

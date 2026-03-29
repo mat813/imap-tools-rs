@@ -1,5 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
@@ -71,8 +72,9 @@ where
 #[cfg(test)]
 mod tests {
     #![expect(clippy::expect_used, clippy::panic, reason = "test")]
+    use serde_any::{Format, from_str, to_string};
+
     use super::*;
-    use serde_any::{from_str, to_string, Format};
 
     #[test]
     fn serialization_single() {

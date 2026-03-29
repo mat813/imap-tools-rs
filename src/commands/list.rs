@@ -1,7 +1,8 @@
-use crate::libs::{args, config::Config, imap::Imap, render::new_renderer};
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
+
+use crate::libs::{args, config::Config, imap::Imap, render::new_renderer};
 
 #[derive(Debug, Display)]
 pub struct ListError(&'static str);

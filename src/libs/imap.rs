@@ -1,13 +1,15 @@
-use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
-use derive_more::Display;
-use exn::{bail, OptionExt as _, Result, ResultExt as _};
-use imap::{types::Uid, ImapConnection, Session};
-use imap_proto::NameAttribute;
-use serde::Serialize;
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
 };
+
+use derive_more::Display;
+use exn::{OptionExt as _, Result, ResultExt as _, bail};
+use imap::{ImapConnection, Session, types::Uid};
+use imap_proto::NameAttribute;
+use serde::Serialize;
+
+use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
 
 #[derive(Debug, Display)]
 pub struct ImapError(String);
@@ -211,12 +213,9 @@ where
                 })
             {
                 found = true;
-                mailboxes.insert(
-                    mailbox.name().to_owned(),
-                    ListResult {
-                        extra: filter.extra.clone().or_else(|| self.extra.clone()),
-                    },
-                );
+                mailboxes.insert(mailbox.name().to_owned(), ListResult {
+                    extra: filter.extra.clone().or_else(|| self.extra.clone()),
+                });
             }
             if !found {
                 bail!(ImapError(format!(
@@ -254,25 +253,29 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
             _ => {
                 // Push the previous range
                 if let (Some(s), Some(e)) = (start, end) {
-                    result.push(if s == e {
-                        s.to_string()
-                    } else {
-                        format!("{s}:{e}")
-                    });
+                    result.push(
+                        if s == e {
+                            s.to_string()
+                        } else {
+                            format!("{s}:{e}")
+                        },
+                    );
                 }
                 start = Some(id);
                 end = start;
-            }
+            },
         }
     }
 
     // Push the last range
     if let (Some(s), Some(e)) = (start, end) {
-        result.push(if s == e {
-            s.to_string()
-        } else {
-            format!("{s}:{e}")
-        });
+        result.push(
+            if s == e {
+                s.to_string()
+            } else {
+                format!("{s}:{e}")
+            },
+        );
     }
 
     result.join(",")
@@ -280,9 +283,11 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::ids_list_to_collapsed_sequence;
+    use std::collections::HashSet;
+
     use imap::types::Uid;
-    use std::collections::HashSet; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
+
+    use super::ids_list_to_collapsed_sequence; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
 
     #[test]
     #[should_panic(expected = "ids must not be empty")]

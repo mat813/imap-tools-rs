@@ -1,16 +1,18 @@
-use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use std::{
+    fmt::Display,
+    io::{IsTerminal as _, Stdout, stdout},
+};
+
 use exn::{Result, ResultExt as _};
 use ratatui::{
+    Terminal, TerminalOptions, Viewport,
     backend::CrosstermBackend,
     layout::Constraint,
     style::{Modifier, Style},
     widgets::{Block, Borders, Cell, Row, Table},
-    Terminal, TerminalOptions, Viewport,
 };
-use std::{
-    fmt::Display,
-    io::{stdout, IsTerminal as _, Stdout},
-};
+
+use crate::libs::render::{Renderer as RendererTrait, RendererError};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {

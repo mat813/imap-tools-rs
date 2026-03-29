@@ -22,8 +22,8 @@ fn main() -> Result<(), MainError> {
     #[cfg(feature = "tracing")]
     {
         use tracing_subscriber::{
-            fmt::format::FmtSpan, layer::SubscriberExt as _, util::SubscriberInitExt as _,
-            Layer as _,
+            Layer as _, fmt::format::FmtSpan, layer::SubscriberExt as _,
+            util::SubscriberInitExt as _,
         };
 
         tracing_subscriber::registry()

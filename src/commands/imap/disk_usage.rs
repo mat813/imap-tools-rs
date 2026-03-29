@@ -1,9 +1,5 @@
-use crate::libs::{
-    args,
-    base_config::BaseConfig,
-    imap::Imap,
-    render::{new_renderer, Renderer},
-};
+use std::str::FromStr;
+
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
@@ -11,7 +7,13 @@ use imap_proto::NameAttribute;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use size::Size;
-use std::str::FromStr;
+
+use crate::libs::{
+    args,
+    base_config::BaseConfig,
+    imap::Imap,
+    render::{Renderer, new_renderer},
+};
 
 #[derive(Debug, Display)]
 pub struct ImapDuCommandError(String);
@@ -231,15 +233,12 @@ mod tests {
     #[test]
     fn disk_usage_empty_mailbox() {
         // INBOX has 0 messages → size reported as 0, no UID FETCH needed
-        let server = MockServer::start(
-            &[],
-            vec![
-                // LIST
-                MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
-                // EXAMINE INBOX → 0 messages
-                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // LIST
+            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+            // EXAMINE INBOX → 0 messages
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();
@@ -253,20 +252,17 @@ mod tests {
     #[test]
     fn disk_usage_sums_message_sizes() {
         // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
-        let server = MockServer::start(
-            &[],
-            vec![
-                // LIST
-                MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
-                // EXAMINE INBOX → 2 messages
-                MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-                // UID FETCH 1:* (RFC822.SIZE)
-                MockExchange::ok(vec![
-                    "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
-                    "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
-                ]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // LIST
+            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+            // EXAMINE INBOX → 2 messages
+            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID FETCH 1:* (RFC822.SIZE)
+            MockExchange::ok(vec![
+                "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
+                "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
+            ]),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();
@@ -280,18 +276,15 @@ mod tests {
     #[test]
     fn disk_usage_skips_noselect_folders() {
         // [Gmail] is NoSelect → filtered out; only INBOX is examined
-        let server = MockServer::start(
-            &[],
-            vec![
-                // LIST → NoSelect folder + real mailbox
-                MockExchange::ok(vec![
-                    "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
-                    "* LIST () \"/\" INBOX\r\n".into(),
-                ]),
-                // EXAMINE INBOX (only INBOX is examined, [Gmail] is skipped)
-                MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-            ],
-        );
+        let server = MockServer::start(&[], vec![
+            // LIST → NoSelect folder + real mailbox
+            MockExchange::ok(vec![
+                "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                "* LIST () \"/\" INBOX\r\n".into(),
+            ]),
+            // EXAMINE INBOX (only INBOX is examined, [Gmail] is skipped)
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();

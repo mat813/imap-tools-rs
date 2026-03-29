@@ -1,6 +1,8 @@
-use crate::libs::mode::Mode;
-use clap::Args;
 use std::path::PathBuf;
+
+use clap::Args;
+
+use crate::libs::mode::Mode;
 
 #[derive(Args, Debug, Clone, Default)]
 pub struct Generic {
@@ -65,8 +67,9 @@ pub struct Generic {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use clap::Parser;
+
+    use super::*;
 
     #[derive(Parser, Debug, Clone)]
     struct Args {

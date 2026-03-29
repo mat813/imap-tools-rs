@@ -1,12 +1,14 @@
+use std::fmt::Debug;
+
+use derive_more::Display;
+use exn::{Result, ResultExt as _};
+use serde::{Deserialize, Serialize};
+
 use crate::libs::{
     args::Generic,
     base_config::{BaseConfig, SerdeAnyWrapper},
     filters::Filters,
 };
-use derive_more::Display;
-use exn::{Result, ResultExt as _};
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
 
 #[derive(Debug, Display)]
 pub struct ConfigError(&'static str);
@@ -76,9 +78,11 @@ where
 mod tests {
     #![expect(clippy::unwrap_used, reason = "test")]
 
-    use super::*;
-    use insta::{assert_debug_snapshot, assert_snapshot};
     use std::{fs::File, io::Write as _};
+
+    use insta::{assert_debug_snapshot, assert_snapshot};
+
+    use super::*;
 
     // Helper to create temporary config files with given content.
     // We have to return the directory too otherwise it goes out of scope, gets
@@ -173,9 +177,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:69:14
+            base, at src/libs/config.rs:71:14
             |
-            |-> The server must be set, at src/libs/base_config.rs:105:13,
+            |-> The server must be set, at src/libs/base_config.rs:107:13,
         )
         ");
     }
@@ -192,9 +196,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:69:14
+            base, at src/libs/config.rs:71:14
             |
-            |-> The username must be set, at src/libs/base_config.rs:109:13,
+            |-> The username must be set, at src/libs/base_config.rs:111:13,
         )
         ");
     }
@@ -231,9 +235,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:136:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:134:22,
+            |-> missing closing quote, at src/libs/base_config.rs:136:22,
         )
         "#);
     }
@@ -254,9 +258,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:141:22
+            password command exec failed, at src/libs/base_config.rs:143:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:143:22,
         )
         ");
     }
@@ -277,7 +281,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:137:22,
+            password command is empty, at src/libs/base_config.rs:139:22,
         )
         ");
     }
@@ -311,9 +315,9 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            base, at src/libs/config.rs:69:14
+            base, at src/libs/config.rs:71:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:113:13,
+            |-> The password or password command must be set, at src/libs/base_config.rs:115:13,
         )
         ");
     }
@@ -335,9 +339,9 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            config file parsing failed, at src/libs/config.rs:61:18
+            config file parsing failed, at src/libs/config.rs:63:18
             |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:61:18,
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:63:18,
         )
         ");
     }

@@ -1,7 +1,8 @@
+use std::str::FromStr;
+
 use derive_more::{Display, From, Into};
 use imap::ConnectionMode;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 #[derive(Debug, Display)]
 pub struct ModeError(String);
@@ -63,7 +64,7 @@ impl Serialize for Mode {
                 return Err(serde::ser::Error::custom(format!(
                     "cannot serialize unknown ConnectionMode variant: {m:?}",
                 )));
-            }
+            },
         };
         serializer.serialize_str(s)
     }

@@ -1,7 +1,9 @@
-use crate::libs::render::{Renderer as RendererTrait, RendererError};
-use exn::{Result, ResultExt as _};
 use std::{collections::HashMap, fmt::Display};
+
+use exn::{Result, ResultExt as _};
 use strfmt::strfmt;
+
+use crate::libs::render::{Renderer as RendererTrait, RendererError};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {
