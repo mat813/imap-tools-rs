@@ -66,17 +66,7 @@ mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
     use super::*;
-    use crate::test_helpers::{MockExchange, MockServer};
-
-    fn test_base() -> BaseConfig {
-        BaseConfig::new(&args::Generic {
-            server: Some("127.0.0.1".to_owned()),
-            username: Some("test".to_owned()),
-            password: Some("test".to_owned()),
-            ..Default::default()
-        })
-        .expect("test base config")
-    }
+    use crate::test_helpers::{MockExchange, MockServer, test_base};
 
     #[test]
     fn create_mailbox_success() {

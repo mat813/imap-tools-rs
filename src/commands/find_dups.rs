@@ -207,18 +207,8 @@ mod tests {
     use super::*;
     use crate::{
         libs::args,
-        test_helpers::{MockExchange, MockServer},
+        test_helpers::{MockExchange, MockServer, header_fetch_line, test_base},
     };
-
-    fn test_base() -> crate::libs::base_config::BaseConfig {
-        crate::libs::base_config::BaseConfig::new(&args::Generic {
-            server: Some("127.0.0.1".to_owned()),
-            username: Some("test".to_owned()),
-            password: Some("test".to_owned()),
-            ..Default::default()
-        })
-        .expect("test base config")
-    }
 
     #[test]
     fn parse_message_id_valid() {
@@ -268,8 +258,6 @@ mod tests {
 
     #[test]
     fn process_dry_run_finds_duplicates() {
-        use crate::test_helpers::header_fetch_line;
-
         // 3 messages: uid 2 and 3 share the same Message-ID
         let server = MockServer::start(&[], vec![
             // EXAMINE → 3 messages (examine is read-only)

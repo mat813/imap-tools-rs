@@ -287,18 +287,8 @@ mod tests {
     use super::*;
     use crate::{
         libs::args,
-        test_helpers::{MockExchange, MockServer},
+        test_helpers::{MockExchange, MockServer, test_base},
     };
-
-    fn test_base() -> crate::libs::base_config::BaseConfig {
-        crate::libs::base_config::BaseConfig::new(&args::Generic {
-            server: Some("127.0.0.1".to_owned()),
-            username: Some("test".to_owned()),
-            password: Some("test".to_owned()),
-            ..Default::default()
-        })
-        .expect("test base config")
-    }
 
     #[test]
     fn archive_mbx_date_format() {

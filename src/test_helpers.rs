@@ -124,6 +124,17 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
     }
 }
 
+/// Create a minimal `BaseConfig` pointing at 127.0.0.1 with test credentials.
+pub fn test_base() -> crate::libs::base_config::BaseConfig {
+    crate::libs::base_config::BaseConfig::new(&crate::libs::args::Generic {
+        server: Some("127.0.0.1".to_owned()),
+        username: Some("test".to_owned()),
+        password: Some("test".to_owned()),
+        ..Default::default()
+    })
+    .expect("test base config")
+}
+
 /// Build a `BODY[HEADER.FIELDS ("MESSAGE-ID")]` FETCH response line for one message.
 ///
 /// `seq` is the sequence number, `uid` is the UID, `msg_id` is e.g. `"<foo@bar.com>"`.
