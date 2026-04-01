@@ -182,12 +182,16 @@ impl FindDups {
     fn parse_message_id(header: Option<&[u8]>) -> Option<String> {
         let header_text = std::str::from_utf8(header?).ok()?;
 
-        // Clean the input by replacing any line breaks followed by whitespace with a single space
-        let cleaned_headers = header_text; //.replace("\r\n ", " ").replace("\n ", " ");
+        // Unfold RFC 2822 header continuation lines (CRLF or LF followed by whitespace)
+        let cleaned_headers = header_text
+            .replace("\r\n ", " ")
+            .replace("\r\n\t", " ")
+            .replace("\n ", " ")
+            .replace("\n\t", " ");
 
         // Find and capture the Message-ID using the regex
         let s = MESSAGE_ID_REGEX
-            .captures(cleaned_headers)?
+            .captures(&cleaned_headers)?
             .get(1)
             .map(|m| m.as_str().to_owned())?;
         // If the length of the message id is too short, say it's None
