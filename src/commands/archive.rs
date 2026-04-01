@@ -288,6 +288,82 @@ mod tests {
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
     #[test]
+    fn archive_non_dry_run_with_move() {
+        // Non-dry-run path with MOVE capability: SELECT, LIST, UID MV, CLOSE
+        let server = MockServer::start(&["MOVE"], vec![
+            // EXAMINE INBOX → 5 messages
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID SEARCH → UIDs 1, 2, 3
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            // UID FETCH INTERNALDATE → 3 messages all in Jan 2020 (same archive mailbox)
+            MockExchange::ok(vec![
+                "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
+            ]),
+            // SELECT INBOX (read-write)
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // LIST to check archive mailbox existence → exists and selectable
+            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()]),
+            // UID MV
+            MockExchange::ok(vec![]),
+            // CLOSE
+            MockExchange::ok(vec![]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let extra = MyExtra {
+            format: "Archives/%Y/%m/%%MBX".to_owned(),
+            days: 30,
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn archive_non_dry_run_copy_delete_fallback() {
+        // Non-dry-run path without MOVE capability: SELECT, LIST, UID COPY, UID STORE, CLOSE
+        let server = MockServer::start(&[], vec![
+            // EXAMINE INBOX → 5 messages
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID SEARCH → UIDs 1, 2, 3
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            // UID FETCH INTERNALDATE → 3 messages all in Jan 2020
+            MockExchange::ok(vec![
+                "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
+            ]),
+            // SELECT INBOX (read-write)
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // LIST to check archive mailbox existence → exists and selectable
+            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()]),
+            // UID COPY (fallback: no MOVE capability)
+            MockExchange::ok(vec![]),
+            // UID STORE +FLAGS (\Deleted)
+            MockExchange::ok(vec![]),
+            // CLOSE
+            MockExchange::ok(vec![]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let extra = MyExtra {
+            format: "Archives/%Y/%m/%%MBX".to_owned(),
+            days: 30,
+        };
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
     fn archive_mbx_date_format() {
         let date = FixedOffset::east_opt(0)
             .expect("valid offset")
