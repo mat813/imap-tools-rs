@@ -281,4 +281,38 @@ mod tests {
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
+
+    #[test]
+    fn cleanup_destructive_large_old_mailbox() {
+        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE → 350 messages
+                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID FETCH RFC822.SIZE INTERNALDATE → 2 large old messages (total > 1 MB)
+                MockExchange::ok(vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+                // UID SEARCH → old messages to delete
+                MockExchange::ok(vec!["* SEARCH 1 2\r\n".into()]),
+                // SELECT INBOX (read-write for deletion)
+                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID STORE +FLAGS (\Deleted)
+                MockExchange::ok(vec![]),
+                // CLOSE (expunge)
+                MockExchange::ok(vec![]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
 }

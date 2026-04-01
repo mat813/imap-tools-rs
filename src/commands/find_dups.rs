@@ -274,4 +274,33 @@ mod tests {
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
+
+    #[test]
+    fn process_destructive_deletes_duplicates() {
+        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
+        let server = MockServer::start(&[], vec![
+            // EXAMINE → 3 messages
+            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID FETCH headers
+            MockExchange::ok(vec![
+                header_fetch_line(1, 1, "<unique@example.com>"),
+                header_fetch_line(2, 2, "<dup@example.com>"),
+                header_fetch_line(3, 3, "<dup@example.com>"),
+            ]),
+            // SELECT INBOX (read-write for deletion)
+            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID STORE +FLAGS (\Deleted)
+            MockExchange::ok(vec![]),
+            // CLOSE (expunge)
+            MockExchange::ok(vec![]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<serde_value::Value> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
 }

@@ -206,4 +206,23 @@ mod tests {
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
+
+    #[test]
+    fn list_exclude_re_filters_mailboxes() {
+        // exclude_re = "^Spam" → Spam/Junk is excluded, INBOX and Sent are kept
+        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
+            "* LIST () \"/\" INBOX\r\n".into(),
+            "* LIST () \"/\" Sent\r\n".into(),
+            "* LIST () \"/\" Spam\r\n".into(),
+        ])]);
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_list();
+        cmd.exclude_re = vec![Regex::new("^Spam").expect("valid regex")];
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
 }
