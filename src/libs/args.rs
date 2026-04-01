@@ -138,6 +138,25 @@ mod tests {
     }
 
     #[test]
+    fn port_option() {
+        let generic = get_generic_from_args(["test", "--port", "993"]);
+        assert_eq!(generic.port, Some(993));
+    }
+
+    #[test]
+    fn mode_option() {
+        let generic = get_generic_from_args(["test", "-m", "auto"]);
+        assert!(generic.mode.is_some(), "mode should be set");
+    }
+
+    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[test]
+    fn mode_tls_option() {
+        let generic = get_generic_from_args(["test", "-m", "tls"]);
+        assert!(generic.mode.is_some(), "mode should be set");
+    }
+
+    #[test]
     fn combined_options() {
         let generic = get_generic_from_args([
             "test",
