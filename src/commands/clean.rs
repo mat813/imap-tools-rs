@@ -241,6 +241,71 @@ mod tests {
     }
 
     #[test]
+    fn cleanup_skips_when_no_old_messages() {
+        // Large mailbox (> 1 MB) but UID SEARCH returns empty → no deletion
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE → 350 messages
+                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID FETCH → 2 large messages (total > 1 MB)
+                MockExchange::ok(vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+                // UID SEARCH → no results (no messages old enough)
+                MockExchange::ok(vec!["* SEARCH\r\n".into()]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn cleanup_multi_rule_first_skips_second_matches() {
+        // Two rules: (500 KB, 1 day) and (1 MB, 365 days). BTreeMap iterates ascending by size,
+        // so the 500 KB rule runs first. Total size is 1.2 MB so both thresholds are exceeded,
+        // but the 1-day search returns nothing → first rule skipped. 365-day search finds old
+        // messages → second rule matches. dry_run=true so no SELECT/STORE/CLOSE.
+        let extra: MyExtra = [
+            (Size::from_bytes(500_000_i64), 1_u64),
+            (Size::from_bytes(1_000_000_i64), 365_u64),
+        ]
+        .into();
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE → 350 messages
+                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                // UID FETCH → 2 large messages (total 1.2 MB)
+                MockExchange::ok(vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+                // UID SEARCH (1 day) → empty
+                MockExchange::ok(vec!["* SEARCH\r\n".into()]),
+                // UID SEARCH (365 days) → UIDs 1 and 2
+                MockExchange::ok(vec!["* SEARCH 1 2\r\n".into()]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<MyExtra> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
     fn cleanup_dry_run_large_old_mailbox() {
         // exists = 350, total size > 1 MB, old messages → dry-run: no SELECT/STORE/CLOSE
         let server = MockServer::start(
