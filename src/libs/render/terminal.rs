@@ -99,11 +99,6 @@ impl RendererTrait for Renderer<'_> {
             }
         }
 
-        // let area = self.terminal.get_frame().area();
-        // self.terminal.set_cursor_position(area)?;
-        self.terminal
-            .clear()
-            .or_raise(|| RendererError("terminal clear failed".to_owned()))?;
         let table_width = self.table_rows.len();
         let table_width = u16::try_from(table_width)
             .or_raise(|| RendererError(format!("convert {table_width} into a u16 failed")))?;
