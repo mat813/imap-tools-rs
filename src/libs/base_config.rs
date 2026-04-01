@@ -95,12 +95,10 @@ impl BaseConfig {
             self.dry_run = args.dry_run;
         }
 
-        if let Some(ref mode) = args.mode {
-            self.mode = Some(mode.clone());
-        } else if self.mode.is_none() {
-            self.mode = Some(Mode::default());
+        if args.mode.is_some() {
+            self.mode.clone_from(&args.mode);
         } else {
-            // vide pour clippy
+            self.mode.get_or_insert_with(Mode::default);
         }
 
         if self.server.is_none() {
@@ -255,7 +253,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:107:13,
+            The server must be set, at src/libs/base_config.rs:105:13,
         )
         ");
     }
@@ -272,7 +270,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:111:13,
+            The username must be set, at src/libs/base_config.rs:109:13,
         )
         ");
     }
@@ -309,9 +307,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:136:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:136:22,
+            |-> missing closing quote, at src/libs/base_config.rs:134:22,
         )
         "#);
     }
@@ -332,9 +330,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:143:22
+            password command exec failed, at src/libs/base_config.rs:141:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:143:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
         )
         ");
     }
@@ -355,7 +353,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:139:22,
+            password command is empty, at src/libs/base_config.rs:137:22,
         )
         ");
     }
@@ -389,7 +387,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:115:13,
+            The password or password command must be set, at src/libs/base_config.rs:113:13,
         )
         ");
     }
