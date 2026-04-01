@@ -115,7 +115,7 @@ impl List {
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::expect_used, reason = "tests")]
+    #![expect(clippy::expect_used, clippy::trivial_regex, reason = "tests")]
 
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};

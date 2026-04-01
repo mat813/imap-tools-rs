@@ -285,10 +285,7 @@ mod tests {
     use chrono::{FixedOffset, TimeZone as _};
 
     use super::*;
-    use crate::{
-        libs::args,
-        test_helpers::{MockExchange, MockServer, test_base},
-    };
+    use crate::test_helpers::{MockExchange, MockServer, test_base};
 
     #[test]
     fn archive_mbx_date_format() {
@@ -321,9 +318,6 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let archive = Archive {
-            config: args::Generic::default(),
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
@@ -351,12 +345,6 @@ mod tests {
         let extra = MyExtra {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
-        };
-        let archive = Archive {
-            config: args::Generic {
-                dry_run: true,
-                ..Default::default()
-            },
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, true);

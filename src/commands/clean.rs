@@ -189,10 +189,7 @@ mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
     use super::*;
-    use crate::{
-        libs::args,
-        test_helpers::{MockExchange, MockServer, test_base},
-    };
+    use crate::test_helpers::{MockExchange, MockServer, test_base};
 
     fn test_extra() -> MyExtra {
         // Delete messages older than 30 days when mailbox exceeds 1 MB
@@ -209,9 +206,6 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let clean = Clean {
-            config: args::Generic::default(),
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
@@ -238,9 +232,6 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let clean = Clean {
-            config: args::Generic::default(),
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
@@ -269,12 +260,6 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let clean = Clean {
-            config: args::Generic {
-                dry_run: true,
-                ..Default::default()
-            },
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true);
         drop(imap);

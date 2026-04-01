@@ -195,10 +195,7 @@ mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
     use super::*;
-    use crate::{
-        libs::args,
-        test_helpers::{MockExchange, MockServer, header_fetch_line, test_base},
-    };
+    use crate::test_helpers::{MockExchange, MockServer, header_fetch_line, test_base};
 
     #[test]
     fn parse_message_id_valid() {
@@ -236,9 +233,6 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let find_dups = FindDups {
-            config: args::Generic::default(),
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
@@ -262,12 +256,6 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let find_dups = FindDups {
-            config: args::Generic {
-                dry_run: true,
-                ..Default::default()
-            },
-        };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true);
         drop(imap);
