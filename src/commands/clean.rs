@@ -31,6 +31,12 @@ pub struct Clean {
 
 type MyExtra = BTreeMap<Size, u64>;
 
+/// Minimum number of messages in a mailbox before cleanup is considered.
+const MIN_MESSAGE_COUNT: u32 = 300;
+
+/// Minimum total mailbox size in bytes before cleanup is considered.
+const MIN_TOTAL_SIZE_BYTES: i64 = 1_000_000;
+
 impl Clean {
     #[cfg_attr(
         feature = "tracing",
@@ -106,7 +112,7 @@ impl Clean {
             .or_raise(|| CleanError(format!("imap examine {mailbox:?} failed")))?;
 
         // If there are not enough messages, skip
-        if mbx.exists <= 300 {
+        if mbx.exists <= MIN_MESSAGE_COUNT {
             return Ok(());
         }
 
@@ -129,8 +135,8 @@ impl Clean {
             .internal_date()
             .unwrap_or_default();
 
-        // If size is less than a MB, skip
-        if total_size <= 1_000_000 {
+        // If size is less than the minimum, skip
+        if total_size <= MIN_TOTAL_SIZE_BYTES {
             return Ok(());
         }
 
