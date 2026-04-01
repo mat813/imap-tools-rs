@@ -1,11 +1,11 @@
 use clap::Args;
 use derive_more::Display;
-use exn::{Result, ResultExt as _};
+use exn::{Result, ResultExt as _, bail};
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, Display)]
-pub struct ImapCreateCommandError(&'static str);
+pub struct ImapCreateCommandError(String);
 impl std::error::Error for ImapCreateCommandError {}
 
 #[derive(Args, Debug, Clone)]
@@ -27,12 +27,13 @@ impl Create {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub fn execute(&self) -> Result<(), ImapCreateCommandError> {
-        let config = BaseConfig::new(&self.config).or_raise(|| ImapCreateCommandError("config"))?;
+        let config = BaseConfig::new(&self.config)
+            .or_raise(|| ImapCreateCommandError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> =
-            Imap::connect_base(&config).or_raise(|| ImapCreateCommandError("connect"))?;
+        let mut imap: Imap<()> = Imap::connect_base(&config)
+            .or_raise(|| ImapCreateCommandError("connect".to_owned()))?;
 
         self.run(&mut imap, &mut std::io::stdout())
     }
@@ -46,13 +47,14 @@ impl Create {
 
         match imap.session.create(mailbox) {
             Ok(()) => writeln!(out, "The mailbox {mailbox} has been created")
-                .or_raise(|| ImapCreateCommandError("write output"))?,
+                .or_raise(|| ImapCreateCommandError("write output".to_owned()))?,
             Err(imap::Error::No(no)) if no.information.contains("Mailbox already exist") => {
                 writeln!(out, "Cannot create {mailbox:?}, it already exist: {no}")
-                    .or_raise(|| ImapCreateCommandError("write output"))?;
+                    .or_raise(|| ImapCreateCommandError("write output".to_owned()))?;
             },
-            Err(e) => writeln!(out, "An error occurred while creating the mailbox: {e:?}")
-                .or_raise(|| ImapCreateCommandError("write output"))?,
+            Err(e) => bail!(ImapCreateCommandError(format!(
+                "imap create {mailbox:?} failed: {e:?}"
+            ))),
         }
 
         Ok(())

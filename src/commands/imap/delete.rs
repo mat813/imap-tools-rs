@@ -1,11 +1,11 @@
 use clap::Args;
 use derive_more::Display;
-use exn::{Result, ResultExt as _};
+use exn::{Result, ResultExt as _, bail};
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, Display)]
-pub struct ImapDeleteCommandError(&'static str);
+pub struct ImapDeleteCommandError(String);
 impl std::error::Error for ImapDeleteCommandError {}
 
 #[derive(Args, Debug, Clone)]
@@ -27,12 +27,13 @@ impl Delete {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub fn execute(&self) -> Result<(), ImapDeleteCommandError> {
-        let config = BaseConfig::new(&self.config).or_raise(|| ImapDeleteCommandError("config"))?;
+        let config = BaseConfig::new(&self.config)
+            .or_raise(|| ImapDeleteCommandError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> =
-            Imap::connect_base(&config).or_raise(|| ImapDeleteCommandError("connect"))?;
+        let mut imap: Imap<()> = Imap::connect_base(&config)
+            .or_raise(|| ImapDeleteCommandError("connect".to_owned()))?;
 
         self.run(&mut imap, &mut std::io::stdout())
     }
@@ -46,13 +47,14 @@ impl Delete {
 
         match imap.session.delete(mailbox) {
             Ok(()) => writeln!(out, "The mailbox {mailbox} has been removed")
-                .or_raise(|| ImapDeleteCommandError("write output"))?,
+                .or_raise(|| ImapDeleteCommandError("write output".to_owned()))?,
             Err(imap::Error::No(no)) if no.information.contains("Mailbox doesn't exist") => {
                 writeln!(out, "Cannot remove {mailbox:?}, it does not exist: {no}")
-                    .or_raise(|| ImapDeleteCommandError("write output"))?;
+                    .or_raise(|| ImapDeleteCommandError("write output".to_owned()))?;
             },
-            Err(e) => writeln!(out, "An error occurred while removing the mailbox: {e:?}")
-                .or_raise(|| ImapDeleteCommandError("write output"))?,
+            Err(e) => bail!(ImapDeleteCommandError(format!(
+                "imap delete {mailbox:?} failed: {e:?}"
+            ))),
         }
 
         Ok(())
