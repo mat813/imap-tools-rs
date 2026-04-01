@@ -76,7 +76,7 @@ where
 
         let mut client = builder
             .connect()
-            .or_raise(|| ImapError(format!("failed to connect to {server} on port 143")))?;
+            .or_raise(|| ImapError(format!("failed to connect to {server} on port {port}")))?;
 
         if base.debug {
             client.debug = true;
