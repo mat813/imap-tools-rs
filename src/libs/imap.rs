@@ -169,6 +169,28 @@ where
 
     #[cfg_attr(
         feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    /// Select a mailbox, flag the given UID sequence as `\Deleted`, then CLOSE
+    /// (which expunges the flagged messages).
+    ///
+    /// # Errors
+    /// Imap errors can happen
+    pub fn delete_uids(&mut self, mailbox: &str, sequence: &str) -> Result<(), ImapError> {
+        self.session
+            .select(mailbox)
+            .or_raise(|| ImapError(format!("imap select {mailbox:?} failed")))?;
+        self.session
+            .uid_store(sequence, "+FLAGS (\\Deleted)")
+            .or_raise(|| ImapError("imap uid store failed".to_owned()))?;
+        self.session
+            .close()
+            .or_raise(|| ImapError("imap close failed".to_owned()))?;
+        Ok(())
+    }
+
+    #[cfg_attr(
+        feature = "tracing",
         tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
     )]
     /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is

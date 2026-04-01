@@ -153,18 +153,8 @@ impl Clean {
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
                 if !dry_run {
-                    imap.session
-                        .select(mailbox)
-                        .or_raise(|| CleanError(format!("imap select {mailbox:?} failed")))?;
-
-                    imap.session
-                        .uid_store(&sequence, "+FLAGS (\\Deleted)")
-                        .or_raise(|| CleanError("imap uid store failed".to_owned()))?;
-
-                    // Expunge to permanently remove messages marked for deletion
-                    imap.session
-                        .close()
-                        .or_raise(|| CleanError("imap close failed".to_owned()))?;
+                    imap.delete_uids(mailbox, &sequence)
+                        .or_raise(|| CleanError("imap delete uids failed".to_owned()))?;
                 }
 
                 renderer

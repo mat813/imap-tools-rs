@@ -113,18 +113,8 @@ impl FindDups {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
             if !dry_run {
-                // Re-open the mailbox in read-write mode
-                imap.session
-                    .select(mailbox)
-                    .or_raise(|| DuError(format!("imap select {mailbox:?} failed")))?;
-
-                imap.session
-                    .uid_store(&duplicate_set, "+FLAGS (\\Deleted)")
-                    .or_raise(|| DuError("imap uid store failed".to_owned()))?;
-
-                imap.session
-                    .close()
-                    .or_raise(|| DuError("imap close failed".to_owned()))?;
+                imap.delete_uids(mailbox, &duplicate_set)
+                    .or_raise(|| DuError("imap delete uids failed".to_owned()))?;
             }
 
             renderer
