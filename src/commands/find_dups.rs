@@ -224,6 +224,70 @@ mod tests {
     }
 
     #[test]
+    fn parse_message_id_folded_header() {
+        // RFC 2822 continuation: CRLF followed by a space unfolds to a single line
+        let header = b"Message-ID:\r\n <folded@example.com>\r\n\r\n";
+        let result = FindDups::parse_message_id_pub(Some(header));
+        assert_eq!(result, Some("<folded@example.com>".to_owned()));
+    }
+
+    #[test]
+    fn parse_message_id_too_short() {
+        // "<x@y>" is 5 chars (MIN_MESSAGE_ID_LEN), "<x@>" is 4 chars → None
+        let header = b"Message-ID: <x@>\r\n\r\n";
+        let result = FindDups::parse_message_id_pub(Some(header));
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn process_no_duplicates() {
+        // 2 messages with different Message-IDs → no deletions
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec![
+                header_fetch_line(1, 1, "<msg1@example.com>"),
+                header_fetch_line(2, 2, "<msg2@example.com>"),
+            ]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<serde_value::Value> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn process_keeps_oldest_with_three_duplicates() {
+        // 3 messages sharing the same Message-ID: UIDs 1, 3, 5.
+        // The oldest (lowest UID = 1) is kept; UIDs 3 and 5 are deleted.
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec![
+                header_fetch_line(1, 1, "<dup@example.com>"),
+                header_fetch_line(2, 3, "<dup@example.com>"),
+                header_fetch_line(3, 5, "<dup@example.com>"),
+            ]),
+            // SELECT INBOX
+            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            // UID STORE +FLAGS (\Deleted) for UIDs 3 and 5
+            MockExchange::ok(vec![]),
+            // CLOSE
+            MockExchange::ok(vec![]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<serde_value::Value> =
+            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
     fn process_skips_mailbox_with_one_message() {
         // exists = 1 < 2 → returns immediately without UID FETCH
         let server = MockServer::start(&[], vec![MockExchange::ok(vec![
