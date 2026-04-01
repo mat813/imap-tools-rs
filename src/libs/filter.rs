@@ -328,6 +328,31 @@ mod tests {
         assert!(filter.exclude_re.is_none());
     }
 
+    /// Test `make_filter_re` with only literal includes (no regex part)
+    #[test]
+    fn filter_only_literal_includes() {
+        let json_data = r#"{"pattern": "*", "include": ["foo", "b.r"]}"#;
+        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
+        let re = filter.include_re.as_ref().unwrap();
+        // Literals are regex-escaped: "foo" matches exactly, "b.r" does NOT match "bar"
+        assert!(re.is_match("foo"), "literal 'foo' should match");
+        assert!(re.is_match("b.r"), "literal 'b.r' should match");
+        assert!(!re.is_match("bar"), "'bar' should not match escaped 'b.r'");
+    }
+
+    /// Test `make_filter_re` with only regex includes (no literal part)
+    #[test]
+    fn filter_only_regex_includes() {
+        let json_data = r#"{"pattern": "*", "include-re": ["^prefix.*"]}"#;
+        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
+        let re = filter.include_re.as_ref().unwrap();
+        assert!(
+            re.is_match("prefix_anything"),
+            "prefix_anything should match"
+        );
+        assert!(!re.is_match("no_prefix"), "no_prefix should not match");
+    }
+
     /// Test error handling for invalid regex patterns
     #[test]
     fn filter_invalid_regex() {
