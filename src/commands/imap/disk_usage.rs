@@ -198,7 +198,7 @@ impl DiskUsage {
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::expect_used, reason = "tests")]
+    #![expect(clippy::expect_used, clippy::trivial_regex, reason = "tests")]
 
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
@@ -218,6 +218,68 @@ mod tests {
             pattern: Some("*".to_owned()),
             reference: None,
         }
+    }
+
+    #[test]
+    fn sort_from_str_name() {
+        let sort = "name".parse::<Sort>().expect("name should parse");
+        assert!(matches!(sort, Sort::Name));
+    }
+
+    #[test]
+    fn sort_from_str_size() {
+        let sort = "size".parse::<Sort>().expect("size should parse");
+        assert!(matches!(sort, Sort::Size));
+    }
+
+    #[test]
+    fn sort_from_str_invalid() {
+        let result = "date".parse::<Sort>();
+        assert!(result.is_err(), "date should not parse as a valid sort");
+    }
+
+    #[test]
+    fn disk_usage_include_re_filters() {
+        // LIST returns INBOX and Sent; include_re matches only INBOX → only INBOX is examined
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ]),
+            // EXAMINE INBOX only
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_du();
+        cmd.include_re = vec![regex::Regex::new("^INBOX$").expect("valid regex")];
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[test]
+    fn disk_usage_exclude_re_filters() {
+        // LIST returns INBOX and Sent; exclude_re removes Sent → only INBOX is examined
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ]),
+            // EXAMINE INBOX only
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+        ]);
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_du();
+        cmd.exclude_re = vec![regex::Regex::new("^Sent$").expect("valid regex")];
+        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
     }
 
     #[test]
