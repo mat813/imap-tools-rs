@@ -70,7 +70,7 @@ impl FindDups {
         let mut imap = Imap::connect(&config).or_raise(|| DuError("connect".to_owned()))?;
 
         for (mailbox, _result) in imap.list().or_raise(|| DuError("imap list".to_owned()))? {
-            self.process(&mut imap, &mut renderer, &mailbox)
+            Self::process(&mut imap, &mut renderer, &mailbox, config.base.dry_run)
                 .or_raise(|| DuError("process".to_owned()))?;
         }
 
@@ -79,13 +79,13 @@ impl FindDups {
 
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+        tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
     )]
     fn process(
-        &self,
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
+        dry_run: bool,
     ) -> Result<(), DuError> {
         // Examine the mailbox in read only mode, so that we don't change any
         // "seen" flags if there are no duplicate messages
@@ -112,7 +112,7 @@ impl FindDups {
         if !duplicates.is_empty() {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
-            if !self.config.dry_run {
+            if !dry_run {
                 // Re-open the mailbox in read-write mode
                 imap.session
                     .select(mailbox)
@@ -256,7 +256,7 @@ mod tests {
             config: args::Generic::default(),
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = find_dups.process(&mut imap, &mut renderer, "INBOX");
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
@@ -287,7 +287,7 @@ mod tests {
             },
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = find_dups.process(&mut imap, &mut renderer, "INBOX");
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");

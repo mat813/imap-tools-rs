@@ -78,8 +78,14 @@ impl Archive {
         {
             match result.extra {
                 Some(ref extra) => {
-                    self.archive(&mut imap, &mut renderer, &mailbox, extra)
-                        .or_raise(|| ArchiveError("archive".to_owned()))?;
+                    Self::archive(
+                        &mut imap,
+                        &mut renderer,
+                        &mailbox,
+                        extra,
+                        config.base.dry_run,
+                    )
+                    .or_raise(|| ArchiveError("archive".to_owned()))?;
                 },
                 None => bail!(ArchiveError(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
@@ -92,14 +98,14 @@ impl Archive {
 
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+        tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
     )]
     fn archive(
-        &self,
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
+        dry_run: bool,
     ) -> Result<(), ArchiveError> {
         let mbx = imap
             .session
@@ -130,7 +136,7 @@ impl Archive {
                 ids_list_to_collapsed_sequence(&uids_to_move),
             )?;
 
-            if self.config.dry_run {
+            if dry_run {
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
                     renderer
                         .add_row(&[
@@ -329,7 +335,7 @@ mod tests {
             config: args::Generic::default(),
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = archive.archive(&mut imap, &mut renderer, "INBOX", &extra);
+        let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
@@ -363,7 +369,7 @@ mod tests {
             },
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = archive.archive(&mut imap, &mut renderer, "INBOX", &extra);
+        let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");

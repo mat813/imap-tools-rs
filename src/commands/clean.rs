@@ -71,8 +71,14 @@ impl Clean {
         for (mailbox, result) in imap.list().or_raise(|| CleanError("list".to_owned()))? {
             match result.extra {
                 Some(ref extra) => {
-                    self.cleanup_mailbox(&mut imap, &mut renderer, &mailbox, extra)
-                        .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
+                    Self::cleanup_mailbox(
+                        &mut imap,
+                        &mut renderer,
+                        &mailbox,
+                        extra,
+                        config.base.dry_run,
+                    )
+                    .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
                 },
                 None => bail!(CleanError(format!(
                     "Mailbox {mailbox} does not have an extra parameter"
@@ -85,14 +91,14 @@ impl Clean {
 
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "info"))
+        tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
     )]
     fn cleanup_mailbox(
-        &self,
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer>,
         mailbox: &str,
         extra: &MyExtra,
+        dry_run: bool,
     ) -> Result<(), CleanError> {
         let mbx = imap
             .session
@@ -146,7 +152,7 @@ impl Clean {
 
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
-                if !self.config.dry_run {
+                if !dry_run {
                     imap.session
                         .select(mailbox)
                         .or_raise(|| CleanError(format!("imap select {mailbox:?} failed")))?;
@@ -221,7 +227,8 @@ mod tests {
             config: args::Generic::default(),
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = clean.cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra());
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
@@ -249,7 +256,8 @@ mod tests {
             config: args::Generic::default(),
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = clean.cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra());
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
@@ -282,7 +290,7 @@ mod tests {
             },
         };
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
-        let result = clean.cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra());
+        let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
