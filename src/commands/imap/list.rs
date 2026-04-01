@@ -196,10 +196,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
-        #[expect(clippy::trivial_regex, reason = "il faut une re")]
-        {
-            cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
-        }
+        cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
         let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
