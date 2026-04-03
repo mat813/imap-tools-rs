@@ -138,10 +138,13 @@ mod tests {
 
     #[test]
     fn list_returns_all_regular_mailboxes() {
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST () \"/\" INBOX\r\n".into(),
-            "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_list();
@@ -155,10 +158,13 @@ mod tests {
     #[test]
     fn list_excludes_noselect_by_default() {
         // [Gmail] is NoSelect → filtered out; INBOX is kept
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
-            "* LIST () \"/\" INBOX\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                "* LIST () \"/\" INBOX\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_list();
@@ -171,10 +177,13 @@ mod tests {
 
     #[test]
     fn list_no_select_flag_includes_noselect_folders() {
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
-            "* LIST () \"/\" INBOX\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
+                "* LIST () \"/\" INBOX\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
@@ -189,10 +198,13 @@ mod tests {
     #[test]
     fn list_include_re_filters_mailboxes() {
         // include_re = "^INBOX$" → only INBOX is kept, Sent is discarded
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST () \"/\" INBOX\r\n".into(),
-            "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
@@ -207,11 +219,14 @@ mod tests {
     #[test]
     fn list_exclude_re_filters_mailboxes() {
         // exclude_re = "^Spam" → Spam/Junk is excluded, INBOX and Sent are kept
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST () \"/\" INBOX\r\n".into(),
-            "* LIST () \"/\" Sent\r\n".into(),
-            "* LIST () \"/\" Spam\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+                "* LIST () \"/\" Spam\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();

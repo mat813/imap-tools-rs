@@ -292,23 +292,28 @@ mod tests {
         // Non-dry-run path with MOVE capability: SELECT, LIST, UID MV, CLOSE
         let server = MockServer::start(&["MOVE"], vec![
             // EXAMINE INBOX → 5 messages
-            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
             // UID SEARCH → UIDs 1, 2, 3
-            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()])
+                .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
             // UID FETCH INTERNALDATE → 3 messages all in Jan 2020 (same archive mailbox)
             MockExchange::ok(vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
-            ]),
+            ])
+            .expect_command("UID FETCH 1:3 INTERNALDATE"),
             // SELECT INBOX (read-write)
-            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("SELECT \"INBOX\""),
             // LIST to check archive mailbox existence → exists and selectable
-            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()]),
+            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()])
+                .expect_command("LIST \"\" Archives/2020/01/INBOX"),
             // UID MV
-            MockExchange::ok(vec![]),
+            MockExchange::ok(vec![]).expect_command("UID MOVE 1:3 \"Archives/2020/01/INBOX\""),
             // CLOSE
-            MockExchange::ok(vec![]),
+            MockExchange::ok(vec![]).expect_command("CLOSE"),
         ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
@@ -329,25 +334,30 @@ mod tests {
         // Non-dry-run path without MOVE capability: SELECT, LIST, UID COPY, UID STORE, CLOSE
         let server = MockServer::start(&[], vec![
             // EXAMINE INBOX → 5 messages
-            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
             // UID SEARCH → UIDs 1, 2, 3
-            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()])
+                .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
             // UID FETCH INTERNALDATE → 3 messages all in Jan 2020
             MockExchange::ok(vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
-            ]),
+            ])
+            .expect_command("UID FETCH 1:3 INTERNALDATE"),
             // SELECT INBOX (read-write)
-            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("SELECT \"INBOX\""),
             // LIST to check archive mailbox existence → exists and selectable
-            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()]),
+            MockExchange::ok(vec!["* LIST () \"/\" Archives/2020/01/INBOX\r\n".into()])
+                .expect_command("LIST \"\" Archives/2020/01/INBOX"),
             // UID COPY (fallback: no MOVE capability)
-            MockExchange::ok(vec![]),
+            MockExchange::ok(vec![]).expect_command("UID COPY 1:3 Archives/2020/01/INBOX"),
             // UID STORE +FLAGS (\Deleted)
-            MockExchange::ok(vec![]),
+            MockExchange::ok(vec![]).expect_command("UID STORE 1:3 +FLAGS (\\Deleted)"),
             // CLOSE
-            MockExchange::ok(vec![]),
+            MockExchange::ok(vec![]).expect_command("CLOSE"),
         ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
@@ -385,7 +395,8 @@ mod tests {
     fn archive_skips_empty_mailbox() {
         let server = MockServer::start(&[], vec![
             // EXAMINE INBOX → 0 messages
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
         ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
@@ -405,15 +416,18 @@ mod tests {
     fn archive_dry_run_moves_old_messages() {
         let server = MockServer::start(&[], vec![
             // EXAMINE INBOX → 5 messages
-            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 5 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
             // UID SEARCH → UIDs 1, 2, 3
-            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()]),
+            MockExchange::ok(vec!["* SEARCH 1 2 3\r\n".into()])
+                .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
             // UID FETCH INTERNALDATE → 3 old messages (all Jan 2020)
             MockExchange::ok(vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 3 FETCH (UID 3 INTERNALDATE \"03-Jan-2020 10:00:00 +0000\")\r\n".into(),
-            ]),
+            ])
+            .expect_command("UID FETCH 1:3 INTERNALDATE"),
         ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =

@@ -6,12 +6,22 @@ use std::{
     thread,
 };
 
+use regex::Regex;
+
+pub enum ExpectCommand {
+    Static(String),
+    Regex(Regex),
+}
+
 /// A scripted IMAP exchange: untagged response lines + final tagged response.
 pub struct MockExchange {
     /// Untagged lines sent before the tagged response (each must include `\r\n`).
     pub untagged: Vec<String>,
     /// Tagged response suffix, e.g. `"OK completed"` or `"NO Mailbox already exist"`.
     pub tagged: String,
+    /// If set, the mock server asserts the client sent this exact command
+    /// (everything after the IMAP tag, trimmed).
+    pub command: Option<ExpectCommand>,
 }
 
 impl MockExchange {
@@ -20,6 +30,7 @@ impl MockExchange {
         Self {
             untagged,
             tagged: "OK completed".to_owned(),
+            command: None,
         }
     }
 
@@ -28,7 +39,24 @@ impl MockExchange {
         Self {
             untagged: vec![],
             tagged: format!("NO {}", reason.into()),
+            command: None,
         }
+    }
+
+    /// Assert that the client sends this exact command (everything after the IMAP tag).
+    pub fn expect_command(mut self, cmd: impl Into<String>) -> Self {
+        self.command = Some(ExpectCommand::Static(cmd.into()));
+        self
+    }
+
+    #[track_caller]
+    pub fn expect_command_re<T>(mut self, re: T) -> Self
+    where
+        T: TryInto<Regex>,
+        <T as std::convert::TryInto<regex::Regex>>::Error: std::fmt::Debug,
+    {
+        self.command = Some(ExpectCommand::Regex(re.try_into().expect("should compile")));
+        self
     }
 }
 
@@ -61,10 +89,12 @@ impl MockServer {
     }
 }
 
+#[track_caller]
 fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>) {
     let mut script: VecDeque<MockExchange> = script.into();
     let mut reader = BufReader::new(stream.try_clone().expect("clone stream"));
     let mut writer = stream;
+    let mut exchange_index: usize = 0;
 
     writer
         .write_all(b"* OK IMAP4rev1 mock server ready\r\n")
@@ -113,6 +143,29 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                 let exchange = script
                     .pop_front()
                     .unwrap_or_else(|| MockExchange::ok(vec![]));
+                #[expect(clippy::string_slice, reason = "ok")]
+                // #[allow(clippy::print_stderr, reason = "ok")]
+                match exchange.command {
+                    Some(ExpectCommand::Static(expected)) => {
+                        let actual = line[tag.len()..].trim();
+                        assert_eq!(
+                            actual,
+                            expected.as_str(),
+                            "command mismatch at exchange #{exchange_index}: expected {expected:?}, got {actual:?}"
+                        );
+                    },
+                    Some(ExpectCommand::Regex(re)) => {
+                        let actual = line[tag.len()..].trim();
+                        assert!(
+                            re.is_match(actual),
+                            "command mismatch at exchange #{exchange_index}: expected {re:?}, got {actual:?}"
+                        );
+                    },
+                    None => {
+                        todo!("MOCK #{exchange_index}: {}", line[tag.len()..].trim());
+                    },
+                }
+                exchange_index += 1;
                 for resp in &exchange.untagged {
                     writer.write_all(resp.as_bytes()).expect("write untagged");
                 }

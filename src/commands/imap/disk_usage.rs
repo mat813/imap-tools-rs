@@ -245,9 +245,11 @@ mod tests {
             MockExchange::ok(vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
                 "* LIST () \"/\" Sent\r\n".into(),
-            ]),
+            ])
+            .expect_command("LIST \"\" *"),
             // EXAMINE INBOX only
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -267,9 +269,11 @@ mod tests {
             MockExchange::ok(vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
                 "* LIST () \"/\" Sent\r\n".into(),
-            ]),
+            ])
+            .expect_command("LIST \"\" *"),
             // EXAMINE INBOX only
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -287,9 +291,11 @@ mod tests {
         // INBOX has 0 messages → size reported as 0, no UID FETCH needed
         let server = MockServer::start(&[], vec![
             // LIST
-            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()])
+                .expect_command("LIST \"\" *"),
             // EXAMINE INBOX → 0 messages
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -306,14 +312,17 @@ mod tests {
         // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
         let server = MockServer::start(&[], vec![
             // LIST
-            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()]),
+            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()])
+                .expect_command("LIST \"\" *"),
             // EXAMINE INBOX → 2 messages
-            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
             // UID FETCH 1:* (RFC822.SIZE)
             MockExchange::ok(vec![
                 "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
                 "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
-            ]),
+            ])
+            .expect_command("UID FETCH 1:* (RFC822.SIZE)"),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -333,9 +342,11 @@ mod tests {
             MockExchange::ok(vec![
                 "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
                 "* LIST () \"/\" INBOX\r\n".into(),
-            ]),
+            ])
+            .expect_command("LIST \"\" *"),
             // EXAMINE INBOX (only INBOX is examined, [Gmail] is skipped)
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
+                .expect_command("EXAMINE \"INBOX\""),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");

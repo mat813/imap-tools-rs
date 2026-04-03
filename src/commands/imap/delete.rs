@@ -70,7 +70,9 @@ mod tests {
 
     #[test]
     fn delete_mailbox_success() {
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![]).expect_command("DELETE \"OldFolder\""),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = Delete {
@@ -91,7 +93,9 @@ mod tests {
 
     #[test]
     fn delete_mailbox_not_found() {
-        let server = MockServer::start(&[], vec![MockExchange::no("Mailbox doesn't exist")]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::no("Mailbox doesn't exist").expect_command("DELETE \"Ghost\""),
+        ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = Delete {

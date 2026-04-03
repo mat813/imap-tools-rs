@@ -71,10 +71,13 @@ mod tests {
 
     #[test]
     fn list_renders_mailboxes() {
-        let server = MockServer::start(&[], vec![MockExchange::ok(vec![
-            "* LIST () \"/\" INBOX\r\n".into(),
-            "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        let server = MockServer::start(&[], vec![
+            MockExchange::ok(vec![
+                "* LIST () \"/\" INBOX\r\n".into(),
+                "* LIST () \"/\" Sent\r\n".into(),
+            ])
+            .expect_command("LIST \"\" *"),
+        ]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
