@@ -243,13 +243,17 @@ mod tests {
     fn process_no_duplicates() {
         // 2 messages with different Message-IDs → no deletions
         let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
-            MockExchange::ok(vec![
-                header_fetch_line(1, 1, "<msg1@example.com>"),
-                header_fetch_line(2, 2, "<msg2@example.com>"),
-            ])
-            .expect_command("UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])"),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 2 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
+            MockExchange::ok(
+                "UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])",
+                vec![
+                    header_fetch_line(1, 1, "<msg1@example.com>"),
+                    header_fetch_line(2, 2, "<msg2@example.com>"),
+                ],
+            ),
         ]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
@@ -266,21 +270,27 @@ mod tests {
         // 3 messages sharing the same Message-ID: UIDs 1, 3, 5.
         // The oldest (lowest UID = 1) is kept; UIDs 3 and 5 are deleted.
         let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
-            MockExchange::ok(vec![
-                header_fetch_line(1, 1, "<dup@example.com>"),
-                header_fetch_line(2, 3, "<dup@example.com>"),
-                header_fetch_line(3, 5, "<dup@example.com>"),
-            ])
-            .expect_command("UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])"),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 3 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
+            MockExchange::ok(
+                "UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])",
+                vec![
+                    header_fetch_line(1, 1, "<dup@example.com>"),
+                    header_fetch_line(2, 3, "<dup@example.com>"),
+                    header_fetch_line(3, 5, "<dup@example.com>"),
+                ],
+            ),
             // SELECT INBOX
-            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("SELECT \"INBOX\""),
+            MockExchange::ok("SELECT \"INBOX\"", vec![
+                "* 3 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
             // UID STORE +FLAGS (\Deleted) for UIDs 3 and 5
-            MockExchange::ok(vec![]).expect_command("UID STORE 3,5 +FLAGS (\\Deleted)"),
+            MockExchange::ok("UID STORE 3,5 +FLAGS (\\Deleted)", vec![]),
             // CLOSE
-            MockExchange::ok(vec![]).expect_command("CLOSE"),
+            MockExchange::ok("CLOSE", vec![]),
         ]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
@@ -295,10 +305,10 @@ mod tests {
     #[test]
     fn process_skips_mailbox_with_one_message() {
         // exists = 1 < 2 → returns immediately without UID FETCH
-        let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec!["* 1 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
-        ]);
+        let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
+            "* 1 EXISTS\r\n".into(),
+            "* 0 RECENT\r\n".into(),
+        ])]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -314,15 +324,19 @@ mod tests {
         // 3 messages: uid 2 and 3 share the same Message-ID
         let server = MockServer::start(&[], vec![
             // EXAMINE → 3 messages (examine is read-only)
-            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 3 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
             // UID FETCH BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)]
-            MockExchange::ok(vec![
-                header_fetch_line(1, 1, "<unique@example.com>"),
-                header_fetch_line(2, 2, "<dup@example.com>"),
-                header_fetch_line(3, 3, "<dup@example.com>"),
-            ])
-            .expect_command("UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])"),
+            MockExchange::ok(
+                "UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])",
+                vec![
+                    header_fetch_line(1, 1, "<unique@example.com>"),
+                    header_fetch_line(2, 2, "<dup@example.com>"),
+                    header_fetch_line(3, 3, "<dup@example.com>"),
+                ],
+            ),
         ]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
@@ -339,22 +353,28 @@ mod tests {
         // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
         let server = MockServer::start(&[], vec![
             // EXAMINE → 3 messages
-            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 3 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
             // UID FETCH headers
-            MockExchange::ok(vec![
-                header_fetch_line(1, 1, "<unique@example.com>"),
-                header_fetch_line(2, 2, "<dup@example.com>"),
-                header_fetch_line(3, 3, "<dup@example.com>"),
-            ])
-            .expect_command("UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])"),
+            MockExchange::ok(
+                "UID FETCH 1:* (BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])",
+                vec![
+                    header_fetch_line(1, 1, "<unique@example.com>"),
+                    header_fetch_line(2, 2, "<dup@example.com>"),
+                    header_fetch_line(3, 3, "<dup@example.com>"),
+                ],
+            ),
             // SELECT INBOX (read-write for deletion)
-            MockExchange::ok(vec!["* 3 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("SELECT \"INBOX\""),
+            MockExchange::ok("SELECT \"INBOX\"", vec![
+                "* 3 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
             // UID STORE +FLAGS (\Deleted)
-            MockExchange::ok(vec![]).expect_command("UID STORE 3 +FLAGS (\\Deleted)"),
+            MockExchange::ok("UID STORE 3 +FLAGS (\\Deleted)", vec![]),
             // CLOSE (expunge)
-            MockExchange::ok(vec![]).expect_command("CLOSE"),
+            MockExchange::ok("CLOSE", vec![]),
         ]);
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =

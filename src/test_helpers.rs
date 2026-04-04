@@ -1,4 +1,9 @@
-#![expect(clippy::expect_used, reason = "test helper")]
+#![expect(
+    clippy::expect_used,
+    clippy::panic,
+    clippy::string_slice,
+    reason = "test helper"
+)]
 use std::{
     collections::VecDeque,
     io::{BufRead as _, BufReader, Write as _},
@@ -13,6 +18,36 @@ pub enum ExpectCommand {
     Regex(Regex),
 }
 
+impl std::str::FromStr for ExpectCommand {
+    type Err = regex::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() >= 3
+            && s.starts_with('/')
+            && s.ends_with('/')
+            && let Some(re) = s.get(1..s.len() - 1)
+        {
+            Ok(Self::Regex(re.parse()?))
+        } else {
+            Ok(Self::Static(s.to_owned()))
+        }
+    }
+}
+
+impl From<String> for ExpectCommand {
+    #[track_caller]
+    fn from(value: String) -> Self {
+        value.parse().expect("should parse")
+    }
+}
+
+impl From<&str> for ExpectCommand {
+    #[track_caller]
+    fn from(value: &str) -> Self {
+        value.parse().expect("should parse")
+    }
+}
+
 /// A scripted IMAP exchange: untagged response lines + final tagged response.
 pub struct MockExchange {
     /// Untagged lines sent before the tagged response (each must include `\r\n`).
@@ -21,42 +56,28 @@ pub struct MockExchange {
     pub tagged: String,
     /// If set, the mock server asserts the client sent this exact command
     /// (everything after the IMAP tag, trimmed).
-    pub command: Option<ExpectCommand>,
+    pub command: ExpectCommand,
 }
 
 impl MockExchange {
     /// Successful exchange: tagged `OK completed` after the untagged lines.
-    pub fn ok(untagged: Vec<String>) -> Self {
+    #[track_caller]
+    pub fn ok(command: impl Into<ExpectCommand>, untagged: Vec<String>) -> Self {
         Self {
             untagged,
             tagged: "OK completed".to_owned(),
-            command: None,
+            command: command.into(),
         }
     }
 
     /// Failed exchange: tagged `NO <reason>`, no untagged lines.
-    pub fn no(reason: impl Into<String>) -> Self {
+    #[track_caller]
+    pub fn no(command: impl Into<ExpectCommand>, reason: impl Into<String>) -> Self {
         Self {
             untagged: vec![],
             tagged: format!("NO {}", reason.into()),
-            command: None,
+            command: command.into(),
         }
-    }
-
-    /// Assert that the client sends this exact command (everything after the IMAP tag).
-    pub fn expect_command(mut self, cmd: impl Into<String>) -> Self {
-        self.command = Some(ExpectCommand::Static(cmd.into()));
-        self
-    }
-
-    #[track_caller]
-    pub fn expect_command_re<T>(mut self, re: T) -> Self
-    where
-        T: TryInto<Regex>,
-        <T as std::convert::TryInto<regex::Regex>>::Error: std::fmt::Debug,
-    {
-        self.command = Some(ExpectCommand::Regex(re.try_into().expect("should compile")));
-        self
     }
 }
 
@@ -84,6 +105,7 @@ impl MockServer {
         Self { port, handle }
     }
 
+    #[track_caller]
     pub fn join(self) {
         self.handle.join().expect("mock server thread panicked");
     }
@@ -142,27 +164,21 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
             _ => {
                 let exchange = script
                     .pop_front()
-                    .unwrap_or_else(|| MockExchange::ok(vec![]));
-                #[expect(clippy::string_slice, reason = "ok")]
-                // #[allow(clippy::print_stderr, reason = "ok")]
+                    .unwrap_or_else(|| panic!("Should have a command at {exchange_index}"));
+                let actual = line[tag.len()..].trim();
                 match exchange.command {
-                    Some(ExpectCommand::Static(expected)) => {
-                        let actual = line[tag.len()..].trim();
+                    ExpectCommand::Static(expected) => {
                         assert_eq!(
                             actual,
                             expected.as_str(),
                             "command mismatch at exchange #{exchange_index}: expected {expected:?}, got {actual:?}"
                         );
                     },
-                    Some(ExpectCommand::Regex(re)) => {
-                        let actual = line[tag.len()..].trim();
+                    ExpectCommand::Regex(re) => {
                         assert!(
                             re.is_match(actual),
                             "command mismatch at exchange #{exchange_index}: expected {re:?}, got {actual:?}"
                         );
-                    },
-                    None => {
-                        todo!("MOCK #{exchange_index}: {}", line[tag.len()..].trim());
                     },
                 }
                 exchange_index += 1;

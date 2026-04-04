@@ -242,14 +242,15 @@ mod tests {
     fn disk_usage_include_re_filters() {
         // LIST returns INBOX and Sent; include_re matches only INBOX → only INBOX is examined
         let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec![
+            MockExchange::ok("LIST \"\" *", vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
                 "* LIST () \"/\" Sent\r\n".into(),
-            ])
-            .expect_command("LIST \"\" *"),
+            ]),
             // EXAMINE INBOX only
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 0 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -266,14 +267,15 @@ mod tests {
     fn disk_usage_exclude_re_filters() {
         // LIST returns INBOX and Sent; exclude_re removes Sent → only INBOX is examined
         let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec![
+            MockExchange::ok("LIST \"\" *", vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
                 "* LIST () \"/\" Sent\r\n".into(),
-            ])
-            .expect_command("LIST \"\" *"),
+            ]),
             // EXAMINE INBOX only
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 0 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -291,11 +293,12 @@ mod tests {
         // INBOX has 0 messages → size reported as 0, no UID FETCH needed
         let server = MockServer::start(&[], vec![
             // LIST
-            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()])
-                .expect_command("LIST \"\" *"),
+            MockExchange::ok("LIST \"\" *", vec!["* LIST () \"/\" INBOX\r\n".into()]),
             // EXAMINE INBOX → 0 messages
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 0 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -312,17 +315,17 @@ mod tests {
         // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
         let server = MockServer::start(&[], vec![
             // LIST
-            MockExchange::ok(vec!["* LIST () \"/\" INBOX\r\n".into()])
-                .expect_command("LIST \"\" *"),
+            MockExchange::ok("LIST \"\" *", vec!["* LIST () \"/\" INBOX\r\n".into()]),
             // EXAMINE INBOX → 2 messages
-            MockExchange::ok(vec!["* 2 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 2 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
             // UID FETCH 1:* (RFC822.SIZE)
-            MockExchange::ok(vec![
+            MockExchange::ok("UID FETCH 1:* (RFC822.SIZE)", vec![
                 "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
                 "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
-            ])
-            .expect_command("UID FETCH 1:* (RFC822.SIZE)"),
+            ]),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -339,14 +342,15 @@ mod tests {
         // [Gmail] is NoSelect → filtered out; only INBOX is examined
         let server = MockServer::start(&[], vec![
             // LIST → NoSelect folder + real mailbox
-            MockExchange::ok(vec![
+            MockExchange::ok("LIST \"\" *", vec![
                 "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
                 "* LIST () \"/\" INBOX\r\n".into(),
-            ])
-            .expect_command("LIST \"\" *"),
+            ]),
             // EXAMINE INBOX (only INBOX is examined, [Gmail] is skipped)
-            MockExchange::ok(vec!["* 0 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
+            MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                "* 0 EXISTS\r\n".into(),
+                "* 0 RECENT\r\n".into(),
+            ]),
         ]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");

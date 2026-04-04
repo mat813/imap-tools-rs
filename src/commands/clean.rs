@@ -199,10 +199,10 @@ mod tests {
     #[test]
     fn cleanup_skips_small_mailbox() {
         // exists = 50 ≤ 300 → should return immediately without UID FETCH
-        let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec!["* 50 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                .expect_command("EXAMINE \"INBOX\""),
-        ]);
+        let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
+            "* 50 EXISTS\r\n".into(),
+            "* 0 RECENT\r\n".into(),
+        ])]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -221,14 +221,12 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("EXAMINE \"INBOX\""),
+                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID FETCH RFC822.SIZE INTERNALDATE → small messages
-                MockExchange::ok(vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 1024 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 1024 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ])
-                .expect_command("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)"),
             ],
         );
         let base = test_base();
@@ -249,17 +247,14 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("EXAMINE \"INBOX\""),
+                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID FETCH → 2 large messages (total > 1 MB)
-                MockExchange::ok(vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ])
-                .expect_command("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)"),
+                ]),
                 // UID SEARCH → no results
-                MockExchange::ok(vec!["* SEARCH\r\n".into()])
-                    .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
+                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH\r\n".into()])
             ],
         );
         let base = test_base();
@@ -288,20 +283,16 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("EXAMINE \"INBOX\""),
+                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID FETCH → 2 large messages (total 1.2 MB)
-                MockExchange::ok(vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ])
-                .expect_command("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)"),
+                ]),
                 // UID SEARCH (1 day) → empty
-                MockExchange::ok(vec!["* SEARCH\r\n".into()])
-                    .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
+                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH\r\n".into()]),
                 // UID SEARCH (365 days) → UIDs 1 and 2
-                MockExchange::ok(vec!["* SEARCH 1 2\r\n".into()])
-                    .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
+                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH 1 2\r\n".into()])
             ],
         );
         let base = test_base();
@@ -321,17 +312,14 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("EXAMINE \"INBOX\""),
+                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID FETCH → 2 large old messages (total > 1 MB)
-                MockExchange::ok(vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ])
-                .expect_command("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)"),
+                ]),
                 // UID SEARCH → old messages to delete
-                MockExchange::ok(vec!["* SEARCH 1 2\r\n".into()])
-                    .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
+                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",vec!["* SEARCH 1 2\r\n".into()])
             ],
         );
         let base = test_base();
@@ -351,24 +339,20 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("EXAMINE \"INBOX\""),
+                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID FETCH RFC822.SIZE INTERNALDATE → 2 large old messages (total > 1 MB)
-                MockExchange::ok(vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ])
-                .expect_command("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)"),
+                ]),
                 // UID SEARCH → old messages to delete
-                MockExchange::ok(vec!["* SEARCH 1 2\r\n".into()])
-                    .expect_command_re(r"UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d"),
+                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",vec!["* SEARCH 1 2\r\n".into()]),
                 // SELECT INBOX (read-write for deletion)
-                MockExchange::ok(vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()])
-                    .expect_command("SELECT \"INBOX\""),
+                MockExchange::ok("SELECT \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
                 // UID STORE +FLAGS (\Deleted)
-                MockExchange::ok(vec![]).expect_command("UID STORE 1:2 +FLAGS (\\Deleted)"),
+                MockExchange::ok("UID STORE 1:2 +FLAGS (\\Deleted)",vec![]),
                 // CLOSE (expunge)
-                MockExchange::ok(vec![]).expect_command("CLOSE"),
+                MockExchange::ok("CLOSE",vec![]),
             ],
         );
         let base = test_base();

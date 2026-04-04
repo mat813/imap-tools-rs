@@ -70,9 +70,7 @@ mod tests {
 
     #[test]
     fn create_mailbox_success() {
-        let server = MockServer::start(&[], vec![
-            MockExchange::ok(vec![]).expect_command("CREATE \"NewFolder\""),
-        ]);
+        let server = MockServer::start(&[], vec![MockExchange::ok("CREATE \"NewFolder\"", vec![])]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = Create {
@@ -93,9 +91,10 @@ mod tests {
 
     #[test]
     fn create_mailbox_already_exists() {
-        let server = MockServer::start(&[], vec![
-            MockExchange::no("Mailbox already exist").expect_command("CREATE \"INBOX\""),
-        ]);
+        let server = MockServer::start(&[], vec![MockExchange::no(
+            "CREATE \"INBOX\"",
+            "Mailbox already exist",
+        )]);
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = Create {
