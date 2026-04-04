@@ -44,9 +44,11 @@ impl List {
             clippy::literal_string_with_formatting_args,
             reason = "We need it for later"
         )]
-        let mut renderer =
-            new_renderer("Mailbox List", "{0:<42} {1}", &["Mailbox", "Mailbox extra"])
-                .or_raise(|| ListError("new renderer"))?;
+        let mut renderer = new_renderer(config.base.renderer, "Mailbox List", "{0:<42} {1}", &[
+            "Mailbox",
+            "Mailbox extra",
+        ])
+        .or_raise(|| ListError("new renderer"))?;
 
         Self::run(&mut imap, &mut renderer)
     }
@@ -78,7 +80,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = List::run(&mut imap, &mut renderer);
         drop(imap);
         server.join();

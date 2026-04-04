@@ -55,6 +55,7 @@ impl Clean {
             reason = "We need it for later"
         )]
         let mut renderer = new_renderer(
+            config.base.renderer,
             if config.base.dry_run {
                 "Mailbox Cleaner DRY-RUN"
             } else {
@@ -206,7 +207,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
@@ -232,7 +233,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
@@ -260,7 +261,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
@@ -298,7 +299,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true);
         drop(imap);
         server.join();
@@ -325,7 +326,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true);
         drop(imap);
         server.join();
@@ -358,7 +359,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);

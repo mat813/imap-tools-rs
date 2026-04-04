@@ -112,6 +112,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "imap.example.com",
                     ),
@@ -179,7 +180,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The server must be set, at src/libs/base_config.rs:105:13,
+            |-> The server must be set, at src/libs/base_config.rs:107:13,
         )
         ");
     }
@@ -198,7 +199,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The username must be set, at src/libs/base_config.rs:109:13,
+            |-> The username must be set, at src/libs/base_config.rs:111:13,
         )
         ");
     }
@@ -235,9 +236,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:140:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:134:22,
+            |-> missing closing quote, at src/libs/base_config.rs:140:22,
         )
         "#);
     }
@@ -258,9 +259,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:141:22
+            password command exec failed, at src/libs/base_config.rs:147:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:147:22,
         )
         ");
     }
@@ -281,7 +282,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:137:22,
+            password command is empty, at src/libs/base_config.rs:143:22,
         )
         ");
     }
@@ -317,7 +318,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:113:13,
+            |-> The password or password command must be set, at src/libs/base_config.rs:115:13,
         )
         ");
     }
@@ -368,6 +369,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "imap.example.com",
                     ),
@@ -458,6 +460,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "override.example.com",
                     ),

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::libs::mode::Mode;
+use crate::libs::{mode::Mode, render::RendererArg};
 
 #[derive(Args, Debug, Clone, Default)]
 pub struct Generic {
@@ -60,6 +60,15 @@ pub struct Generic {
     )]
     #[arg(short = 'm', long)]
     pub mode: Option<Mode>,
+
+    /// Which renderer to use.
+    ///
+    /// Possible values are:
+    ///
+    /// - terminal
+    #[cfg_attr(feature = "ratatui", doc = "", doc = "- ratatui")]
+    #[arg(long, env = "RENDERER")]
+    pub renderer: Option<RendererArg>,
 
     /// Do not actually do any changes to the server.
     #[arg(short = 'n', long)]

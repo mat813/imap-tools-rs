@@ -89,8 +89,11 @@ impl DiskUsage {
             clippy::literal_string_with_formatting_args,
             reason = "We need it for later"
         )]
-        let mut renderer = new_renderer("Mailbox Size", "{0:<42} {1}", &["Mailbox", "Attributes"])
-            .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
+        let mut renderer = new_renderer(config.renderer, "Mailbox Size", "{0:<42} {1}", &[
+            "Mailbox",
+            "Attributes",
+        ])
+        .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
 
         self.run(&mut imap, &mut renderer)
     }
@@ -256,7 +259,7 @@ mod tests {
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_du();
         cmd.include_re = vec![regex::Regex::new("^INBOX$").expect("valid regex")];
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
@@ -281,7 +284,7 @@ mod tests {
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_du();
         cmd.exclude_re = vec![regex::Regex::new("^Sent$").expect("valid regex")];
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
@@ -303,7 +306,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
@@ -330,7 +333,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
@@ -355,7 +358,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();

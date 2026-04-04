@@ -53,6 +53,7 @@ impl Archive {
             reason = "We need it for later"
         )]
         let mut renderer = new_renderer(
+            config.base.renderer,
             if config.base.dry_run {
                 "Mailbox Archiving DRY-RUN"
             } else {
@@ -328,7 +329,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
@@ -378,7 +379,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
@@ -419,7 +420,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
@@ -453,7 +454,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, true);
         drop(imap);
         server.join();

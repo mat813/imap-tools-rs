@@ -5,7 +5,7 @@ use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 
-use crate::libs::{args::Generic, mode::Mode};
+use crate::libs::{args::Generic, mode::Mode, render::RendererArg};
 
 #[derive(Debug, Display)]
 pub struct BaseConfigError(String);
@@ -14,6 +14,8 @@ impl std::error::Error for BaseConfigError {}
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct BaseConfig {
+    pub renderer: Option<RendererArg>,
+
     pub server: Option<String>,
 
     #[serde(default)]
@@ -115,6 +117,10 @@ impl BaseConfig {
             ));
         }
 
+        if let Some(renderer) = args.renderer {
+            self.renderer = Some(renderer);
+        }
+
         Ok(self)
     }
 
@@ -195,6 +201,7 @@ mod tests {
         if cfg!(any(feature = "rustls", feature = "openssl")) {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "imap.example.com",
                 ),
@@ -253,7 +260,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:105:13,
+            The server must be set, at src/libs/base_config.rs:107:13,
         )
         ");
     }
@@ -270,7 +277,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:109:13,
+            The username must be set, at src/libs/base_config.rs:111:13,
         )
         ");
     }
@@ -307,9 +314,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:134:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:140:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:134:22,
+            |-> missing closing quote, at src/libs/base_config.rs:140:22,
         )
         "#);
     }
@@ -330,9 +337,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:141:22
+            password command exec failed, at src/libs/base_config.rs:147:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:141:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:147:22,
         )
         ");
     }
@@ -353,7 +360,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:137:22,
+            password command is empty, at src/libs/base_config.rs:143:22,
         )
         ");
     }
@@ -387,7 +394,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:113:13,
+            The password or password command must be set, at src/libs/base_config.rs:115:13,
         )
         ");
     }
@@ -411,9 +418,9 @@ mod tests {
             config,
             @"
         Err(
-            config file parsing failed, at src/libs/base_config.rs:57:18
+            config file parsing failed, at src/libs/base_config.rs:59:18
             |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:57:18,
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:59:18,
         )
         "
         );
@@ -440,6 +447,7 @@ mod tests {
         if cfg!(any(feature = "rustls", feature = "openssl")) {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "imap.example.com",
                 ),
@@ -521,6 +529,7 @@ mod tests {
         if cfg!(any(feature = "rustls", feature = "openssl")) {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "override.example.com",
                 ),

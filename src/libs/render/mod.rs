@@ -1,10 +1,51 @@
 use std::fmt::Display;
 
 use derive_more::Display;
-use exn::{Result, ResultExt as _};
+use exn::{Exn, Result, ResultExt as _, bail};
+use serde::{Deserialize, Serialize};
 mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display)]
+pub enum RendererArg {
+    Terminal,
+    #[cfg(feature = "ratatui")]
+    Ratatui,
+}
+
+#[allow(clippy::derivable_impls, reason = "special cases")]
+impl Default for RendererArg {
+    fn default() -> Self {
+        #[cfg(feature = "ratatui")]
+        if terminal::Renderer::is_usable() {
+            return Self::Ratatui;
+        }
+
+        Self::Terminal
+    }
+}
+
+#[derive(Clone, Debug, derive_more::Display)]
+pub enum RendererArgError {
+    #[display("Unknown renderer {_0:?}")]
+    Unknown(String),
+}
+
+impl std::error::Error for RendererArgError {}
+
+impl std::str::FromStr for RendererArg {
+    type Err = Exn<RendererArgError>;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            #[cfg(feature = "ratatui")]
+            "ratatui" => Ok(Self::Ratatui),
+            "terminal" => Ok(Self::Terminal),
+            s => bail!(RendererArgError::Unknown(s.to_owned())),
+        }
+    }
+}
 
 #[derive(Debug, Display)]
 pub struct RendererError(String);
@@ -34,20 +75,20 @@ pub trait Renderer {
     tracing::instrument(level = "trace", skip(title, format, headers), err(level = "info"))
 )]
 pub fn new_renderer(
+    renderer: Option<RendererArg>,
     title: &'static str,
     format: &'static str,
     headers: &[&'static str],
 ) -> Result<Box<dyn Renderer>, RendererError> {
-    #[cfg(feature = "ratatui")]
-    if terminal::Renderer::is_usable() && option_env!("RENDERER").is_none_or(|v| v == "ratatui") {
-        return Ok(Box::new(
+    match renderer.unwrap_or_default() {
+        #[cfg(feature = "ratatui")]
+        RendererArg::Ratatui => Ok(Box::new(
             terminal::Renderer::new(title, format, headers)
                 .or_raise(|| RendererError("terminal".to_owned()))?,
-        ));
+        )),
+        RendererArg::Terminal => Ok(Box::new(
+            print::Renderer::new(title, format, headers)
+                .or_raise(|| RendererError("print".to_owned()))?,
+        )),
     }
-
-    Ok(Box::new(
-        print::Renderer::new(title, format, headers)
-            .or_raise(|| RendererError("print".to_owned()))?,
-    ))
 }

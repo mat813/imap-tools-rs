@@ -57,6 +57,7 @@ impl FindDups {
         tracing::trace!(?config);
 
         let mut renderer = new_renderer(
+            config.base.renderer,
             if config.base.dry_run {
                 "Mailbox Deduplication DRY-RUN"
             } else {
@@ -258,7 +259,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
@@ -295,7 +296,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
@@ -312,7 +313,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
@@ -341,7 +342,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true);
         drop(imap);
         server.join();
@@ -379,7 +380,7 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer("test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
