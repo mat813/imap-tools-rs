@@ -37,6 +37,19 @@ const MIN_MESSAGE_COUNT: u32 = 300;
 /// Minimum total mailbox size in bytes before cleanup is considered.
 const MIN_TOTAL_SIZE_BYTES: i64 = 1_000_000;
 
+static RENDERER_FORMAT: &str =
+    "{0:<42} | {1:>5} | {2:>10} | {3:>4} | {4:>11} | {5:>11} | {6:>4} | {7}";
+static RENDERER_HEADERS: &[&str] = &[
+    "Mailbox",
+    "Msgs",
+    "Size",
+    "Del",
+    "First date",
+    "Cutoff date",
+    "Days",
+    "Sequence",
+];
+
 impl Clean {
     #[cfg_attr(
         feature = "tracing",
@@ -50,10 +63,6 @@ impl Clean {
 
         let mut imap = Imap::connect(&config).or_raise(|| CleanError("connect".to_owned()))?;
 
-        #[expect(
-            clippy::literal_string_with_formatting_args,
-            reason = "We need it for later"
-        )]
         let mut renderer = new_renderer(
             config.base.renderer,
             if config.base.dry_run {
@@ -61,17 +70,8 @@ impl Clean {
             } else {
                 "Mailbox Cleaner"
             },
-            "{0:<42} | {1:>5} | {2:>10} | {3:>4} | {4:>11} | {5:>11} | {6:>4} | {7}",
-            &[
-                "Mailbox",
-                "Msgs",
-                "Size",
-                "Del",
-                "First date",
-                "Cutoff date",
-                "Days",
-                "Sequence",
-            ],
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
         )
         .or_raise(|| CleanError("new renderer".to_owned()))?;
 
@@ -189,6 +189,8 @@ impl Clean {
 mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
+    use insta::assert_snapshot;
+
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
@@ -207,12 +209,19 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
     #[test]
@@ -233,12 +242,19 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
     #[test]
@@ -261,12 +277,19 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
     #[test]
@@ -299,11 +322,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence
+        INBOX,350,1.14 MiB,2,01-Jan-2020,04-Apr-2025,1920,1:2
+        ");
     }
 
     #[test]
@@ -326,11 +359,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence
+        INBOX,350,1.14 MiB,2,01-Jan-2020,05-Mar-2026,2255,1:2
+        ");
     }
 
     #[test]
@@ -359,11 +402,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence
+        INBOX,350,1.14 MiB,2,01-Jan-2020,05-Mar-2026,2255,1:2
+        ");
     }
 }

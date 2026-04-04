@@ -19,6 +19,10 @@ pub enum RendererArg {
 #[allow(clippy::derivable_impls, reason = "special cases")]
 impl Default for RendererArg {
     fn default() -> Self {
+        if cfg!(test) {
+            return Self::Csv;
+        }
+
         #[cfg(feature = "ratatui")]
         if terminal::Renderer::is_usable() {
             return Self::Ratatui;
@@ -71,6 +75,13 @@ pub trait Renderer {
     where
         Self: Sized;
     fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError>;
+
+    /// Returns the accumulated output as a string, for renderers that buffer internally.
+    /// Other renderers return an empty string.
+    #[cfg(test)]
+    fn output(&mut self) -> String {
+        String::new()
+    }
 }
 
 #[cfg_attr(

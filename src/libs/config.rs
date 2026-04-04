@@ -140,6 +140,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "imap.example.com",
                     ),
@@ -397,6 +398,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "imap.example.com",
                     ),
@@ -488,6 +490,7 @@ mod tests {
             assert_debug_snapshot!(config, @r#"
             Config {
                 base: BaseConfig {
+                    renderer: None,
                     server: Some(
                         "override.example.com",
                     ),

@@ -225,6 +225,7 @@ mod tests {
         } else {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "imap.example.com",
                 ),
@@ -471,6 +472,7 @@ mod tests {
         } else {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "imap.example.com",
                 ),
@@ -553,6 +555,7 @@ mod tests {
         } else {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
+                renderer: None,
                 server: Some(
                     "override.example.com",
                 ),

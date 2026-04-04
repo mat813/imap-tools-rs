@@ -37,6 +37,16 @@ struct MyExtra {
     days: u32, // TODO: should this be a float instead ?
 }
 
+static RENDERER_FORMAT: &str = "{0:<42} | {1:>5} | {2:<25} | {3:>5} | {4:>11} | {5}";
+static RENDERER_HEADERS: &[&str] = &[
+    "Mailbox",
+    "Msgs",
+    "Archive mbx",
+    "Arc",
+    "Cutoff date",
+    "Sequence",
+];
+
 impl Archive {
     #[cfg_attr(
         feature = "tracing",
@@ -48,10 +58,6 @@ impl Archive {
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        #[expect(
-            clippy::literal_string_with_formatting_args,
-            reason = "We need it for later"
-        )]
         let mut renderer = new_renderer(
             config.base.renderer,
             if config.base.dry_run {
@@ -59,15 +65,8 @@ impl Archive {
             } else {
                 "Mailbox Archiving"
             },
-            "{0:<42} | {1:>5} | {2:<25} | {3:>5} | {4:>11} | {5}",
-            &[
-                "Mailbox",
-                "Msgs",
-                "Archive mbx",
-                "Arc",
-                "Cutoff date",
-                "Sequence",
-            ],
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
         )
         .or_raise(|| ArchiveError("new renderer".to_owned()))?;
 
@@ -284,6 +283,7 @@ mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
     use chrono::{FixedOffset, TimeZone as _};
+    use insta::assert_snapshot;
 
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
@@ -329,11 +329,21 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Archiving",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
+        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
+        ");
     }
 
     #[test]
@@ -379,11 +389,21 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Archiving",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
+        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
+        ");
     }
 
     #[test]
@@ -420,11 +440,18 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Archiving",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence");
     }
 
     #[test]
@@ -454,10 +481,20 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Archiving",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
+        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
+        ");
     }
 }

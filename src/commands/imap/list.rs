@@ -44,6 +44,9 @@ pub struct List {
     reference: Option<String>,
 }
 
+static RENDERER_FORMAT: &str = "{0:<42} {1}";
+static RENDERER_HEADERS: &[&str] = &["Mailbox", "Attributes"];
+
 impl List {
     #[cfg_attr(
         feature = "tracing",
@@ -58,14 +61,12 @@ impl List {
         let mut imap: Imap<()> =
             Imap::connect_base(&config).or_raise(|| ImapListCommandError("connect".into()))?;
 
-        #[expect(
-            clippy::literal_string_with_formatting_args,
-            reason = "We need it for later"
-        )]
-        let mut renderer = new_renderer(config.renderer, "Mailbox List", "{0:<42} {1}", &[
-            "Mailbox",
-            "Attributes",
-        ])
+        let mut renderer = new_renderer(
+            config.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
         .or_raise(|| ImapListCommandError("new renderer".to_owned()))?;
 
         self.run(&mut imap, &mut renderer)
@@ -120,6 +121,8 @@ impl List {
 mod tests {
     #![expect(clippy::expect_used, clippy::trivial_regex, reason = "tests")]
 
+    use insta::assert_snapshot;
+
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
@@ -148,11 +151,22 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_list();
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Attributes
+        INBOX,[]
+        Sent,[]
+        ");
     }
 
     #[test]
@@ -165,11 +179,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let cmd = default_list();
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Attributes
+        INBOX,[]
+        ");
     }
 
     #[test]
@@ -182,11 +206,22 @@ mod tests {
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
         cmd.no_select = true;
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Attributes
+        [Gmail],[NoSelect]
+        INBOX,[]
+        ");
     }
 
     #[test]
@@ -200,11 +235,21 @@ mod tests {
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
         cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Attributes
+        INBOX,[]
+        ");
     }
 
     #[test]
@@ -219,10 +264,21 @@ mod tests {
         let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
         let mut cmd = default_list();
         cmd.exclude_re = vec![Regex::new("^Spam").expect("valid regex")];
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox List",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Attributes
+        INBOX,[]
+        Sent,[]
+        ");
     }
 }

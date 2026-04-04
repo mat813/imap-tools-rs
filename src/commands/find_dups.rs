@@ -45,6 +45,9 @@ static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|
         .unwrap()
 });
 
+static RENDERER_FORMAT: &str = "[{0}] {1} {2}";
+static RENDERER_HEADERS: &[&str] = &["Mailbox", "Dups", "Sequence"];
+
 impl FindDups {
     #[cfg_attr(
         feature = "tracing",
@@ -63,8 +66,8 @@ impl FindDups {
             } else {
                 "Mailbox Deduplication"
             },
-            "[{0}] {1} {2}",
-            &["Mailbox", "Dups", "Sequence"],
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
         )
         .or_raise(|| DuError("new renderer".to_owned()))?;
 
@@ -195,6 +198,8 @@ impl FindDups {
 mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
+    use insta::assert_snapshot;
+
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, header_fetch_line, test_base};
 
@@ -259,11 +264,18 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Deduplication",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Dups,Sequence");
     }
 
     #[test]
@@ -296,11 +308,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Deduplication",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @r#"
+        Mailbox,Dups,Sequence
+        INBOX,2,"3,5"
+        "#);
     }
 
     #[test]
@@ -313,11 +335,18 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Deduplication",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Dups,Sequence");
     }
 
     #[test]
@@ -342,11 +371,21 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Deduplication",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Dups,Sequence
+        INBOX,1,3
+        ");
     }
 
     #[test]
@@ -380,10 +419,20 @@ mod tests {
         let base = test_base();
         let mut imap: Imap<serde_value::Value> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(base.renderer, "test", "{0}", &["col"]).expect("renderer");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Deduplication",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"
+        Mailbox,Dups,Sequence
+        INBOX,1,3
+        ");
     }
 }
