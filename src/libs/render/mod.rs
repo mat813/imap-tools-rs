@@ -3,12 +3,14 @@ use std::fmt::Display;
 use derive_more::Display;
 use exn::{Exn, Result, ResultExt as _, bail};
 use serde::{Deserialize, Serialize};
+mod csv;
 mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display)]
 pub enum RendererArg {
+    Csv,
     Terminal,
     #[cfg(feature = "ratatui")]
     Ratatui,
@@ -39,6 +41,7 @@ impl std::str::FromStr for RendererArg {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
+            "csv" => Ok(Self::Csv),
             #[cfg(feature = "ratatui")]
             "ratatui" => Ok(Self::Ratatui),
             "terminal" => Ok(Self::Terminal),
@@ -81,6 +84,10 @@ pub fn new_renderer(
     headers: &[&'static str],
 ) -> Result<Box<dyn Renderer>, RendererError> {
     match renderer.unwrap_or_default() {
+        RendererArg::Csv => Ok(Box::new(
+            csv::Renderer::new(title, format, headers)
+                .or_raise(|| RendererError("csv".to_owned()))?,
+        )),
         #[cfg(feature = "ratatui")]
         RendererArg::Ratatui => Ok(Box::new(
             terminal::Renderer::new(title, format, headers)
