@@ -34,29 +34,30 @@ pub struct Generic {
     #[arg(short = 'd', long)]
     pub debug: bool,
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
-    /// Select the TLS mode
-    ///
-    /// `auto_tls`: Automatically detect what connection mode should be used.
-    ///   This will use TLS if the port is 993, and otherwise STARTTLS if available.
-    ///   If no TLS communication mechanism is available, the connection will fail.
-    ///
-    /// `auto`: Automatically detect what connection mode should be used.
-    ///   This will use TLS if the port is 993, and otherwise STARTTLS if available.
-    ///   It will fallback to a plaintext connection if no TLS option can be used.
-    ///
-    /// `plaintext`: A plain unencrypted TCP connection
-    ///
-    /// `tls`: An encrypted TLS connection (needs feature rustls or openssl)
-    ///
-    /// `start_tls`: An eventually-encrypted (i.e., STARTTLS) connection (needs feature rustls or openssl)
-    #[arg(short = 'm', long)]
-    pub mode: Option<Mode>,
-
-    #[cfg(not(any(feature = "rustls", feature = "openssl")))]
-    /// TLS is disabled, recompile with either feature rustls or openssl.
-    ///
-    /// The only accepted value is `plaintext`, which is no encryption
+    #[cfg_attr(
+        any(feature = "rustls", feature = "openssl"),
+        doc = "Select the TLS mode",
+        doc = "",
+        doc = "`auto_tls`: Automatically detect what connection mode should be used.",
+        doc = "  This will use TLS if the port is 993, and otherwise STARTTLS if available.",
+        doc = "  If no TLS communication mechanism is available, the connection will fail.",
+        doc = "",
+        doc = "`auto`: Automatically detect what connection mode should be used.",
+        doc = "  This will use TLS if the port is 993, and otherwise STARTTLS if available.",
+        doc = "  It will fallback to a plaintext connection if no TLS option can be used.",
+        doc = "",
+        doc = "`plaintext`: A plain unencrypted TCP connection",
+        doc = "",
+        doc = "`tls`: An encrypted TLS connection (needs feature rustls or openssl)",
+        doc = "",
+        doc = "`start_tls`: An eventually-encrypted (i.e., STARTTLS) connection (needs feature rustls or openssl)"
+    )]
+    #[cfg_attr(
+        not(any(feature = "rustls", feature = "openssl")),
+        doc = "TLS is disabled, recompile with either feature rustls or openssl.",
+        doc = "",
+        doc = "The only accepted value is `plaintext`, which is no encryption"
+    )]
     #[arg(short = 'm', long)]
     pub mode: Option<Mode>,
 
