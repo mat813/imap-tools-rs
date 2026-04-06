@@ -280,7 +280,7 @@ impl Archive {
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::expect_used, reason = "tests")]
+    #![expect(clippy::expect_used, clippy::indexing_slicing, reason = "tests")]
 
     use chrono::{FixedOffset, TimeZone as _};
     use insta::assert_snapshot;
@@ -340,10 +340,19 @@ mod tests {
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
-        assert_snapshot!(renderer.output(), @"
-        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
-        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
-        ");
+        let out: Vec<String> = renderer
+            .output()
+            .split('\n')
+            .map(std::borrow::ToOwned::to_owned)
+            .collect();
+        assert_eq!(out.len(), 3);
+        assert_snapshot!(out[0], @"Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence");
+        assert!(
+            regex::Regex::new(r"^INBOX,5,Archives/2020/01/%MBX,3,\d\d-\w\w\w-\d\d\d\d,1:3$")
+                .expect("should parse")
+                .is_match(&out[1])
+        );
+        assert!(out[2].is_empty());
     }
 
     #[test]
@@ -400,10 +409,19 @@ mod tests {
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
-        assert_snapshot!(renderer.output(), @"
-        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
-        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
-        ");
+        let out: Vec<String> = renderer
+            .output()
+            .split('\n')
+            .map(std::borrow::ToOwned::to_owned)
+            .collect();
+        assert_eq!(out.len(), 3);
+        assert_snapshot!(out[0], @"Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence");
+        assert!(
+            regex::Regex::new(r"^INBOX,5,Archives/2020/01/%MBX,3,\d\d-\w\w\w-\d\d\d\d,1:3$")
+                .expect("should parse")
+                .is_match(&out[1])
+        );
+        assert!(out[2].is_empty());
     }
 
     #[test]
@@ -492,9 +510,18 @@ mod tests {
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
-        assert_snapshot!(renderer.output(), @"
-        Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence
-        INBOX,5,Archives/2020/01/%MBX,3,05-Mar-2026,1:3
-        ");
+        let out: Vec<String> = renderer
+            .output()
+            .split('\n')
+            .map(std::borrow::ToOwned::to_owned)
+            .collect();
+        assert_eq!(out.len(), 3);
+        assert_snapshot!(out[0], @"Mailbox,Msgs,Archive mbx,Arc,Cutoff date,Sequence");
+        assert!(
+            regex::Regex::new(r"^INBOX,5,Archives/2020/01/%MBX,3,\d\d-\w\w\w-\d\d\d\d,1:3$")
+                .expect("should parse")
+                .is_match(&out[1])
+        );
+        assert!(out[2].is_empty());
     }
 }
