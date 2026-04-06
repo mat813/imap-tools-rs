@@ -202,13 +202,10 @@ mod tests {
     #[test]
     fn cleanup_skips_small_mailbox() {
         // exists = 50 ≤ 300 → should return immediately without UID FETCH
-        let server = MockServer::start(
-            &[],
-            vec![MockExchange::ok(
-                "EXAMINE \"INBOX\"",
-                vec!["* 50 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()],
-            )],
-        );
+        let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
+            "* 50 EXISTS\r\n".into(),
+            "* 0 RECENT\r\n".into(),
+        ])]);
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
