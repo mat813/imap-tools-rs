@@ -202,10 +202,13 @@ mod tests {
     #[test]
     fn cleanup_skips_small_mailbox() {
         // exists = 50 ≤ 300 → should return immediately without UID FETCH
-        let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
-            "* 50 EXISTS\r\n".into(),
-            "* 0 RECENT\r\n".into(),
-        ])]);
+        let server = MockServer::start(
+            &[],
+            vec![MockExchange::ok(
+                "EXAMINE \"INBOX\"",
+                vec!["* 50 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()],
+            )],
+        );
         let base = test_base();
         let mut imap: Imap<MyExtra> =
             Imap::connect_base_on_port(&base, server.port).expect("connect");
@@ -333,10 +336,6 @@ mod tests {
         drop(imap);
         server.join();
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
-        assert_snapshot!(renderer.output(), @"
-        Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence
-        INBOX,350,1.14 MiB,2,01-Jan-2020,06-Apr-2025,1921,1:2
-        ");
         let out: Vec<String> = renderer
             .output()
             .split('\n')
@@ -345,9 +344,11 @@ mod tests {
         assert_eq!(out.len(), 3);
         assert_snapshot!(out[0], @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
         assert!(
-            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,1921,1:2$")
+            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,\d+,1:2$")
                 .expect("should parse")
-                .is_match(&out[1])
+                .is_match(&out[1]),
+            "not matching {:?}",
+            out[1]
         );
         assert!(out[2].is_empty());
     }
@@ -391,9 +392,11 @@ mod tests {
         assert_eq!(out.len(), 3);
         assert_snapshot!(out[0], @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
         assert!(
-            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,2256,1:2$")
+            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,\d+,1:2$")
                 .expect("should parse")
-                .is_match(&out[1])
+                .is_match(&out[1]),
+            "not matching {:?}",
+            out[1]
         );
         assert!(out[2].is_empty());
     }
@@ -444,9 +447,11 @@ mod tests {
         assert_eq!(out.len(), 3);
         assert_snapshot!(out[0], @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
         assert!(
-            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,2256,1:2$")
+            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,\d+,1:2$")
                 .expect("should parse")
-                .is_match(&out[1])
+                .is_match(&out[1]),
+            "not matching {:?}",
+            out[1]
         );
         assert!(out[2].is_empty());
     }
