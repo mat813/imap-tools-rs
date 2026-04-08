@@ -1,0 +1,8 @@
+---
+source: src/commands/imap/disk_usage.rs
+expression: renderer.output()
+---
+Mailbox,Attributes
+Beta,3.00 KiB
+Gamma,2.00 KiB
+Alpha,1.00 KiB

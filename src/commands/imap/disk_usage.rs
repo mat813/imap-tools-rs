@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
@@ -24,20 +22,12 @@ pub enum Sort {
     /// Sort by mailbox name, ascending
     #[default]
     Name,
+    /// Sort by mailbox name, descending
+    NameDesc,
     /// Sort by mailbox size, ascending
     Size,
-}
-
-impl FromStr for Sort {
-    type Err = ImapDuCommandError;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "size" => Ok(Self::Size),
-            "name" => Ok(Self::Name),
-            _ => Err(ImapDuCommandError(format!("Invalid sort {s}"))),
-        }
-    }
+    /// Sort by mailbox size, descending
+    SizeDesc,
 }
 
 #[derive(Args, Debug, Clone)]
@@ -189,7 +179,9 @@ impl DiskUsage {
 
         result.sort_by(|a, b| match self.sort {
             Sort::Name => a.0.cmp(&b.0),
+            Sort::NameDesc => b.0.cmp(&a.0),
             Sort::Size => a.1.cmp(&b.1),
+            Sort::SizeDesc => b.1.cmp(&a.1),
         });
 
         for (mbx, total) in result {
@@ -207,6 +199,7 @@ mod tests {
     #![expect(clippy::expect_used, clippy::trivial_regex, reason = "tests")]
 
     use insta::assert_snapshot;
+    use rstest::{Context, rstest};
 
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
@@ -226,24 +219,6 @@ mod tests {
             pattern: Some("*".to_owned()),
             reference: None,
         }
-    }
-
-    #[test]
-    fn sort_from_str_name() {
-        let sort = "name".parse::<Sort>().expect("name should parse");
-        assert!(matches!(sort, Sort::Name));
-    }
-
-    #[test]
-    fn sort_from_str_size() {
-        let sort = "size".parse::<Sort>().expect("size should parse");
-        assert!(matches!(sort, Sort::Size));
-    }
-
-    #[test]
-    fn sort_from_str_invalid() {
-        let result = "date".parse::<Sort>();
-        assert!(result.is_err(), "date should not parse as a valid sort");
     }
 
     #[test]
@@ -383,6 +358,73 @@ mod tests {
         Mailbox,Attributes
         INBOX,3.00 KiB
         ");
+    }
+
+    #[rstest]
+    #[case::name(Sort::Name)]
+    #[case::name_desc(Sort::NameDesc)]
+    #[case::size(Sort::Size)]
+    #[case::size_desc(Sort::SizeDesc)]
+    fn disk_usage_sort_by(
+        #[notrace]
+        #[context]
+        ctx: Context,
+        #[case] sort: Sort,
+    ) {
+        let server = MockServer::start(
+            &[],
+            // Alpha=1KiB, Beta=3KiB, Gamma=2KiB — LIST returns them alphabetically
+            vec![
+                MockExchange::ok("LIST \"\" *", vec![
+                    "* LIST () \"/\" Alpha\r\n".into(),
+                    "* LIST () \"/\" Beta\r\n".into(),
+                    "* LIST () \"/\" Gamma\r\n".into(),
+                ]),
+                MockExchange::ok("EXAMINE \"Alpha\"", vec![
+                    "* 1 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE)", vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
+                ]),
+                MockExchange::ok("EXAMINE \"Beta\"", vec![
+                    "* 1 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE)", vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 1024)\r\n".into(),
+                    "* 3 FETCH (UID 3 RFC822.SIZE 1024)\r\n".into(),
+                ]),
+                MockExchange::ok("EXAMINE \"Gamma\"", vec![
+                    "* 1 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE)", vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 1024)\r\n".into(),
+                ]),
+            ],
+        );
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut cmd = default_du();
+        cmd.sort = sort;
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Size",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
+        let result = cmd.run(&mut imap, &mut renderer);
+        drop(imap);
+        server.join();
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        assert_snapshot!(
+            format!("{}_{}", ctx.name, ctx.description.unwrap_or_default()),
+            renderer.output()
+        );
     }
 
     #[test]
