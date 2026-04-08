@@ -5,7 +5,172 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.9.0 (2026-04-08)
+
+### Chore
+
+ - <csr-id-754207379260f6573a5ede2bf500ec449df49009/> lock file maintenance
+ - <csr-id-000026700e96439e9554d21e9375e870d525e096/> utiliser cfg_attr pour n'avoir qu'une seule option
+ - <csr-id-00925453af7c272eb4f97a738726164388d3cc44/> update rust crate insta to v1.47.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.47.1 | 1.47.2 |
+ - <csr-id-afe568bd6b2b2035a6d09bb4cedca367771b3f72/> lock file maintenance
+ - <csr-id-00002410a3a85fc9f1a8017fb2d36d30087f7b18/> typos
+ - <csr-id-17d9f3f37abc358bb5391477d9a764916caa3131/> update rust crate insta to v1.47.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.47.0 | 1.47.1 |
+ - <csr-id-75d322174b3ef280aae4d389740e32f7b62356a9/> update rust crate insta to v1.47.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.46.3 | 1.47.0 |
+
+### New Features
+
+ - <csr-id-0000269056541cd270ca5f033b5de7f6463c3e8e/> ajouter un renderer csv
+
+### Bug Fixes
+
+ - <csr-id-00002770c34f0d7dca5d4193706f67cb4587f4b9/> add sorting name and size by descending order
+ - <csr-id-0000276058bf87fcba7ce2538bc2785ce401acec/> use clap's value_enum/ValueEnum to get help from enums
+   Convert Mode to an enum for this to work.
+ - <csr-id-00002750de65e7886b135390b714e9a24c26fc54/> add csv renderer to args
+ - <csr-id-000026808c25a7f0a7b2daf9bb6c9c2c1b8ba570/> ajouter le renderer aux arguments
+ - <csr-id-0000249061b6eb5a3058600ef986d2112f628257/> propagate unexpected IMAP errors in create/delete commands
+   Previously, any IMAP error other than the expected NO response was
+   printed to stdout and silently returned Ok(()), making failures
+   invisible to callers and scripts. Unexpected errors now bail with
+   a proper error.
+ - <csr-id-00002480108f74cc2c914ed1c0e0533f1ac7b437/> unfold RFC 2822 header continuations before parsing Message-ID
+   Folded headers (CRLF followed by whitespace) were not being unfolded,
+   causing duplicates with multi-line Message-ID headers to go undetected.
+ - <csr-id-000024701e705f893ce9e66cb661e5e065ba7c65/> use actual port in connection error message
+   The error was hardcoding port 143 even when a different port was
+   configured via config file or --port CLI argument.
+ - <csr-id-00002460de32f264fb59ab707b5fe13543bfdee2/> use resolved dry_run from config in destructive commands
+   When dry-run=true is set in the config file but not on the CLI,
+   the renderer title showed "DRY-RUN" but the actual IMAP operations
+   (SELECT/STORE/CLOSE) would still execute. Now the inner methods
+   receive dry_run from config.base.dry_run, which merges both sources.
+
+### Other
+
+ - <csr-id-0000243076f04f38a14a08d36ba6f004bc3d1455/> fix
+ - <csr-id-000024208857f63a01d7d5172a606ecc880e53f4/> fmt → nightly
+
+### Performance
+
+ - <csr-id-00002530e34ff6968c2ce611cb744b130060016f/> remove redundant terminal.clear() before ratatui re-init
+   The clear() call immediately before try_init_with_options() was a
+   no-op since reinitializing ratatui sets up a fresh terminal state.
+
+### Refactor
+
+ - <csr-id-000025403a5aba4ba9b5f03384862f612a051c08/> remove empty else branch workaround in base_config
+   The if-else-if-else with an empty last branch existed only to satisfy
+   clippy::else_if_without_else. Rewriting with clone_from + get_or_insert_with
+   expresses the intent more clearly.
+ - <csr-id-000025201be47a1a3187c2588d012e0b90150308/> name magic numbers in clean command
+   300 (minimum message count) and 1_000_000 (minimum total size in
+   bytes) are now named constants, making their intent clear.
+ - <csr-id-00002510880259df2c9c9517c352b8e7a1d007db/> extract delete_uids method on Imap to remove duplication
+   The select + uid_store(\Deleted) + close sequence was duplicated in
+   clean and find_dups. It now lives as Imap::delete_uids.
+ - <csr-id-000025003c6999b1080e275c79968b8062c41fa4/> deduplicate test_base() helper into test_helpers
+   The identical test_base() function was copied verbatim in 7 test
+   modules. It now lives in src/test_helpers.rs and is imported where
+   needed.
+
+### Style
+
+ - <csr-id-0000273074ec8dd76d13cf1a21f095e02e435cfb/> fmt
+ - <csr-id-00002570e69f8ea44aaf68c0dce498cf698c558d/> cleanup
+ - <csr-id-00002400bd15ee73ff03764d6a789642398a2a7c/> lints
+
+### Test
+
+ - <csr-id-000027203ead927da209cf04936ffbb1920b409e/> really fix
+ - <csr-id-00002710a38f03251bac1f6fb5fa4465f688262b/> fixup time sensitive tests
+ - <csr-id-0000270020cc5fc3c1b971b7454868ea1d57f2c8/> utiliser le renderer csv pour les tests
+ - <csr-id-0000266020b576ca0576f8522d9ce3fb5321c8c5/> merge ok/no and expect_command*
+ - <csr-id-00002650fae1bc9238e84bf452890ff723c51731/> add commands
+ - <csr-id-000026408c77280101badcd63edf47f56b42d53e/> add tests for non-dry-run archive with MOVE and COPY+DELETE fallback
+ - <csr-id-000026309dd443f0fc9a24ec95b24d417d98028c/> add tests for empty search result and multi-rule iteration in clean
+ - <csr-id-0000262061f5a8a9efa13a76fd952f05222e2db3/> add tests for folded headers, short Message-ID, no duplicates, and 3-way dedup
+ - <csr-id-00002610c1bef6aad96fde1370b2346b83fd7bf6/> add tests for Sort::from_str and DiskUsage include/exclude_re filtering
+ - <csr-id-00002600355e9a8565be885dca14de7de8e74c3e/> add tests for make_filter_re with only literals or only regex
+ - <csr-id-00002590fd0291a6a8db16fd638b6e9bf5447ba2/> add tests for --port and -m/--mode CLI flags
+ - <csr-id-000025802f2bcdafc85be44cc9b04633659dba4e/> add tests for Mode FromStr, Serialize, Deserialize, and Default
+ - <csr-id-000025609ccc5d2638b525be2a82769282105800/> cleanup
+ - <csr-id-00002550eb965294cc61cb873c820620e2acfd79/> add missing tests for list, exclude_re, and destructive paths
+   - commands/list.rs: extract run() helper and add list_renders_mailboxes test
+   - imap/list.rs: add list_exclude_re_filters_mailboxes test
+   - clean.rs: add cleanup_destructive_large_old_mailbox test (non-dry-run)
+   - find_dups.rs: add process_destructive_deletes_duplicates test (non-dry-run)
+   - update insta snapshots for shifted line numbers from earlier refactors
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 40 commits contributed to the release.
+ - 40 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add sorting name and size by descending order (0000277)
+    - Use clap's value_enum/ValueEnum to get help from enums (0000276)
+    - Add csv renderer to args (0000275)
+    - Lock file maintenance (7542073)
+    - Fmt (0000273)
+    - Really fix (0000272)
+    - Fixup time sensitive tests (0000271)
+    - Utiliser le renderer csv pour les tests (0000270)
+    - Ajouter un renderer csv (0000269)
+    - Ajouter le renderer aux arguments (0000268)
+    - Utiliser cfg_attr pour n'avoir qu'une seule option (0000267)
+    - Merge ok/no and expect_command* (0000266)
+    - Add commands (0000265)
+    - Add tests for non-dry-run archive with MOVE and COPY+DELETE fallback (0000264)
+    - Add tests for empty search result and multi-rule iteration in clean (0000263)
+    - Add tests for folded headers, short Message-ID, no duplicates, and 3-way dedup (0000262)
+    - Add tests for Sort::from_str and DiskUsage include/exclude_re filtering (0000261)
+    - Add tests for make_filter_re with only literals or only regex (0000260)
+    - Add tests for --port and -m/--mode CLI flags (0000259)
+    - Add tests for Mode FromStr, Serialize, Deserialize, and Default (0000258)
+    - Cleanup (0000257)
+    - Cleanup (0000256)
+    - Add missing tests for list, exclude_re, and destructive paths (0000255)
+    - Remove empty else branch workaround in base_config (0000254)
+    - Remove redundant terminal.clear() before ratatui re-init (0000253)
+    - Name magic numbers in clean command (0000252)
+    - Extract delete_uids method on Imap to remove duplication (0000251)
+    - Deduplicate test_base() helper into test_helpers (0000250)
+    - Propagate unexpected IMAP errors in create/delete commands (0000249)
+    - Unfold RFC 2822 header continuations before parsing Message-ID (0000248)
+    - Use actual port in connection error message (0000247)
+    - Use resolved dry_run from config in destructive commands (0000246)
+    - Update rust crate insta to v1.47.2 (0092545)
+    - Lock file maintenance (afe568b)
+    - Fix (0000243)
+    - Fmt → nightly (0000242)
+    - Typos (0000241)
+    - Lints (0000240)
+    - Update rust crate insta to v1.47.1 (17d9f3f)
+    - Update rust crate insta to v1.47.0 (75d3221)
+</details>
+
 ## v1.8.3 (2026-03-25)
+
+<csr-id-5ec2513a91c5964a1e61a088676bafb7d7b09386/>
+<csr-id-08f403cb52e2f47fc51104c71bd38de733ee96e3/>
 
 ### Chore
 
@@ -38,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release.
+ - 13 commits contributed to the release.
  - 13 days passed between releases.
  - 12 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -50,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.8.3 (43980a4)
     - Return a more meaningfull error in the exhaustive case (0000236)
     - Define a constant for minimum message id length (0000235)
     - Always keep the first message (0000234)
