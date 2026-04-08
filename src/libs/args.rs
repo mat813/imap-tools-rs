@@ -36,40 +36,17 @@ pub struct Generic {
 
     #[cfg_attr(
         any(feature = "rustls", feature = "openssl"),
-        doc = "Select the TLS mode",
-        doc = "",
-        doc = "`auto_tls`: Automatically detect what connection mode should be used.",
-        doc = "  This will use TLS if the port is 993, and otherwise STARTTLS if available.",
-        doc = "  If no TLS communication mechanism is available, the connection will fail.",
-        doc = "",
-        doc = "`auto`: Automatically detect what connection mode should be used.",
-        doc = "  This will use TLS if the port is 993, and otherwise STARTTLS if available.",
-        doc = "  It will fallback to a plaintext connection if no TLS option can be used.",
-        doc = "",
-        doc = "`plaintext`: A plain unencrypted TCP connection",
-        doc = "",
-        doc = "`tls`: An encrypted TLS connection (needs feature rustls or openssl)",
-        doc = "",
-        doc = "`start_tls`: An eventually-encrypted (i.e., STARTTLS) connection (needs feature rustls or openssl)"
+        doc = "Select the TLS mode"
     )]
     #[cfg_attr(
         not(any(feature = "rustls", feature = "openssl")),
-        doc = "TLS is disabled, recompile with either feature rustls or openssl.",
-        doc = "",
-        doc = "The only accepted value is `plaintext`, which is no encryption"
+        doc = "TLS is disabled, recompile with either feature rustls or openssl."
     )]
-    #[arg(short = 'm', long)]
+    #[arg(short = 'm', long, value_enum)]
     pub mode: Option<Mode>,
 
     /// Which renderer to use.
-    ///
-    /// Possible values are:
-    ///
-    /// - terminal
-    ///
-    /// - csv
-    #[cfg_attr(feature = "ratatui", doc = "", doc = "- ratatui")]
-    #[arg(long, env = "RENDERER")]
+    #[arg(long, env = "RENDERER", value_enum)]
     pub renderer: Option<RendererArg>,
 
     /// Do not actually do any changes to the server.

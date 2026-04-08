@@ -19,10 +19,12 @@ use crate::libs::{
 pub struct ImapDuCommandError(String);
 impl std::error::Error for ImapDuCommandError {}
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, clap::ValueEnum)]
 pub enum Sort {
+    /// Sort by mailbox name, ascending
     #[default]
     Name,
+    /// Sort by mailbox size, ascending
     Size,
 }
 
@@ -55,8 +57,8 @@ pub struct DiskUsage {
     #[arg(long)]
     pub exclude_re: Vec<Regex>,
 
-    /// sort results by `name` or `size`
-    #[arg(long, default_value = "name")]
+    /// sort results
+    #[arg(long, default_value = "name", value_enum)]
     pub sort: Sort,
 
     /// Show progress bar

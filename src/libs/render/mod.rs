@@ -8,11 +8,14 @@ mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display, clap::ValueEnum)]
 pub enum RendererArg {
+    /// CSV output
     Csv,
+    /// Table-ish output
     Terminal,
     #[cfg(feature = "ratatui")]
+    /// Ratatui-TUI output
     Ratatui,
 }
 

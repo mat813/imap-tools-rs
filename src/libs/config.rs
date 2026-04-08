@@ -125,9 +125,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            AutoTls,
-                        ),
+                        AutoTls,
                     ),
                     debug: true,
                     dry_run: false,
@@ -153,9 +151,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            Plaintext,
-                        ),
+                        Plaintext,
                     ),
                     debug: true,
                     dry_run: false,
@@ -383,9 +379,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            AutoTls,
-                        ),
+                        AutoTls,
                     ),
                     debug: true,
                     dry_run: true,
@@ -411,9 +405,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            Plaintext,
-                        ),
+                        Plaintext,
                     ),
                     debug: true,
                     dry_run: true,
@@ -475,9 +467,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            Tls,
-                        ),
+                        Tls,
                     ),
                     debug: true,
                     dry_run: true,
@@ -503,9 +493,7 @@ mod tests {
                     ),
                     password_command: None,
                     mode: Some(
-                        Mode(
-                            Plaintext,
-                        ),
+                        Plaintext,
                     ),
                     debug: true,
                     dry_run: true,
