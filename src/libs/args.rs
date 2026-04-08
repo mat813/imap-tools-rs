@@ -66,6 +66,8 @@ pub struct Generic {
     /// Possible values are:
     ///
     /// - terminal
+    ///
+    /// - csv
     #[cfg_attr(feature = "ratatui", doc = "", doc = "- ratatui")]
     #[arg(long, env = "RENDERER")]
     pub renderer: Option<RendererArg>,
