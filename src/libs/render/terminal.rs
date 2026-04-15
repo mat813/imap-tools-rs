@@ -12,7 +12,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table},
 };
 
-use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {
@@ -23,12 +23,14 @@ pub struct Renderer<'a> {
     title: &'static str,
 }
 
-impl RendererTrait for Renderer<'_> {
+impl RendererUsable for Renderer<'_> {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
     fn is_usable() -> bool {
         stdout().is_terminal()
     }
+}
 
+impl<const N: usize> RendererTrait<N> for Renderer<'_> {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -41,7 +43,7 @@ impl RendererTrait for Renderer<'_> {
     fn new(
         title: &'static str,
         _format: &'static str,
-        headers: &[&'static str],
+        headers: &[&'static str; N],
     ) -> Result<Self, RendererError> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
@@ -68,7 +70,7 @@ impl RendererTrait for Renderer<'_> {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
+    fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError> {
         let str_row: Vec<_> = row.iter().map(std::string::ToString::to_string).collect();
 
         #[cfg(feature = "tracing")]

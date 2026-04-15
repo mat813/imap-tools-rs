@@ -1,12 +1,16 @@
-use std::fmt::Display;
-
-use derive_more::Display;
-use exn::{Exn, Result, ResultExt as _, bail};
-use serde::{Deserialize, Serialize};
 mod csv;
 mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;
+mod traits;
+
+use exn::{Exn, Result, ResultExt as _, bail};
+use serde::{Deserialize, Serialize};
+
+pub use crate::libs::render::traits::Renderer;
+use crate::libs::render::traits::RendererError;
+#[cfg(feature = "ratatui")]
+use crate::libs::render::traits::RendererUsable as _;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display, clap::ValueEnum)]
 pub enum RendererArg {
@@ -57,46 +61,16 @@ impl std::str::FromStr for RendererArg {
     }
 }
 
-#[derive(Debug, Display)]
-pub struct RendererError(String);
-impl std::error::Error for RendererError {}
-
-pub trait Renderer {
-    #[allow(dead_code, reason = "when the feature is not enabled")]
-    fn is_usable() -> bool
-    where
-        Self: Sized,
-    {
-        true
-    }
-
-    fn new(
-        title: &'static str,
-        format: &'static str,
-        headers: &[&'static str],
-    ) -> Result<Self, RendererError>
-    where
-        Self: Sized;
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError>;
-
-    /// Returns the accumulated output as a string, for renderers that buffer internally.
-    /// Other renderers return an empty string.
-    #[cfg(test)]
-    fn output(&mut self) -> String {
-        String::new()
-    }
-}
-
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", skip(title, format, headers), err(level = "info"))
 )]
-pub fn new_renderer(
+pub fn new_renderer<const N: usize>(
     renderer: Option<RendererArg>,
     title: &'static str,
     format: &'static str,
-    headers: &[&'static str],
-) -> Result<Box<dyn Renderer>, RendererError> {
+    headers: &[&'static str; N],
+) -> Result<Box<dyn Renderer<N>>, RendererError> {
     match renderer.unwrap_or_default() {
         RendererArg::Csv => Ok(Box::new(
             csv::Renderer::new(title, format, headers)

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use exn::{Result, ResultExt as _};
 
-use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
@@ -11,7 +11,9 @@ pub struct Renderer {
     writer: csv::Writer<Vec<u8>>,
 }
 
-impl RendererTrait for Renderer {
+impl RendererUsable for Renderer {}
+
+impl<const N: usize> RendererTrait<N> for Renderer {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -24,7 +26,7 @@ impl RendererTrait for Renderer {
     fn new(
         _title: &'static str,
         _format: &'static str,
-        headers: &[&'static str],
+        headers: &[&'static str; N],
     ) -> Result<Self, RendererError> {
         let mut writer = csv::Writer::from_writer(Vec::new());
         writer
@@ -37,7 +39,7 @@ impl RendererTrait for Renderer {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
+    fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?row.iter().map(std::string::ToString::to_string).collect::<Vec<_>>());
 

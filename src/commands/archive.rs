@@ -38,7 +38,7 @@ struct MyExtra {
 }
 
 static RENDERER_FORMAT: &str = "{0:<42} | {1:>5} | {2:<25} | {3:>5} | {4:>11} | {5}";
-static RENDERER_HEADERS: &[&str] = &[
+static RENDERER_HEADERS: &[&str; 6] = &[
     "Mailbox",
     "Msgs",
     "Archive mbx",
@@ -102,7 +102,7 @@ impl Archive {
     )]
     fn archive(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer>,
+        renderer: &mut Box<dyn Renderer<6>>,
         mailbox: &str,
         extra: &MyExtra,
         dry_run: bool,

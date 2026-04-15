@@ -45,7 +45,7 @@ pub struct List {
 }
 
 static RENDERER_FORMAT: &str = "{0:<42} {1}";
-static RENDERER_HEADERS: &[&str] = &["Mailbox", "Attributes"];
+static RENDERER_HEADERS: &[&str; 2] = &["Mailbox", "Attributes"];
 
 impl List {
     #[cfg_attr(
@@ -75,7 +75,7 @@ impl List {
     fn run(
         &self,
         imap: &mut Imap<()>,
-        renderer: &mut Box<dyn Renderer>,
+        renderer: &mut Box<dyn Renderer<2>>,
     ) -> Result<(), ImapListCommandError> {
         for mailbox in imap
             .session

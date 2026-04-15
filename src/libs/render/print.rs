@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use exn::{Result, ResultExt as _};
 use strfmt::strfmt;
 
-use crate::libs::render::{Renderer as RendererTrait, RendererError};
+use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer<'a> {
@@ -12,7 +12,9 @@ pub struct Renderer<'a> {
     some_output: bool,
 }
 
-impl RendererTrait for Renderer<'_> {
+impl RendererUsable for Renderer<'_> {}
+
+impl<const N: usize> RendererTrait<N> for Renderer<'_> {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -25,7 +27,7 @@ impl RendererTrait for Renderer<'_> {
     fn new(
         _title: &'static str,
         format: &'static str,
-        headers: &[&'static str],
+        headers: &[&'static str; N],
     ) -> Result<Self, RendererError> {
         Ok(Self {
             format,
@@ -39,7 +41,7 @@ impl RendererTrait for Renderer<'_> {
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
     #[expect(clippy::print_stdout, reason = "we print")]
-    fn add_row(&mut self, row: &[&dyn Display]) -> Result<(), RendererError> {
+    fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?row.iter().map(std::string::ToString::to_string).collect::<Vec<_>>());
 
