@@ -57,7 +57,10 @@ impl List {
     fn run(imap: &mut Imap<MyExtra>, renderer: &mut Box<dyn Renderer>) -> Result<(), ListError> {
         for (mailbox, result) in imap.list().or_raise(|| ListError("list"))? {
             renderer
-                .add_row(&[&mailbox, &format!("{:?}", result.extra)])
+                .add_row(&[
+                    &mailbox,
+                    &std::fmt::from_fn(|f| write!(f, "{:?}", result.extra)),
+                ])
                 .or_raise(|| ListError("renderer add row"))?;
         }
 

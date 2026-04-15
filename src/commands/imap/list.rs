@@ -109,7 +109,10 @@ impl List {
             })
         {
             renderer
-                .add_row(&[&mailbox.name(), &format!("{:?}", mailbox.attributes())])
+                .add_row(&[
+                    &mailbox.name(),
+                    &std::fmt::from_fn(|f| write!(f, "{:?}", mailbox.attributes())),
+                ])
                 .or_raise(|| ImapListCommandError("renderer add row".to_owned()))?;
         }
 
