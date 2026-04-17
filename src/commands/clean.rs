@@ -39,7 +39,8 @@ const MIN_TOTAL_SIZE_BYTES: i64 = 1_000_000;
 
 static RENDERER_FORMAT: &str =
     "{0:<42} | {1:>5} | {2:>10} | {3:>4} | {4:>11} | {5:>11} | {6:>4} | {7}";
-static RENDERER_HEADERS: &[&str; 8] = &[
+static RENDERER_HEADERS_LEN: usize = 8;
+static RENDERER_HEADERS: &[&str; RENDERER_HEADERS_LEN] = &[
     "Mailbox",
     "Msgs",
     "Size",
@@ -102,7 +103,7 @@ impl Clean {
     )]
     fn cleanup_mailbox(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<8>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_HEADERS_LEN>>,
         mailbox: &str,
         extra: &MyExtra,
         dry_run: bool,

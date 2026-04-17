@@ -46,7 +46,8 @@ static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|
 });
 
 static RENDERER_FORMAT: &str = "[{0}] {1} {2}";
-static RENDERER_HEADERS: &[&str; 3] = &["Mailbox", "Dups", "Sequence"];
+static RENDERER_HEADERS_LEN: usize = 3;
+static RENDERER_HEADERS: &[&str; RENDERER_HEADERS_LEN] = &["Mailbox", "Dups", "Sequence"];
 
 impl FindDups {
     #[cfg_attr(
@@ -87,7 +88,7 @@ impl FindDups {
     )]
     fn process(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<3>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_HEADERS_LEN>>,
         mailbox: &str,
         dry_run: bool,
     ) -> Result<(), DuError> {
