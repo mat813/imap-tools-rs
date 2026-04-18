@@ -26,7 +26,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
     fn new(
         _title: &'static str,
         _format: &'static str,
-        headers: &[&'static str; N],
+        headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError> {
         let mut writer = csv::Writer::from_writer(Vec::new());
         writer

@@ -69,7 +69,7 @@ pub fn new_renderer<const N: usize>(
     renderer: Option<RendererArg>,
     title: &'static str,
     format: &'static str,
-    headers: &[&'static str; N],
+    headers: &'static [&'static str; N],
 ) -> Result<Box<dyn Renderer<N>>, RendererError> {
     match renderer.unwrap_or_default() {
         RendererArg::Csv => Ok(Box::new(

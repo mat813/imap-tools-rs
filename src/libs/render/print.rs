@@ -6,15 +6,15 @@ use strfmt::strfmt;
 use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
-pub struct Renderer<'a> {
-    format: &'a str,
-    headers: Vec<&'a str>,
+pub struct Renderer {
+    format: &'static str,
+    headers: &'static [&'static str],
     some_output: bool,
 }
 
-impl RendererUsable for Renderer<'_> {}
+impl RendererUsable for Renderer {}
 
-impl<const N: usize> RendererTrait<N> for Renderer<'_> {
+impl<const N: usize> RendererTrait<N> for Renderer {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -27,11 +27,11 @@ impl<const N: usize> RendererTrait<N> for Renderer<'_> {
     fn new(
         _title: &'static str,
         format: &'static str,
-        headers: &[&'static str; N],
+        headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError> {
         Ok(Self {
             format,
-            headers: headers.into(),
+            headers,
             some_output: false,
         })
     }
