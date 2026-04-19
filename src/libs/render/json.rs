@@ -69,3 +69,57 @@ impl Drop for Renderer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use insta::assert_snapshot;
+
+    use super::*;
+
+    macro_rules! row {
+        ($($e:expr),* $(,)?) => { [$(&$e as &dyn std::fmt::Display),*] };
+    }
+
+    fn make(headers: &'static [&'static str; 2]) -> impl RendererTrait<2> {
+        Renderer::new("T", "", headers).expect("new renderer")
+    }
+
+    #[test]
+    fn json_empty() {
+        let mut r = make(&["Name", "Value"]);
+        assert_snapshot!(r.output(), @"[]");
+    }
+
+    #[test]
+    fn json_single_row() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        assert_snapshot!(r.output(), @r#"[{"Name":"foo","Value":"bar"}]"#);
+    }
+
+    #[test]
+    fn json_multiple_rows() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        r.add_row(&row!["baz", "qux"]).expect("add_row");
+        assert_snapshot!(r.output(), @r#"[{"Name":"foo","Value":"bar"},{"Name":"baz","Value":"qux"}]"#);
+    }
+
+    #[test]
+    fn json_special_chars_are_escaped() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["line1\nline2", r#"has "quotes""#])
+            .expect("add_row");
+        assert_snapshot!(r.output(), @r#"[{"Name":"line1\nline2","Value":"has \"quotes\""}]"#);
+    }
+
+    #[test]
+    fn json_mixed_display_types() {
+        let mut r = make(&["Count", "Score"]);
+        r.add_row(&row![42i32, 100u64]).expect("add_row");
+        // All values are serialized as JSON strings, not numbers.
+        assert_snapshot!(r.output(), @r#"[{"Count":"42","Score":"100"}]"#);
+    }
+}

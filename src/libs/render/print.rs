@@ -10,6 +10,7 @@ pub struct Renderer {
     format: &'static str,
     headers: &'static [&'static str],
     some_output: bool,
+    buffer: String,
 }
 
 impl RendererUsable for Renderer {}
@@ -33,6 +34,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
             format,
             headers,
             some_output: false,
+            buffer: String::new(),
         })
     }
 
@@ -40,7 +42,6 @@ impl<const N: usize> RendererTrait<N> for Renderer {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self, row), err(level = "info"))
     )]
-    #[expect(clippy::print_stdout, reason = "we print")]
     fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?row.iter().map(std::string::ToString::to_string).collect::<Vec<_>>());
@@ -56,7 +57,8 @@ impl<const N: usize> RendererTrait<N> for Renderer {
                 .collect();
             let output = strfmt(self.format, &map)
                 .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
-            println!("{output}");
+            self.buffer.push_str(&output);
+            self.buffer.push('\n');
         }
         let map: HashMap<_, _> = row
             .iter()
@@ -65,8 +67,89 @@ impl<const N: usize> RendererTrait<N> for Renderer {
             .collect();
         let output = strfmt(self.format, &map)
             .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
-        println!("{output}");
+        self.buffer.push_str(&output);
+        self.buffer.push('\n');
 
         Ok(())
+    }
+
+    #[cfg(test)]
+    fn output(&mut self) -> String {
+        self.buffer.clone()
+    }
+}
+
+impl Drop for Renderer {
+    #[expect(clippy::print_stdout, reason = "we print")]
+    fn drop(&mut self) {
+        if !cfg!(test) {
+            print!("{}", self.buffer);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![expect(
+        clippy::expect_used,
+        clippy::literal_string_with_formatting_args,
+        reason = "tests"
+    )]
+
+    use insta::assert_snapshot;
+
+    use super::*;
+
+    macro_rules! row {
+        ($($e:expr),* $(,)?) => { [$(&$e as &dyn std::fmt::Display),*] };
+    }
+
+    fn make(format: &'static str, headers: &'static [&'static str; 2]) -> impl RendererTrait<2> {
+        Renderer::new("T", format, headers).expect("new renderer")
+    }
+
+    #[test]
+    fn print_empty() {
+        let mut r = make("{0} {1}", &["Name", "Value"]);
+        assert_snapshot!(r.output(), @"");
+    }
+
+    #[test]
+    fn print_writes_headers_on_first_row() {
+        let mut r = make("{0} {1}", &["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Name Value
+        foo bar
+        ");
+    }
+
+    #[test]
+    fn print_multiple_rows_headers_once() {
+        let mut r = make("{0} {1}", &["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        r.add_row(&row!["baz", "qux"]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Name Value
+        foo bar
+        baz qux
+        ");
+    }
+
+    #[test]
+    fn print_format_with_width_specifier() {
+        let mut r = make("{0:<10} {1}", &["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Name       Value
+        foo        bar
+        ");
+    }
+
+    #[test]
+    fn print_format_error_propagates() {
+        let mut r = make("{99}", &["A", "B"]);
+        let result = r.add_row(&row!["x", "y"]);
+        assert!(result.is_err());
     }
 }

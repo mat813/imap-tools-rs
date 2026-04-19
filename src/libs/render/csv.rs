@@ -66,3 +66,69 @@ impl Drop for Renderer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
+    use insta::assert_snapshot;
+
+    use super::*;
+
+    macro_rules! row {
+        ($($e:expr),* $(,)?) => { [$(&$e as &dyn std::fmt::Display),*] };
+    }
+
+    fn make(headers: &'static [&'static str; 2]) -> impl RendererTrait<2> {
+        Renderer::new("T", "", headers).expect("new renderer")
+    }
+
+    #[test]
+    fn csv_empty() {
+        let mut r = make(&["Name", "Value"]);
+        assert_snapshot!(r.output(), @"Name,Value");
+    }
+
+    #[test]
+    fn csv_single_row() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Name,Value
+        foo,bar
+        ");
+    }
+
+    #[test]
+    fn csv_multiple_rows() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        r.add_row(&row!["baz", "qux"]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Name,Value
+        foo,bar
+        baz,qux
+        ");
+    }
+
+    #[test]
+    fn csv_escapes_special_chars() {
+        let mut r = make(&["Name", "Value"]);
+        r.add_row(&row!["hello, world", r#"say "hi""#])
+            .expect("add_row");
+        assert_snapshot!(r.output(), @r#"
+        Name,Value
+        "hello, world","say ""hi"""
+        "#);
+    }
+
+    #[test]
+    fn csv_mixed_display_types() {
+        let mut r = make(&["Count", "Score"]);
+        r.add_row(&row![42i32, 100u64]).expect("add_row");
+        assert_snapshot!(r.output(), @"
+        Count,Score
+        42,100
+        ");
+    }
+}
