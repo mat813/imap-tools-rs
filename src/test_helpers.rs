@@ -4,17 +4,20 @@
     clippy::string_slice,
     reason = "test helper"
 )]
-use std::{
-    collections::VecDeque,
-    io::{BufRead as _, BufReader, Write as _},
-    net::{TcpListener, TcpStream},
-    thread,
-};
+use std::collections::VecDeque;
 
 use regex::Regex;
+use tokio::{
+    io::{AsyncBufReadExt as _, AsyncWriteExt as _, BufReader},
+    net::{TcpListener, TcpStream},
+    task::JoinHandle,
+};
 
+/// An expected IMAP command, either literal or regex-matched.
 pub enum ExpectCommand {
+    /// Expect an exact literal command string.
     Static(String),
+    /// Expect a command matching this regular expression.
     Regex(Regex),
 }
 
@@ -86,8 +89,10 @@ impl MockExchange {
 /// Handles `CAPABILITY`, `LOGIN`, and `LOGOUT` automatically.
 /// All other commands are answered from the provided script in order.
 pub struct MockServer {
+    /// The local port the mock server is listening on.
     pub port: u16,
-    handle: thread::JoinHandle<()>,
+    /// The background task running the mock server.
+    handle: JoinHandle<()>,
 }
 
 impl MockServer {
@@ -95,36 +100,38 @@ impl MockServer {
     ///
     /// `extra_caps`: additional capabilities beyond `IMAP4rev1 UIDPLUS` (e.g. `&["MOVE"]`).
     /// `script`: one `MockExchange` per non-handshake IMAP command.
-    pub fn start(extra_caps: &'static [&'static str], script: Vec<MockExchange>) -> Self {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("bind to local port");
+    pub async fn start(extra_caps: &'static [&'static str], script: Vec<MockExchange>) -> Self {
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind to local port");
         let port = listener.local_addr().expect("get local port").port();
-        let handle = thread::spawn(move || {
-            let (stream, _) = listener.accept().expect("accept connection");
-            run_session(stream, extra_caps, script);
+        let handle = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.expect("accept connection");
+            run_session(stream, extra_caps, script).await;
         });
         Self { port, handle }
     }
 
-    #[track_caller]
-    pub fn join(self) {
-        self.handle.join().expect("mock server thread panicked");
+    /// Wait for the mock server task to complete.
+    pub async fn join(self) {
+        self.handle.await.expect("mock server task panicked");
     }
 }
 
-#[track_caller]
-fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>) {
+async fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>) {
     let mut script: VecDeque<MockExchange> = script.into();
-    let mut reader = BufReader::new(stream.try_clone().expect("clone stream"));
-    let mut writer = stream;
+    let (read_half, mut writer) = stream.into_split();
+    let mut reader = BufReader::new(read_half);
     let mut exchange_index: usize = 0;
 
     writer
         .write_all(b"* OK IMAP4rev1 mock server ready\r\n")
+        .await
         .expect("write greeting");
 
     loop {
         let mut line = String::new();
-        if reader.read_line(&mut line).expect("read line") == 0 {
+        if reader.read_line(&mut line).await.expect("read line") == 0 {
             break;
         }
         let tag = line.split_whitespace().next().unwrap_or("A0").to_owned();
@@ -146,11 +153,13 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                         format!("* CAPABILITY {caps}\r\n{tag} OK CAPABILITY completed\r\n")
                             .as_bytes(),
                     )
+                    .await
                     .expect("write capability");
             },
             "LOGIN" => {
                 writer
                     .write_all(format!("{tag} OK LOGIN completed\r\n").as_bytes())
+                    .await
                     .expect("write login");
             },
             "LOGOUT" => {
@@ -158,6 +167,7 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                     .write_all(
                         format!("* BYE logging out\r\n{tag} OK LOGOUT completed\r\n").as_bytes(),
                     )
+                    .await
                     .expect("write logout");
                 break;
             },
@@ -167,14 +177,14 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                     .unwrap_or_else(|| panic!("Should have a command at {exchange_index}"));
                 let actual = line[tag.len()..].trim();
                 match exchange.command {
-                    ExpectCommand::Static(expected) => {
+                    ExpectCommand::Static(ref expected) => {
                         assert_eq!(
                             actual,
                             expected.as_str(),
                             "command mismatch at exchange #{exchange_index}: expected {expected:?}, got {actual:?}"
                         );
                     },
-                    ExpectCommand::Regex(re) => {
+                    ExpectCommand::Regex(ref re) => {
                         assert!(
                             re.is_match(actual),
                             "command mismatch at exchange #{exchange_index}: expected {re:?}, got {actual:?}"
@@ -183,10 +193,14 @@ fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>
                 }
                 exchange_index += 1;
                 for resp in &exchange.untagged {
-                    writer.write_all(resp.as_bytes()).expect("write untagged");
+                    writer
+                        .write_all(resp.as_bytes())
+                        .await
+                        .expect("write untagged");
                 }
                 writer
                     .write_all(format!("{tag} {}\r\n", exchange.tagged).as_bytes())
+                    .await
                     .expect("write tagged");
             },
         }

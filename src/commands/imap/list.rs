@@ -1,7 +1,8 @@
+use async_imap::imap_proto::NameAttribute;
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
-use imap_proto::NameAttribute;
+use futures::TryStreamExt as _;
 use regex::Regex;
 
 use crate::libs::{
@@ -53,14 +54,15 @@ impl List {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), ImapListCommandError> {
+    pub async fn execute(&self) -> Result<(), ImapListCommandError> {
         let config =
             BaseConfig::new(&self.config).or_raise(|| ImapListCommandError("config".into()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> =
-            Imap::connect_base(&config).or_raise(|| ImapListCommandError("connect".into()))?;
+        let mut imap: Imap<()> = Imap::connect_base(&config)
+            .await
+            .or_raise(|| ImapListCommandError("connect".into()))?;
 
         let mut renderer = new_renderer(
             config.renderer,
@@ -70,23 +72,36 @@ impl List {
         )
         .or_raise(|| ImapListCommandError("new renderer".to_owned()))?;
 
-        self.run(&mut imap, &mut renderer)
+        let result = self.run(&mut imap, &mut renderer).await;
+        imap.close()
+            .await
+            .or_raise(|| ImapListCommandError("imap close failed".to_owned()))?;
+        result
     }
 
-    fn run(
+    async fn run(
         &self,
         imap: &mut Imap<()>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
     ) -> Result<(), ImapListCommandError> {
-        for mailbox in imap
-            .session
-            .list(self.reference.as_deref(), self.pattern.as_deref())
-            .or_raise(|| {
-                ImapListCommandError(format!(
-                    "imap list failed with ref:{:?} and pattern:{:?}",
-                    self.reference, self.pattern
-                ))
-            })?
+        let names: Vec<_> = {
+            let stream = imap
+                .session
+                .list(self.reference.as_deref(), self.pattern.as_deref())
+                .await
+                .or_raise(|| {
+                    ImapListCommandError(format!(
+                        "imap list failed with ref:{:?} and pattern:{:?}",
+                        self.reference, self.pattern
+                    ))
+                })?;
+            stream
+                .try_collect()
+                .await
+                .or_raise(|| ImapListCommandError("imap list stream error".to_owned()))?
+        };
+
+        for mailbox in names
             .iter()
             // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
             .filter(|mbx| self.no_select || !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -146,14 +161,17 @@ mod tests {
         }
     }
 
-    #[test]
-    fn list_returns_all_regular_mailboxes() {
+    #[tokio::test]
+    async fn list_returns_all_regular_mailboxes() {
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = default_list();
         let mut renderer = new_renderer(
             base.renderer,
@@ -162,9 +180,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -173,15 +191,18 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn list_excludes_noselect_by_default() {
+    #[tokio::test]
+    async fn list_excludes_noselect_by_default() {
         // [Gmail] is NoSelect → filtered out; INBOX is kept
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
             "* LIST () \"/\" INBOX\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = default_list();
         let mut renderer = new_renderer(
             base.renderer,
@@ -190,9 +211,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -200,14 +221,17 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn list_no_select_flag_includes_noselect_folders() {
+    #[tokio::test]
+    async fn list_no_select_flag_includes_noselect_folders() {
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
             "* LIST () \"/\" INBOX\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_list();
         cmd.no_select = true;
         let mut renderer = new_renderer(
@@ -217,9 +241,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -228,15 +252,18 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn list_include_re_filters_mailboxes() {
+    #[tokio::test]
+    async fn list_include_re_filters_mailboxes() {
         // include_re = "^INBOX$" → only INBOX is kept, Sent is discarded
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_list();
         cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
         let mut renderer = new_renderer(
@@ -246,9 +273,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -256,16 +283,19 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn list_exclude_re_filters_mailboxes() {
+    #[tokio::test]
+    async fn list_exclude_re_filters_mailboxes() {
         // exclude_re = "^Spam" → Spam/Junk is excluded, INBOX and Sent are kept
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),
             "* LIST () \"/\" Spam\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_list();
         cmd.exclude_re = vec![Regex::new("^Spam").expect("valid regex")];
         let mut renderer = new_renderer(
@@ -275,9 +305,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes

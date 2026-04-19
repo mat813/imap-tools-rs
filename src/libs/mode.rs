@@ -1,15 +1,12 @@
 use std::str::FromStr;
 
 use derive_more::Display;
-use imap::ConnectionMode;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Display)]
 pub struct ModeError(String);
 impl std::error::Error for ModeError {}
 
-// #[derive(Debug, Clone, PartialEq, Eq, From, Into)]
-// pub struct Mode(ConnectionMode);
 #[derive(Clone, Debug, PartialEq, Eq, clap::ValueEnum)]
 #[non_exhaustive]
 pub enum Mode {
@@ -45,50 +42,19 @@ pub enum Mode {
     StartTls,
 }
 
-impl From<Mode> for ConnectionMode {
-    fn from(value: Mode) -> Self {
-        match value {
-            Mode::AutoTls => Self::AutoTls,
-            Mode::Auto => Self::Auto,
-            Mode::Plaintext => Self::Plaintext,
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
-            Mode::Tls => Self::Tls,
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
-            Mode::StartTls => Self::StartTls,
-        }
-    }
-}
-
-impl TryFrom<ConnectionMode> for Mode {
-    type Error = ModeError;
-
-    fn try_from(value: ConnectionMode) -> Result<Self, Self::Error> {
-        match value {
-            ConnectionMode::AutoTls => Ok(Self::AutoTls),
-            ConnectionMode::Auto => Ok(Self::Auto),
-            ConnectionMode::Plaintext => Ok(Self::Plaintext),
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
-            ConnectionMode::Tls => Ok(Self::Tls),
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
-            ConnectionMode::StartTls => Ok(Self::StartTls),
-            _ => Err(ModeError("Invalid connection mode".to_owned())),
-        }
-    }
-}
-
 impl FromStr for Mode {
     type Err = ModeError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let v = s.to_ascii_lowercase();
-        let mode = match v.as_str() {
-            "auto_tls" | "autotls" => ConnectionMode::AutoTls,
-            "auto" => ConnectionMode::Auto,
-            "plaintext" | "none" => ConnectionMode::Plaintext,
+        Ok(match v.as_str() {
+            "auto_tls" | "autotls" => Self::AutoTls,
+            "auto" => Self::Auto,
+            "plaintext" | "none" => Self::Plaintext,
             #[cfg(any(feature = "rustls", feature = "openssl"))]
-            "tls" => ConnectionMode::Tls,
+            "tls" => Self::Tls,
             #[cfg(any(feature = "rustls", feature = "openssl"))]
-            "start_tls" | "starttls" => ConnectionMode::StartTls,
+            "start_tls" | "starttls" => Self::StartTls,
             _ => return Err(ModeError(
                 if cfg!(any(feature = "rustls", feature = "openssl")) {
                     "Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls"
@@ -97,8 +63,7 @@ impl FromStr for Mode {
                 }
                 .to_owned(),
             )),
-        };
-        mode.try_into()
+        })
     }
 }
 

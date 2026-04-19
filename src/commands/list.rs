@@ -37,12 +37,14 @@ impl List {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), ListError> {
+    pub async fn execute(&self) -> Result<(), ListError> {
         let config = Config::<MyExtra>::new(&self.config).or_raise(|| ListError("config"))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap = Imap::connect(&config).or_raise(|| ListError("connect"))?;
+        let mut imap = Imap::connect(&config)
+            .await
+            .or_raise(|| ListError("connect"))?;
 
         let mut renderer = new_renderer(
             config.base.renderer,
@@ -52,14 +54,18 @@ impl List {
         )
         .or_raise(|| ListError("new renderer"))?;
 
-        Self::run(&mut imap, &mut renderer)
+        let result = Self::run(&mut imap, &mut renderer).await;
+        imap.close()
+            .await
+            .or_raise(|| ListError("imap close failed"))?;
+        result
     }
 
-    fn run(
+    async fn run(
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
     ) -> Result<(), ListError> {
-        for (mailbox, result) in imap.list().or_raise(|| ListError("list"))? {
+        for (mailbox, result) in imap.list().await.or_raise(|| ListError("list"))? {
             renderer
                 .add_row(&[
                     &mailbox,
@@ -81,15 +87,17 @@ mod tests {
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
-    #[test]
-    fn list_renders_mailboxes() {
+    #[tokio::test]
+    async fn list_renders_mailboxes() {
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox List",
@@ -97,9 +105,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = List::run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = List::run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Mailbox extra

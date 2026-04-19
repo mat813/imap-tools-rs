@@ -1,7 +1,8 @@
+use async_imap::imap_proto::NameAttribute;
 use clap::Args;
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
-use imap_proto::NameAttribute;
+use futures::TryStreamExt as _;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use size::Size;
@@ -72,14 +73,15 @@ impl DiskUsage {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), ImapDuCommandError> {
+    pub async fn execute(&self) -> Result<(), ImapDuCommandError> {
         let config =
             BaseConfig::new(&self.config).or_raise(|| ImapDuCommandError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap: Imap<()> =
-            Imap::connect_base(&config).or_raise(|| ImapDuCommandError("connect".to_owned()))?;
+        let mut imap: Imap<()> = Imap::connect_base(&config)
+            .await
+            .or_raise(|| ImapDuCommandError("connect".to_owned()))?;
 
         let mut renderer = new_renderer(
             config.renderer,
@@ -89,27 +91,38 @@ impl DiskUsage {
         )
         .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
 
-        self.run(&mut imap, &mut renderer)
+        let result = self.run(&mut imap, &mut renderer).await;
+        imap.close()
+            .await
+            .or_raise(|| ImapDuCommandError("imap close failed".to_owned()))?;
+        result
     }
 
-    fn run(
+    async fn run(
         &self,
         imap: &mut Imap<()>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
     ) -> Result<(), ImapDuCommandError> {
         let mut result: Vec<(String, u64)> = vec![];
 
-        let mailboxes = imap
-            .session
-            .list(self.reference.as_deref(), self.pattern.as_deref())
-            .or_raise(|| {
-                ImapDuCommandError(format!(
-                    "imap list failed with ref:{:?} and pattern:{:?}",
-                    self.reference, self.pattern
-                ))
-            })?;
+        let names: Vec<_> = {
+            let stream = imap
+                .session
+                .list(self.reference.as_deref(), self.pattern.as_deref())
+                .await
+                .or_raise(|| {
+                    ImapDuCommandError(format!(
+                        "imap list failed with ref:{:?} and pattern:{:?}",
+                        self.reference, self.pattern
+                    ))
+                })?;
+            stream
+                .try_collect()
+                .await
+                .or_raise(|| ImapDuCommandError("imap list stream error".to_owned()))?
+        };
 
-        let mailboxes: Vec<_> = mailboxes
+        let mailboxes: Vec<_> = names
             .iter()
             // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
             .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
@@ -156,6 +169,7 @@ impl DiskUsage {
             let mbx = imap
                 .session
                 .examine(mailbox.name())
+                .await
                 .or_raise(|| ImapDuCommandError("imap examine".to_owned()))?;
 
             if mbx.exists == 0 {
@@ -163,13 +177,22 @@ impl DiskUsage {
                 continue;
             }
 
-            let total: u64 = imap
-                .session
-                .uid_fetch("1:*", "(RFC822.SIZE)")
-                .or_raise(|| ImapDuCommandError("imap uid fetch".to_owned()))?
-                .iter()
-                .map(|m| u64::from(m.size.unwrap_or(0)))
-                .sum();
+            let total: u64 = {
+                let mut sum = 0u64;
+                let mut stream = imap
+                    .session
+                    .uid_fetch("1:*", "(RFC822.SIZE)")
+                    .await
+                    .or_raise(|| ImapDuCommandError("imap uid fetch".to_owned()))?;
+                while let Some(m) = stream
+                    .try_next()
+                    .await
+                    .or_raise(|| ImapDuCommandError("uid fetch stream error".to_owned()))?
+                {
+                    sum = sum.saturating_add(u64::from(m.size.unwrap_or(0)));
+                }
+                sum
+            };
 
             result.push((mailbox.name().to_owned(), total));
         }
@@ -222,8 +245,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn disk_usage_include_re_filters() {
+    #[tokio::test]
+    async fn disk_usage_include_re_filters() {
         // LIST returns INBOX and Sent; include_re matches only INBOX → only INBOX is examined
         let server = MockServer::start(&[], vec![
             MockExchange::ok("LIST \"\" *", vec![
@@ -235,9 +258,12 @@ mod tests {
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_du();
         cmd.include_re = vec![regex::Regex::new("^INBOX$").expect("valid regex")];
         let mut renderer = new_renderer(
@@ -247,9 +273,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -257,8 +283,8 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn disk_usage_exclude_re_filters() {
+    #[tokio::test]
+    async fn disk_usage_exclude_re_filters() {
         // LIST returns INBOX and Sent; exclude_re removes Sent → only INBOX is examined
         let server = MockServer::start(&[], vec![
             MockExchange::ok("LIST \"\" *", vec![
@@ -270,9 +296,12 @@ mod tests {
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_du();
         cmd.exclude_re = vec![regex::Regex::new("^Sent$").expect("valid regex")];
         let mut renderer = new_renderer(
@@ -282,9 +311,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -292,8 +321,8 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn disk_usage_empty_mailbox() {
+    #[tokio::test]
+    async fn disk_usage_empty_mailbox() {
         // INBOX has 0 messages → size reported as 0, no UID FETCH needed
         let server = MockServer::start(&[], vec![
             // LIST
@@ -303,9 +332,12 @@ mod tests {
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = default_du();
         let mut renderer = new_renderer(
             base.renderer,
@@ -314,9 +346,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -324,8 +356,8 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn disk_usage_sums_message_sizes() {
+    #[tokio::test]
+    async fn disk_usage_sums_message_sizes() {
         // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
         let server = MockServer::start(&[], vec![
             // LIST
@@ -340,9 +372,12 @@ mod tests {
                 "* 1 FETCH (UID 1 RFC822.SIZE 1024)\r\n".into(),
                 "* 2 FETCH (UID 2 RFC822.SIZE 2048)\r\n".into(),
             ]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = default_du();
         let mut renderer = new_renderer(
             base.renderer,
@@ -351,9 +386,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes
@@ -366,7 +401,8 @@ mod tests {
     #[case::name_desc(Sort::NameDesc)]
     #[case::size(Sort::Size)]
     #[case::size_desc(Sort::SizeDesc)]
-    fn disk_usage_sort_by(
+    #[tokio::test]
+    async fn disk_usage_sort_by(
         #[notrace]
         #[context]
         ctx: Context,
@@ -406,9 +442,12 @@ mod tests {
                     "* 2 FETCH (UID 2 RFC822.SIZE 1024)\r\n".into(),
                 ]),
             ],
-        );
+        )
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut cmd = default_du();
         cmd.sort = sort;
         let mut renderer = new_renderer(
@@ -418,9 +457,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(
             format!("{}_{}", ctx.name, ctx.description.unwrap_or_default()),
@@ -428,8 +467,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn disk_usage_skips_noselect_folders() {
+    #[tokio::test]
+    async fn disk_usage_skips_noselect_folders() {
         // [Gmail] is NoSelect → filtered out; only INBOX is examined
         let server = MockServer::start(&[], vec![
             // LIST → NoSelect folder + real mailbox
@@ -442,9 +481,12 @@ mod tests {
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = default_du();
         let mut renderer = new_renderer(
             base.renderer,
@@ -453,9 +495,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = cmd.run(&mut imap, &mut renderer);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut renderer).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Attributes

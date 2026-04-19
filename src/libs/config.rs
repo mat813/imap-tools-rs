@@ -102,7 +102,6 @@ mod tests {
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
             password: Some("password123".to_owned()),
-            debug: true,
             ..Default::default()
         };
 
@@ -127,7 +126,7 @@ mod tests {
                     mode: Some(
                         AutoTls,
                     ),
-                    debug: true,
+                    debug: false,
                     dry_run: false,
                 },
                 extra: None,
@@ -153,7 +152,7 @@ mod tests {
                     mode: Some(
                         Plaintext,
                     ),
-                    debug: true,
+                    debug: false,
                     dry_run: false,
                 },
                 extra: None,
@@ -177,7 +176,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The server must be set, at src/libs/base_config.rs:107:13,
+            |-> The server must be set, at src/libs/base_config.rs:103:13,
         )
         ");
     }
@@ -196,7 +195,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The username must be set, at src/libs/base_config.rs:111:13,
+            |-> The username must be set, at src/libs/base_config.rs:107:13,
         )
         ");
     }
@@ -233,9 +232,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:140:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:136:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:140:22,
+            |-> missing closing quote, at src/libs/base_config.rs:136:22,
         )
         "#);
     }
@@ -256,9 +255,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:147:22
+            password command exec failed, at src/libs/base_config.rs:143:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:147:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:143:22,
         )
         ");
     }
@@ -279,7 +278,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:143:22,
+            password command is empty, at src/libs/base_config.rs:139:22,
         )
         ");
     }
@@ -315,7 +314,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:115:13,
+            |-> The password or password command must be set, at src/libs/base_config.rs:111:13,
         )
         ");
     }
@@ -435,7 +434,6 @@ mod tests {
             server: Some("override.example.com".to_owned()),
             username: Some("override_user@example.com".to_owned()),
             password: Some("override_password".to_owned()),
-            debug: true,
             dry_run: true,
             mode: Some(
                 if cfg!(any(feature = "rustls", feature = "openssl")) {
@@ -469,7 +467,7 @@ mod tests {
                     mode: Some(
                         Tls,
                     ),
-                    debug: true,
+                    debug: false,
                     dry_run: true,
                 },
                 extra: None,
@@ -495,7 +493,7 @@ mod tests {
                     mode: Some(
                         Plaintext,
                     ),
-                    debug: true,
+                    debug: false,
                     dry_run: true,
                 },
                 extra: None,

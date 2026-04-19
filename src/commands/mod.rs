@@ -35,17 +35,19 @@ impl MainCommands {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), MainCommandError> {
+    pub async fn execute(&self) -> Result<(), MainCommandError> {
         match *self {
-            Self::Archive(ref archive) => {
-                archive.execute().or_raise(|| MainCommandError("archive"))
-            },
-            Self::Clean(ref clean) => clean.execute().or_raise(|| MainCommandError("clean")),
+            Self::Archive(ref archive) => archive
+                .execute()
+                .await
+                .or_raise(|| MainCommandError("archive")),
+            Self::Clean(ref clean) => clean.execute().await.or_raise(|| MainCommandError("clean")),
             Self::FindDups(ref find_dups) => find_dups
                 .execute()
+                .await
                 .or_raise(|| MainCommandError("find-dups")),
-            Self::List(ref list) => list.execute().or_raise(|| MainCommandError("list")),
-            Self::Imap(ref imap) => imap.execute().or_raise(|| MainCommandError("imap")),
+            Self::List(ref list) => list.execute().await.or_raise(|| MainCommandError("list")),
+            Self::Imap(ref imap) => imap.execute().await.or_raise(|| MainCommandError("imap")),
         }
     }
 }

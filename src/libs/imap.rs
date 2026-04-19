@@ -1,51 +1,76 @@
+#[cfg(all(feature = "openssl", feature = "rustls"))]
+compile_error!("features `openssl` and `rustls` are mutually exclusive — enable only one");
+
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
 };
 
+use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
 use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
-use imap::{ImapConnection, Session, types::Uid};
-use imap_proto::NameAttribute;
+use futures::TryStreamExt as _;
 use serde::Serialize;
+use tokio::net::TcpStream;
 
-use crate::libs::{base_config::BaseConfig, config::Config, filter::Filter, filters::Filters};
+use crate::libs::{
+    base_config::BaseConfig, config::Config, filter::Filter, filters::Filters, mode::Mode,
+};
+
+/// Marker trait for streams usable with async-imap.
+pub trait AsyncStream: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + Debug {}
+impl<T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + Debug> AsyncStream for T {}
+
+/// Boxed async stream type alias.
+pub type ImapStream = Box<dyn AsyncStream>;
 
 #[derive(Debug, Display)]
+/// Error type for IMAP operations.
 pub struct ImapError(String);
 impl std::error::Error for ImapError {}
 
+/// The result of listing a mailbox, including optional command-specific extra data.
 #[derive(Clone, Debug)]
 pub struct ListResult<T>
 where
     T: Clone + Debug,
 {
+    /// Optional extra data associated with the mailbox, from matching filter config.
     pub extra: Option<T>,
 }
 
+/// Wraps an async-imap Session with connection state and filter configuration.
 #[derive(Debug)]
 pub struct Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
-    pub session: Session<Box<dyn ImapConnection>>,
+    /// The underlying async-imap session.
+    pub session: Session<ImapStream>,
 
+    /// Optional command-specific extra data from configuration.
     extra: Option<T>,
 
+    /// Optional list of filters to apply when listing mailboxes.
     filters: Option<Filters<T>>,
 
+    /// Cache of previously fetched capabilities to avoid redundant round trips.
     cached_capabilities: HashMap<String, bool>,
+
+    /// Whether the session has been explicitly closed.
+    closed: bool,
 }
 
 impl<T> Drop for Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
-    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
-    #[expect(clippy::print_stderr, reason = "ok")]
     fn drop(&mut self) {
-        if let Err(e) = self.session.logout() {
-            eprintln!("error disconnecting: {e}");
+        if !self.closed {
+            #[cfg(feature = "tracing")]
+            tracing::warn!(
+                "Imap dropped without explicit close(); connection torn down by TCP RST"
+            );
         }
     }
 }
@@ -54,11 +79,27 @@ impl<T> Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    /// Explicitly close the IMAP session by sending LOGOUT.
+    ///
+    /// # Errors
+    /// Returns an error if the LOGOUT command fails.
+    pub async fn close(mut self) -> Result<(), ImapError> {
+        self.closed = true;
+        self.session
+            .logout()
+            .await
+            .or_raise(|| ImapError("imap logout failed".to_owned()))
+    }
+
+    /// Connect and login to the IMAP server described by `base`.
+    ///
+    /// # Errors
+    /// Returns an error if the connection, TLS setup, or login fails.
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(base), ret, err(level = "info"))
     )]
-    pub fn connect_base(base: &BaseConfig) -> Result<Self, ImapError> {
+    pub async fn connect_base(base: &BaseConfig) -> Result<Self, ImapError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
 
@@ -68,29 +109,38 @@ where
             .ok_or_raise(|| ImapError("Missing server".to_owned()))?;
 
         let port = base.port.unwrap_or(143);
-        let mut builder = imap::ClientBuilder::new(server.as_str(), port);
+        let mode = base.mode.clone().unwrap_or_default();
 
-        if let Some(ref mode) = base.mode {
-            builder = builder.mode(mode.clone().into());
-        }
-
-        let mut client = builder
-            .connect()
+        let tcp = TcpStream::connect((server.as_str(), port))
+            .await
             .or_raise(|| ImapError(format!("failed to connect to {server} on port {port}")))?;
 
-        if base.debug {
-            client.debug = true;
+        let (stream, greeting_consumed): (ImapStream, bool) =
+            build_stream(tcp, &mode, server, port)
+                .await
+                .or_raise(|| ImapError("TLS setup failed".to_owned()))?;
+
+        let mut client = async_imap::Client::new(stream);
+
+        if !greeting_consumed {
+            client
+                .read_response()
+                .await
+                .or_raise(|| ImapError("failed to read server greeting".to_owned()))?;
         }
 
+        let username = base
+            .username
+            .as_ref()
+            .ok_or_raise(|| ImapError("Missing username".to_owned()))?;
+        let password = base
+            .password()
+            .or_raise(|| ImapError("Password error".to_owned()))?;
+
         let session = client
-            .login(
-                base.username
-                    .as_ref()
-                    .ok_or_raise(|| ImapError("Missing username".to_owned()))?,
-                base.password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?,
-            )
-            .map_err(|err| err.0)
+            .login(username, password)
+            .await
+            .map_err(|(err, _client)| err)
             .or_raise(|| ImapError("imap login failed".to_owned()))?;
 
         let mut ret = Self {
@@ -98,9 +148,10 @@ where
             extra: None,
             filters: None,
             cached_capabilities: HashMap::new(),
+            closed: false,
         };
 
-        if !ret.has_capability("UIDPLUS")? {
+        if !ret.has_capability("UIDPLUS").await? {
             bail!(ImapError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned()));
         }
 
@@ -110,29 +161,26 @@ where
     /// Test-only: connect to a specific port in plaintext mode (no TLS).
     /// Useful for connecting to a mock IMAP server.
     #[cfg(test)]
-    pub fn connect_base_on_port(base: &BaseConfig, port: u16) -> Result<Self, ImapError> {
+    pub async fn connect_base_on_port(base: &BaseConfig, port: u16) -> Result<Self, ImapError> {
         let mut test_base = base.clone();
         test_base.port = Some(port);
-        #[expect(
-            clippy::expect_used,
-            clippy::unwrap_in_result,
-            reason = "known-valid literal"
-        )]
+        #[expect(clippy::expect_used, reason = "known-valid literal")]
         {
             test_base.mode = Some("plaintext".parse().expect("plaintext is a valid mode"));
         }
-        Self::connect_base(&test_base)
+        Self::connect_base(&test_base).await
     }
 
     /// Connect to the server and login with the given credentials.
+    ///
     /// # Errors
     /// Many errors can happen
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(config), ret, err(level = "info"))
     )]
-    pub fn connect(config: &Config<T>) -> Result<Self, ImapError> {
-        let mut ret = Self::connect_base(&config.base)?;
+    pub async fn connect(config: &Config<T>) -> Result<Self, ImapError> {
+        let mut ret = Self::connect_base(&config.base).await?;
 
         ret.extra.clone_from(&config.extra);
         ret.filters.clone_from(&config.filters);
@@ -140,24 +188,26 @@ where
         Ok(ret)
     }
 
+    /// Check if the imap server has some capability.
+    ///
+    /// # Errors
+    /// Imap errors can happen
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
     )]
-    /// Check if the imap server has some capability
-    /// # Errors
-    /// Imap errors can happen
-    pub fn has_capability<S: AsRef<str> + Debug>(&mut self, cap: S) -> Result<bool, ImapError> {
+    pub async fn has_capability<S: AsRef<str> + Debug>(
+        &mut self,
+        cap: S,
+    ) -> Result<bool, ImapError> {
         if let Some(&cached_result) = self.cached_capabilities.get(cap.as_ref()) {
             return Ok(cached_result);
         }
 
-        // We can't cache the result of .capabilities() because it returns some
-        // strange structure with very limited lifetime, so we ask once each
-        // time we need a new capability and cache the result.
         let has_capability = self
             .session
             .capabilities()
+            .await
             .or_raise(|| ImapError("imap capabilities failed".to_owned()))?
             .has_str(cap.as_ref());
 
@@ -167,32 +217,43 @@ where
         Ok(has_capability)
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self), err(level = "info"))
-    )]
     /// Select a mailbox, flag the given UID sequence as `\Deleted`, then CLOSE
     /// (which expunges the flagged messages).
     ///
     /// # Errors
     /// Imap errors can happen
-    pub fn delete_uids(&mut self, mailbox: &str, sequence: &str) -> Result<(), ImapError> {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    pub async fn delete_uids(&mut self, mailbox: &str, sequence: &str) -> Result<(), ImapError> {
         self.session
             .select(mailbox)
+            .await
             .or_raise(|| ImapError(format!("imap select {mailbox:?} failed")))?;
-        self.session
-            .uid_store(sequence, "+FLAGS (\\Deleted)")
-            .or_raise(|| ImapError("imap uid store failed".to_owned()))?;
+
+        {
+            let mut stream = self
+                .session
+                .uid_store(sequence, "+FLAGS (\\Deleted)")
+                .await
+                .or_raise(|| ImapError("imap uid store failed".to_owned()))?;
+            while stream
+                .try_next()
+                .await
+                .or_raise(|| ImapError("uid store stream error".to_owned()))?
+                .is_some()
+            {}
+        }
+
         self.session
             .close()
+            .await
             .or_raise(|| ImapError("imap close failed".to_owned()))?;
+
         Ok(())
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
-    )]
     /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is
     /// sorted and stable.
     ///
@@ -201,32 +262,41 @@ where
     ///
     /// # Errors
     /// Many errors can happen
-    pub fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, ImapError> {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
+    )]
+    pub async fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, ImapError> {
         let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
 
-        for filter in self.filters.clone().unwrap_or_else(||
-            // If we don't have a filter, provide an empty one matching everything
-            vec![Filter::default()])
+        for filter in self
+            .filters
+            .clone()
+            .unwrap_or_else(|| vec![Filter::default()])
         {
             let mut found = false;
 
-            for mailbox in self
-                .session
-                .list(filter.reference.as_deref(), filter.pattern.as_deref())
-                .or_raise(|| ImapError(format!("imap list failed with {filter:?}")))?
+            let names: Vec<_> = {
+                let stream = self
+                    .session
+                    .list(filter.reference.as_deref(), filter.pattern.as_deref())
+                    .await
+                    .or_raise(|| ImapError(format!("imap list failed with {filter:?}")))?;
+                stream
+                    .try_collect()
+                    .await
+                    .or_raise(|| ImapError("imap list stream error".to_owned()))?
+            };
+
+            for mailbox in names
                 .iter()
-                // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
                 .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
-                // If we have an include regex, keep folders that match it
-                // Otherwise, keep everything
                 .filter(|mbx| {
                     filter
                         .include_re
                         .as_ref()
                         .is_none_or(|re| re.is_match(mbx.name()))
                 })
-                // If we have an exclude regex, filter out folders that match it
-                // Otherwise, keep everything
                 .filter(|mbx| {
                     filter
                         .exclude_re
@@ -239,6 +309,7 @@ where
                     extra: filter.extra.clone().or_else(|| self.extra.clone()),
                 });
             }
+
             if !found {
                 bail!(ImapError(format!(
                     "This filter did not return anything {filter:?}"
@@ -250,6 +321,150 @@ where
     }
 }
 
+/// Wrap a raw `TcpStream` in the appropriate TLS layer (or leave as-is for plaintext),
+/// returning the opaque `ImapStream` and whether the server greeting has already been consumed.
+async fn build_stream(
+    tcp: TcpStream,
+    mode: &Mode,
+    server: &str,
+    port: u16,
+) -> Result<(ImapStream, bool), ImapError> {
+    match *mode {
+        Mode::Plaintext => Ok((Box::new(tcp), false)),
+        #[cfg(any(feature = "openssl", feature = "rustls"))]
+        Mode::Tls => {
+            let tls = wrap_tls(tcp, server).await?;
+            Ok((tls, false))
+        },
+        #[cfg(any(feature = "openssl", feature = "rustls"))]
+        Mode::StartTls => {
+            let mut plain_client = async_imap::Client::new(tcp);
+            plain_client
+                .read_response()
+                .await
+                .or_raise(|| ImapError("failed to read greeting before STARTTLS".to_owned()))?;
+            plain_client
+                .run_command_and_check_ok("STARTTLS", None)
+                .await
+                .or_raise(|| ImapError("STARTTLS command failed".to_owned()))?;
+            let tcp_back: TcpStream = plain_client.into_inner();
+            let tls = wrap_tls(tcp_back, server).await?;
+            Ok((tls, true))
+        },
+        Mode::AutoTls => {
+            #[cfg(any(feature = "openssl", feature = "rustls"))]
+            {
+                if port == 993 {
+                    let tls = wrap_tls(tcp, server).await?;
+                    Ok((tls, false))
+                } else {
+                    // Treat as StartTls
+                    let mut plain_client = async_imap::Client::new(tcp);
+                    plain_client.read_response().await.or_raise(|| {
+                        ImapError("failed to read greeting before STARTTLS".to_owned())
+                    })?;
+                    plain_client
+                        .run_command_and_check_ok("STARTTLS", None)
+                        .await
+                        .or_raise(|| ImapError("STARTTLS command failed".to_owned()))?;
+                    let tcp_back: TcpStream = plain_client.into_inner();
+                    let tls = wrap_tls(tcp_back, server).await?;
+                    Ok((tls, true))
+                }
+            }
+            #[cfg(not(any(feature = "openssl", feature = "rustls")))]
+            {
+                let _ = port;
+                Ok((Box::new(tcp), false))
+            }
+        },
+        Mode::Auto => {
+            #[cfg(any(feature = "openssl", feature = "rustls"))]
+            {
+                if port == 993 {
+                    let tls = wrap_tls(tcp, server).await?;
+                    return Ok((tls, false));
+                }
+                // Non-993: read greeting then attempt STARTTLS; fall back to plaintext if not supported
+                let mut plain_client = async_imap::Client::new(tcp);
+                plain_client
+                    .read_response()
+                    .await
+                    .or_raise(|| ImapError("failed to read server greeting".to_owned()))?;
+                // Try STARTTLS; if the server returns NO/BAD, fall back to plaintext
+                let starttls_ok = plain_client
+                    .run_command_and_check_ok("STARTTLS", None)
+                    .await
+                    .is_ok();
+                if starttls_ok {
+                    let tcp_back: TcpStream = plain_client.into_inner();
+                    let tls = wrap_tls(tcp_back, server).await?;
+                    Ok((tls, true))
+                } else {
+                    // Server does not support STARTTLS; use plaintext
+                    let stream: TcpStream = plain_client.into_inner();
+                    Ok((Box::new(stream), true))
+                }
+            }
+            #[cfg(not(any(feature = "openssl", feature = "rustls")))]
+            {
+                let _ = port;
+                Ok((Box::new(tcp), false))
+            }
+        },
+    }
+}
+
+/// Wrap a `TcpStream` in a TLS layer using the OpenSSL backend.
+#[cfg(feature = "openssl")]
+async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {
+    let connector = native_tls::TlsConnector::new()
+        .or_raise(|| ImapError("native TLS connector creation failed".to_owned()))?;
+    let connector = tokio_native_tls::TlsConnector::from(connector);
+    let tls = connector
+        .connect(server, tcp)
+        .await
+        .or_raise(|| ImapError(format!("TLS handshake with {server} failed")))?;
+    Ok(Box::new(tls))
+}
+
+/// Wrap a `TcpStream` in a TLS layer using the rustls backend.
+#[cfg(feature = "rustls")]
+async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {
+    use std::sync::Arc;
+
+    use tokio_rustls::rustls;
+
+    let cert_result = rustls_native_certs::load_native_certs();
+    if !cert_result.errors.is_empty() {
+        return Err(ImapError(format!(
+            "failed to load native certs: {:?}",
+            cert_result.errors
+        )))
+        .or_raise(|| ImapError("failed to load native certs".to_owned()));
+    }
+    let mut roots = rustls::RootCertStore::empty();
+    for cert in cert_result.certs {
+        roots
+            .add(cert)
+            .or_raise(|| ImapError("failed to add cert".to_owned()))?;
+    }
+    let config = rustls::ClientConfig::builder()
+        .with_root_certificates(roots)
+        .with_no_client_auth();
+    let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
+    let dns = rustls::pki_types::ServerName::try_from(server.to_owned())
+        .or_raise(|| ImapError(format!("invalid server name: {server}")))?;
+    let tls = connector
+        .connect(dns, tcp)
+        .await
+        .or_raise(|| ImapError(format!("TLS handshake with {server} failed")))?;
+    Ok(Box::new(tls))
+}
+
+/// Convert a set of `Uid`s into a collapsed IMAP sequence string.
+///
+/// For example, `{1, 2, 3, 7, 8}` becomes `"1:3,7:8"`.
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", skip(ids), ret)
@@ -307,9 +522,9 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
 mod tests {
     use std::collections::HashSet;
 
-    use imap::types::Uid;
+    use async_imap::types::Uid;
 
-    use super::ids_list_to_collapsed_sequence; // Assuming this function is in a module named 'ids_list_to_collapsed_sequence'
+    use super::ids_list_to_collapsed_sequence;
 
     #[test]
     #[should_panic(expected = "ids must not be empty")]

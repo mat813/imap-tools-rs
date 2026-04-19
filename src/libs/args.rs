@@ -30,10 +30,6 @@ pub struct Generic {
     #[arg(short = 'P', long)]
     pub password_command: Option<String>,
 
-    /// Display all the IMAP commands sent and received.
-    #[arg(short = 'd', long)]
-    pub debug: bool,
-
     #[cfg_attr(
         any(feature = "rustls", feature = "openssl"),
         doc = "Select the TLS mode"
@@ -115,12 +111,6 @@ mod tests {
     }
 
     #[test]
-    fn debug_flag() {
-        let generic = get_generic_from_args(["test", "-d"]);
-        assert!(generic.debug);
-    }
-
-    #[test]
     fn dry_run_flag() {
         let generic = get_generic_from_args(["test", "-n"]);
         assert!(generic.dry_run);
@@ -159,7 +149,6 @@ mod tests {
             "secret_password",
             "-P",
             "echo secret_password",
-            "-d",
             "-n",
         ]);
 
@@ -171,7 +160,6 @@ mod tests {
             generic.password_command,
             Some("echo secret_password".to_owned())
         );
-        assert!(generic.debug);
         assert!(generic.dry_run);
     }
 }

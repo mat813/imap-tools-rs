@@ -1,5 +1,7 @@
 #![allow(clippy::missing_docs_in_private_items, reason = "TODO: docs")]
 #![allow(clippy::todo, reason = "TODO: fixup last todos")]
+// We use tokio current_thread runtime, so futures don't need to be Send.
+#![allow(clippy::future_not_send, reason = "current_thread runtime")]
 
 use derive_more::Display;
 use exn::{Result, ResultExt as _};
@@ -14,11 +16,12 @@ struct MainError;
 
 impl std::error::Error for MainError {}
 
+#[tokio::main(flavor = "current_thread")]
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", err(level = "info"))
 )]
-fn main() -> Result<(), MainError> {
+async fn main() -> Result<(), MainError> {
     #[cfg(feature = "tracing")]
     {
         use tracing_subscriber::{
@@ -39,5 +42,5 @@ fn main() -> Result<(), MainError> {
             .init();
     }
 
-    run::run().or_raise(|| MainError)
+    run::run().await.or_raise(|| MainError)
 }

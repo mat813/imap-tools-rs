@@ -4,6 +4,7 @@ use chrono::{Duration, Utc};
 use clap::Args;
 use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
+use futures::TryStreamExt as _;
 use size::Size;
 
 use crate::libs::{
@@ -56,13 +57,15 @@ impl Clean {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), CleanError> {
+    pub async fn execute(&self) -> Result<(), CleanError> {
         let config =
             Config::<MyExtra>::new(&self.config).or_raise(|| CleanError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut imap = Imap::connect(&config).or_raise(|| CleanError("connect".to_owned()))?;
+        let mut imap = Imap::connect(&config)
+            .await
+            .or_raise(|| CleanError("connect".to_owned()))?;
 
         let mut renderer = new_renderer(
             config.base.renderer,
@@ -76,7 +79,11 @@ impl Clean {
         )
         .or_raise(|| CleanError("new renderer".to_owned()))?;
 
-        for (mailbox, result) in imap.list().or_raise(|| CleanError("list".to_owned()))? {
+        for (mailbox, result) in imap
+            .list()
+            .await
+            .or_raise(|| CleanError("list".to_owned()))?
+        {
             match result.extra {
                 Some(ref extra) => {
                     Self::cleanup_mailbox(
@@ -86,6 +93,7 @@ impl Clean {
                         extra,
                         config.base.dry_run,
                     )
+                    .await
                     .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
                 },
                 None => bail!(CleanError(format!(
@@ -94,6 +102,10 @@ impl Clean {
             }
         }
 
+        imap.close()
+            .await
+            .or_raise(|| CleanError("imap close failed".to_owned()))?;
+
         Ok(())
     }
 
@@ -101,7 +113,7 @@ impl Clean {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
     )]
-    fn cleanup_mailbox(
+    async fn cleanup_mailbox(
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
         mailbox: &str,
@@ -111,6 +123,7 @@ impl Clean {
         let mbx = imap
             .session
             .examine(mailbox)
+            .await
             .or_raise(|| CleanError(format!("imap examine {mailbox:?} failed")))?;
 
         // If there are not enough messages, skip
@@ -118,24 +131,31 @@ impl Clean {
             return Ok(());
         }
 
-        let messages = imap
-            .session
-            .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
-            .or_raise(|| CleanError("imap uid fetch failed".to_owned()))?;
+        let mut total_size: i64 = 0;
+        let mut first_date: Option<chrono::DateTime<chrono::FixedOffset>> = None;
 
-        let total_size = messages
-            .iter()
-            .map(|m| i64::from(m.size.unwrap_or(0)))
-            .sum::<i64>();
+        {
+            let mut stream = imap
+                .session
+                .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
+                .await
+                .or_raise(|| CleanError("imap uid fetch failed".to_owned()))?;
 
-        let first_date = messages
-            .iter()
-            .next()
-            .ok_or_raise(|| {
-                CleanError("Could not find the first message where there should be one".to_owned())
-            })?
-            .internal_date()
-            .unwrap_or_default();
+            while let Some(m) = stream
+                .try_next()
+                .await
+                .or_raise(|| CleanError("uid fetch stream error".to_owned()))?
+            {
+                total_size = total_size.saturating_add(i64::from(m.size.unwrap_or(0)));
+                if first_date.is_none() {
+                    first_date = Some(m.internal_date().unwrap_or_default());
+                }
+            }
+        }
+
+        let first_date = first_date.ok_or_raise(|| {
+            CleanError("Could not find the first message where there should be one".to_owned())
+        })?;
 
         // If size is less than the minimum, skip
         if total_size <= MIN_TOTAL_SIZE_BYTES {
@@ -152,7 +172,8 @@ impl Clean {
             let uids_to_delete = imap
                 .session
                 .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
-                .or_raise(|| CleanError("imap uid search failed".to_owned()))?; // Search messages by cutoff date
+                .await
+                .or_raise(|| CleanError("imap uid search failed".to_owned()))?;
 
             // Only delete if the rule applies based on mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
@@ -162,6 +183,7 @@ impl Clean {
 
                 if !dry_run {
                     imap.delete_uids(mailbox, &sequence)
+                        .await
                         .or_raise(|| CleanError("imap delete uids failed".to_owned()))?;
                 }
 
@@ -200,16 +222,18 @@ mod tests {
         [(Size::from_bytes(1_000_000_i64), 30_u64)].into()
     }
 
-    #[test]
-    fn cleanup_skips_small_mailbox() {
+    #[tokio::test]
+    async fn cleanup_skips_small_mailbox() {
         // exists = 50 ≤ 300 → should return immediately without UID FETCH
         let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
             "* 50 EXISTS\r\n".into(),
             "* 0 RECENT\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Cleaner",
@@ -218,31 +242,36 @@ mod tests {
         )
         .expect("renderer");
         let result =
-            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
-        drop(imap);
-        server.join();
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
-    #[test]
-    fn cleanup_skips_small_total_size() {
+    #[tokio::test]
+    async fn cleanup_skips_small_total_size() {
         // exists = 350 but total size < 1 MB → should skip
         let server = MockServer::start(
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
                 // UID FETCH RFC822.SIZE INTERNALDATE → small messages
-                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 1024 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 1024 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ])
+                ]),
             ],
-        );
+        )
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Cleaner",
@@ -251,33 +280,41 @@ mod tests {
         )
         .expect("renderer");
         let result =
-            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
-        drop(imap);
-        server.join();
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
-    #[test]
-    fn cleanup_skips_when_no_old_messages() {
+    #[tokio::test]
+    async fn cleanup_skips_when_no_old_messages() {
         // Large mailbox (> 1 MB) but UID SEARCH returns empty → no deletion
         let server = MockServer::start(
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
                 // UID FETCH → 2 large messages (total > 1 MB)
-                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
                 // UID SEARCH → no results
-                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH\r\n".into()])
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH\r\n".into()],
+                ),
             ],
-        );
+        )
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Cleaner",
@@ -286,15 +323,15 @@ mod tests {
         )
         .expect("renderer");
         let result =
-            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
-        drop(imap);
-        server.join();
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
-    #[test]
-    fn cleanup_multi_rule_first_skips_second_matches() {
+    #[tokio::test]
+    async fn cleanup_multi_rule_first_skips_second_matches() {
         // Two rules: (500 KB, 1 day) and (1 MB, 365 days). BTreeMap iterates ascending by size,
         // so the 500 KB rule runs first. Total size is 1.2 MB so both thresholds are exceeded,
         // but the 1-day search returns nothing → first rule skipped. 365-day search finds old
@@ -308,21 +345,32 @@ mod tests {
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
                 // UID FETCH → 2 large messages (total 1.2 MB)
-                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
                 // UID SEARCH (1 day) → empty
-                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH\r\n".into()]),
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH\r\n".into()],
+                ),
                 // UID SEARCH (365 days) → UIDs 1 and 2
-                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/", vec!["* SEARCH 1 2\r\n".into()])
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH 1 2\r\n".into()],
+                ),
             ],
-        );
+        )
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Cleaner",
@@ -330,9 +378,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true);
-        drop(imap);
-        server.join();
+        let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         let out: Vec<String> = renderer
             .output()
@@ -351,80 +399,34 @@ mod tests {
         assert!(out[2].is_empty());
     }
 
-    #[test]
-    fn cleanup_dry_run_large_old_mailbox() {
+    #[tokio::test]
+    async fn cleanup_dry_run_large_old_mailbox() {
         // exists = 350, total size > 1 MB, old messages → dry-run: no SELECT/STORE/CLOSE
         let server = MockServer::start(
             &[],
             vec![
                 // EXAMINE → 350 messages
-                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
                 // UID FETCH → 2 large old messages (total > 1 MB)
-                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
                 // UID SEARCH → old messages to delete
-                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",vec!["* SEARCH 1 2\r\n".into()])
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH 1 2\r\n".into()],
+                ),
             ],
-        );
-        let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
         )
-        .expect("renderer");
-        let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true);
-        drop(imap);
-        server.join();
-        assert!(result.is_ok(), "expected Ok, got: {result:?}");
-        let out: Vec<String> = renderer
-            .output()
-            .split('\n')
-            .map(std::borrow::ToOwned::to_owned)
-            .collect();
-        assert_eq!(out.len(), 3);
-        assert_snapshot!(out[0], @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
-        assert!(
-            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,\d+,1:2$")
-                .expect("should parse")
-                .is_match(&out[1]),
-            "not matching {:?}",
-            out[1]
-        );
-        assert!(out[2].is_empty());
-    }
-
-    #[test]
-    fn cleanup_destructive_large_old_mailbox() {
-        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
-        let server = MockServer::start(
-            &[],
-            vec![
-                // EXAMINE → 350 messages
-                MockExchange::ok("EXAMINE \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-                // UID FETCH RFC822.SIZE INTERNALDATE → 2 large old messages (total > 1 MB)
-                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)",vec![
-                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
-                ]),
-                // UID SEARCH → old messages to delete
-                MockExchange::ok(r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",vec!["* SEARCH 1 2\r\n".into()]),
-                // SELECT INBOX (read-write for deletion)
-                MockExchange::ok("SELECT \"INBOX\"",vec!["* 350 EXISTS\r\n".into(), "* 0 RECENT\r\n".into()]),
-                // UID STORE +FLAGS (\Deleted)
-                MockExchange::ok("UID STORE 1:2 +FLAGS (\\Deleted)",vec![]),
-                // CLOSE (expunge)
-                MockExchange::ok("CLOSE",vec![]),
-            ],
-        );
+        .await;
         let base = test_base();
-        let mut imap: Imap<MyExtra> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Cleaner",
@@ -433,9 +435,75 @@ mod tests {
         )
         .expect("renderer");
         let result =
-            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false);
-        drop(imap);
-        server.join();
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true).await;
+        let _ = imap.close().await;
+        server.join().await;
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        let out: Vec<String> = renderer
+            .output()
+            .split('\n')
+            .map(std::borrow::ToOwned::to_owned)
+            .collect();
+        assert_eq!(out.len(), 3);
+        assert_snapshot!(out[0], @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
+        assert!(
+            regex::Regex::new(r"^INBOX,350,1.14 MiB,2,01-Jan-2020,\d\d-\w\w\w-\d\d\d\d,\d+,1:2$")
+                .expect("should parse")
+                .is_match(&out[1]),
+            "not matching {:?}",
+            out[1]
+        );
+        assert!(out[2].is_empty());
+    }
+
+    #[tokio::test]
+    async fn cleanup_destructive_large_old_mailbox() {
+        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
+        let server = MockServer::start(
+            &[],
+            vec![
+                // EXAMINE → 350 messages
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
+                // UID FETCH RFC822.SIZE INTERNALDATE → 2 large old messages (total > 1 MB)
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+                // UID SEARCH → old messages to delete
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH 1 2\r\n".into()],
+                ),
+                // SELECT INBOX (read-write for deletion)
+                MockExchange::ok("SELECT \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                ]),
+                // UID STORE +FLAGS (\Deleted)
+                MockExchange::ok("UID STORE 1:2 +FLAGS (\\Deleted)", vec![]),
+                // CLOSE (expunge)
+                MockExchange::ok("CLOSE", vec![]),
+            ],
+        )
+        .await;
+        let base = test_base();
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
+        let mut renderer = new_renderer(
+            base.renderer,
+            "Mailbox Cleaner",
+            RENDERER_FORMAT,
+            RENDERER_HEADERS,
+        )
+        .expect("renderer");
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         let out: Vec<String> = renderer
             .output()

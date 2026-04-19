@@ -30,12 +30,18 @@ impl ImapCommands {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), ImapCommandsError> {
+    pub async fn execute(&self) -> Result<(), ImapCommandsError> {
         match *self {
-            Self::List(ref list) => list.execute().or_raise(|| ImapCommandsError("list")),
-            Self::Create(ref create) => create.execute().or_raise(|| ImapCommandsError("create")),
-            Self::Delete(ref delete) => delete.execute().or_raise(|| ImapCommandsError("delete")),
-            Self::DiskUsage(ref du) => du.execute().or_raise(|| ImapCommandsError("du")),
+            Self::List(ref list) => list.execute().await.or_raise(|| ImapCommandsError("list")),
+            Self::Create(ref create) => create
+                .execute()
+                .await
+                .or_raise(|| ImapCommandsError("create")),
+            Self::Delete(ref delete) => delete
+                .execute()
+                .await
+                .or_raise(|| ImapCommandsError("delete")),
+            Self::DiskUsage(ref du) => du.execute().await.or_raise(|| ImapCommandsError("du")),
         }
     }
 }

@@ -10,7 +10,7 @@ use crate::commands::MainCommands;
     version,
     about = "A collection of tools to manipulate IMAP mailboxes",
     long_about = "These commands will help you curate your IMAP mailboxes.
-	
+
 You can remove duplicate emails, clean old emails, or archive them."
 )]
 struct MainArgs {
@@ -30,8 +30,8 @@ impl std::error::Error for RunError {}
 /// Dispatch-run our commands
 /// # Errors
 /// forwards the errors from the commands to `main()`
-pub fn run() -> Result<(), RunError> {
+pub async fn run() -> Result<(), RunError> {
     let cli = MainArgs::parse();
 
-    cli.command.execute().or_raise(|| RunError)
+    cli.command.execute().await.or_raise(|| RunError)
 }

@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
+use async_imap::types::Uid;
 use clap::Args;
 use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _};
-use imap::types::{Fetches, Uid};
+use futures::TryStreamExt as _;
 use regex::Regex;
 
 use crate::libs::{
@@ -54,7 +55,7 @@ impl FindDups {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), DuError> {
+    pub async fn execute(&self) -> Result<(), DuError> {
         let config =
             Config::<MyExtra>::new(&self.config).or_raise(|| DuError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
@@ -72,12 +73,23 @@ impl FindDups {
         )
         .or_raise(|| DuError("new renderer".to_owned()))?;
 
-        let mut imap = Imap::connect(&config).or_raise(|| DuError("connect".to_owned()))?;
+        let mut imap = Imap::connect(&config)
+            .await
+            .or_raise(|| DuError("connect".to_owned()))?;
 
-        for (mailbox, _result) in imap.list().or_raise(|| DuError("imap list".to_owned()))? {
+        for (mailbox, _result) in imap
+            .list()
+            .await
+            .or_raise(|| DuError("imap list".to_owned()))?
+        {
             Self::process(&mut imap, &mut renderer, &mailbox, config.base.dry_run)
+                .await
                 .or_raise(|| DuError("process".to_owned()))?;
         }
+
+        imap.close()
+            .await
+            .or_raise(|| DuError("imap close failed".to_owned()))?;
 
         Ok(())
     }
@@ -86,7 +98,7 @@ impl FindDups {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
     )]
-    fn process(
+    async fn process(
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
         mailbox: &str,
@@ -97,6 +109,7 @@ impl FindDups {
         let mbx = imap
             .session
             .examine(mailbox)
+            .await
             .or_raise(|| DuError(format!("imap examine {mailbox:?} failed")))?;
 
         // If there are less than 2 messages, there cannot possible be
@@ -106,44 +119,26 @@ impl FindDups {
         }
 
         // Fetch message headers to find duplicates
-        let messages = imap
-            .session
-            .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
-            .or_raise(|| DuError("imap uid fetch failed".to_owned()))?;
-        let duplicates =
-            Self::find_duplicates(&messages).or_raise(|| DuError("find duplicates".to_owned()))?;
-
-        // Delete duplicate messages
-        if !duplicates.is_empty() {
-            let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
-
-            if !dry_run {
-                imap.delete_uids(mailbox, &duplicate_set)
-                    .or_raise(|| DuError("imap delete uids failed".to_owned()))?;
-            }
-
-            renderer
-                .add_row(&[&mailbox, &duplicates.len(), &duplicate_set])
-                .or_raise(|| DuError("renderer add row".to_owned()))?;
-        }
-
-        Ok(())
-    }
-
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(messages), ret, , err(level = "info"), fields(messages = messages.len()))
-    )]
-    fn find_duplicates(messages: &Fetches) -> Result<HashSet<Uid>, DuError> {
         let mut message_ids: HashMap<String, Vec<Uid>> = HashMap::new();
 
-        // Collect message IDs with sequence numbers
-        for message in messages.iter() {
-            if let Some(id) = Self::parse_message_id(message.header()) {
-                message_ids
-                    .entry(id)
-                    .or_default()
-                    .push(message.uid.ok_or_raise(|| DuError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned()))?);
+        {
+            let mut stream = imap
+                .session
+                .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
+                .await
+                .or_raise(|| DuError("imap uid fetch failed".to_owned()))?;
+
+            while let Some(message) = stream
+                .try_next()
+                .await
+                .or_raise(|| DuError("uid fetch stream error".to_owned()))?
+            {
+                if let Some(id) = Self::parse_message_id(message.header()) {
+                    let uid = message.uid.ok_or_raise(|| {
+                        DuError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned())
+                    })?;
+                    message_ids.entry(id).or_default().push(uid);
+                }
             }
         }
 
@@ -161,7 +156,22 @@ impl FindDups {
             }
         }
 
-        Ok(duplicates)
+        // Delete duplicate messages
+        if !duplicates.is_empty() {
+            let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
+
+            if !dry_run {
+                imap.delete_uids(mailbox, &duplicate_set)
+                    .await
+                    .or_raise(|| DuError("imap delete uids failed".to_owned()))?;
+            }
+
+            renderer
+                .add_row(&[&mailbox, &duplicates.len(), &duplicate_set])
+                .or_raise(|| DuError("renderer add row".to_owned()))?;
+        }
+
+        Ok(())
     }
 
     #[cfg(test)]
@@ -246,8 +256,8 @@ mod tests {
         assert_eq!(result, None);
     }
 
-    #[test]
-    fn process_no_duplicates() {
+    #[tokio::test]
+    async fn process_no_duplicates() {
         // 2 messages with different Message-IDs → no deletions
         let server = MockServer::start(&[], vec![
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
@@ -261,10 +271,12 @@ mod tests {
                     header_fetch_line(2, 2, "<msg2@example.com>"),
                 ],
             ),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<serde_value::Value> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Deduplication",
@@ -272,15 +284,15 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
-        drop(imap);
-        server.join();
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"Mailbox,Dups,Sequence");
     }
 
-    #[test]
-    fn process_keeps_oldest_with_three_duplicates() {
+    #[tokio::test]
+    async fn process_keeps_oldest_with_three_duplicates() {
         // 3 messages sharing the same Message-ID: UIDs 1, 3, 5.
         // The oldest (lowest UID = 1) is kept; UIDs 3 and 5 are deleted.
         let server = MockServer::start(&[], vec![
@@ -305,10 +317,12 @@ mod tests {
             MockExchange::ok("UID STORE 3,5 +FLAGS (\\Deleted)", vec![]),
             // CLOSE
             MockExchange::ok("CLOSE", vec![]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<serde_value::Value> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Deduplication",
@@ -316,9 +330,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
-        drop(imap);
-        server.join();
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @r#"
         Mailbox,Dups,Sequence
@@ -326,16 +340,18 @@ mod tests {
         "#);
     }
 
-    #[test]
-    fn process_skips_mailbox_with_one_message() {
+    #[tokio::test]
+    async fn process_skips_mailbox_with_one_message() {
         // exists = 1 < 2 → returns immediately without UID FETCH
         let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
             "* 1 EXISTS\r\n".into(),
             "* 0 RECENT\r\n".into(),
-        ])]);
+        ])])
+        .await;
         let base = test_base();
-        let mut imap: Imap<serde_value::Value> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Deduplication",
@@ -343,15 +359,15 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
-        drop(imap);
-        server.join();
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"Mailbox,Dups,Sequence");
     }
 
-    #[test]
-    fn process_dry_run_finds_duplicates() {
+    #[tokio::test]
+    async fn process_dry_run_finds_duplicates() {
         // 3 messages: uid 2 and 3 share the same Message-ID
         let server = MockServer::start(&[], vec![
             // EXAMINE → 3 messages (examine is read-only)
@@ -368,10 +384,12 @@ mod tests {
                     header_fetch_line(3, 3, "<dup@example.com>"),
                 ],
             ),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<serde_value::Value> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Deduplication",
@@ -379,9 +397,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true);
-        drop(imap);
-        server.join();
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Dups,Sequence
@@ -389,8 +407,8 @@ mod tests {
         ");
     }
 
-    #[test]
-    fn process_destructive_deletes_duplicates() {
+    #[tokio::test]
+    async fn process_destructive_deletes_duplicates() {
         // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
         let server = MockServer::start(&[], vec![
             // EXAMINE → 3 messages
@@ -416,10 +434,12 @@ mod tests {
             MockExchange::ok("UID STORE 3 +FLAGS (\\Deleted)", vec![]),
             // CLOSE (expunge)
             MockExchange::ok("CLOSE", vec![]),
-        ]);
+        ])
+        .await;
         let base = test_base();
-        let mut imap: Imap<serde_value::Value> =
-            Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let mut renderer = new_renderer(
             base.renderer,
             "Mailbox Deduplication",
@@ -427,9 +447,9 @@ mod tests {
             RENDERER_HEADERS,
         )
         .expect("renderer");
-        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false);
-        drop(imap);
-        server.join();
+        let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         assert_snapshot!(renderer.output(), @"
         Mailbox,Dups,Sequence

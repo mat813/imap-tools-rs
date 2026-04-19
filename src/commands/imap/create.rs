@@ -26,30 +26,37 @@ impl Create {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub fn execute(&self) -> Result<(), ImapCreateCommandError> {
+    pub async fn execute(&self) -> Result<(), ImapCreateCommandError> {
         let config = BaseConfig::new(&self.config)
             .or_raise(|| ImapCreateCommandError("config".to_owned()))?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)
+            .await
             .or_raise(|| ImapCreateCommandError("connect".to_owned()))?;
 
-        self.run(&mut imap, &mut std::io::stdout())
+        let result = self.run(&mut imap, &mut std::io::stdout()).await;
+        imap.close()
+            .await
+            .or_raise(|| ImapCreateCommandError("imap close failed".to_owned()))?;
+        result
     }
 
-    fn run(
+    async fn run(
         &self,
         imap: &mut Imap<()>,
         out: &mut dyn std::io::Write,
     ) -> Result<(), ImapCreateCommandError> {
         let mailbox = &self.mailbox;
 
-        match imap.session.create(mailbox) {
+        match imap.session.create(mailbox).await {
             Ok(()) => writeln!(out, "The mailbox {mailbox} has been created")
                 .or_raise(|| ImapCreateCommandError("write output".to_owned()))?,
-            Err(imap::Error::No(no)) if no.information.contains("Mailbox already exist") => {
-                writeln!(out, "Cannot create {mailbox:?}, it already exist: {no}")
+            Err(async_imap::error::Error::No(reason))
+                if reason.contains("Mailbox already exist") =>
+            {
+                writeln!(out, "Cannot create {mailbox:?}, it already exist: {reason}")
                     .or_raise(|| ImapCreateCommandError("write output".to_owned()))?;
             },
             Err(e) => bail!(ImapCreateCommandError(format!(
@@ -68,19 +75,22 @@ mod tests {
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
-    #[test]
-    fn create_mailbox_success() {
-        let server = MockServer::start(&[], vec![MockExchange::ok("CREATE \"NewFolder\"", vec![])]);
+    #[tokio::test]
+    async fn create_mailbox_success() {
+        let server =
+            MockServer::start(&[], vec![MockExchange::ok("CREATE \"NewFolder\"", vec![])]).await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = Create {
             config: args::Generic::default(),
             mailbox: "NewFolder".to_owned(),
         };
         let mut output = Vec::<u8>::new();
-        let result = cmd.run(&mut imap, &mut output);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut output).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         let msg = String::from_utf8(output).expect("utf8");
         assert!(
@@ -89,22 +99,25 @@ mod tests {
         );
     }
 
-    #[test]
-    fn create_mailbox_already_exists() {
+    #[tokio::test]
+    async fn create_mailbox_already_exists() {
         let server = MockServer::start(&[], vec![MockExchange::no(
             "CREATE \"INBOX\"",
             "Mailbox already exist",
-        )]);
+        )])
+        .await;
         let base = test_base();
-        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port).expect("connect");
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
         let cmd = Create {
             config: args::Generic::default(),
             mailbox: "INBOX".to_owned(),
         };
         let mut output = Vec::<u8>::new();
-        let result = cmd.run(&mut imap, &mut output);
-        drop(imap);
-        server.join();
+        let result = cmd.run(&mut imap, &mut output).await;
+        let _ = imap.close().await;
+        server.join().await;
         assert!(
             result.is_ok(),
             "expected Ok even for NO response, got: {result:?}"
