@@ -1,4 +1,4 @@
-#[cfg(all(feature = "openssl", feature = "rustls"))]
+#[cfg(all(feature = "native-tls", feature = "rustls"))]
 compile_error!("features `openssl` and `rustls` are mutually exclusive — enable only one");
 
 use std::{
@@ -323,20 +323,28 @@ where
 
 /// Wrap a raw `TcpStream` in the appropriate TLS layer (or leave as-is for plaintext),
 /// returning the opaque `ImapStream` and whether the server greeting has already been consumed.
+#[cfg_attr(
+    not(feature = "__tls"),
+    expect(clippy::unused_async, reason = "only needed when using tls")
+)]
 async fn build_stream(
     tcp: TcpStream,
     mode: &Mode,
+    #[cfg_attr(
+        not(feature = "__tls"),
+        expect(unused_variables, reason = "only needed when using tls")
+    )]
     server: &str,
     port: u16,
 ) -> Result<(ImapStream, bool), ImapError> {
     match *mode {
         Mode::Plaintext => Ok((Box::new(tcp), false)),
-        #[cfg(any(feature = "openssl", feature = "rustls"))]
+        #[cfg(feature = "__tls")]
         Mode::Tls => {
             let tls = wrap_tls(tcp, server).await?;
             Ok((tls, false))
         },
-        #[cfg(any(feature = "openssl", feature = "rustls"))]
+        #[cfg(feature = "__tls")]
         Mode::StartTls => {
             let mut plain_client = async_imap::Client::new(tcp);
             plain_client
@@ -352,7 +360,7 @@ async fn build_stream(
             Ok((tls, true))
         },
         Mode::AutoTls => {
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
+            #[cfg(feature = "__tls")]
             {
                 if port == 993 {
                     let tls = wrap_tls(tcp, server).await?;
@@ -372,14 +380,14 @@ async fn build_stream(
                     Ok((tls, true))
                 }
             }
-            #[cfg(not(any(feature = "openssl", feature = "rustls")))]
+            #[cfg(not(feature = "__tls"))]
             {
                 let _ = port;
                 Ok((Box::new(tcp), false))
             }
         },
         Mode::Auto => {
-            #[cfg(any(feature = "openssl", feature = "rustls"))]
+            #[cfg(feature = "__tls")]
             {
                 if port == 993 {
                     let tls = wrap_tls(tcp, server).await?;
@@ -406,7 +414,7 @@ async fn build_stream(
                     Ok((Box::new(stream), true))
                 }
             }
-            #[cfg(not(any(feature = "openssl", feature = "rustls")))]
+            #[cfg(not(feature = "__tls"))]
             {
                 let _ = port;
                 Ok((Box::new(tcp), false))
@@ -416,7 +424,7 @@ async fn build_stream(
 }
 
 /// Wrap a `TcpStream` in a TLS layer using the OpenSSL backend.
-#[cfg(feature = "openssl")]
+#[cfg(feature = "native-tls")]
 async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {
     let connector = native_tls::TlsConnector::new()
         .or_raise(|| ImapError("native TLS connector creation failed".to_owned()))?;

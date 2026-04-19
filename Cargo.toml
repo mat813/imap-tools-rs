@@ -18,8 +18,9 @@ inherits = "dev"
 
 [features]
 default = ["rustls", "tracing"]
-native-tls = ["dep:tokio-native-tls", "dep:native-tls"]
-rustls  = ["dep:tokio-rustls", "dep:rustls-native-certs"]
+__tls = []
+native-tls = ["dep:tokio-native-tls", "dep:native-tls", "__tls"]
+rustls  = ["dep:tokio-rustls", "dep:rustls-native-certs", "__tls"]
 ratatui = ["dep:ratatui"]
 tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 json = ["dep:serde_json"]

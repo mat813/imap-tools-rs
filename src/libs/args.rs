@@ -30,12 +30,9 @@ pub struct Generic {
     #[arg(short = 'P', long)]
     pub password_command: Option<String>,
 
+    #[cfg_attr(feature = "__tls", doc = "Select the TLS mode")]
     #[cfg_attr(
-        any(feature = "rustls", feature = "openssl"),
-        doc = "Select the TLS mode"
-    )]
-    #[cfg_attr(
-        not(any(feature = "rustls", feature = "openssl")),
+        not(feature = "__tls"),
         doc = "TLS is disabled, recompile with either feature rustls or openssl."
     )]
     #[arg(short = 'm', long, value_enum)]
@@ -128,7 +125,7 @@ mod tests {
         assert!(generic.mode.is_some(), "mode should be set");
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn mode_tls_option() {
         let generic = get_generic_from_args(["test", "-m", "tls"]);

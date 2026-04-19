@@ -193,7 +193,7 @@ mod tests {
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
 
-        if cfg!(any(feature = "rustls", feature = "openssl")) {
+        if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
                 renderer: None,
@@ -436,7 +436,7 @@ mod tests {
         };
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
-        if cfg!(any(feature = "rustls", feature = "openssl")) {
+        if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
                 renderer: None,
@@ -502,7 +502,7 @@ mod tests {
             password: Some("override_password".to_owned()),
             dry_run: true,
             mode: Some(
-                if cfg!(any(feature = "rustls", feature = "openssl")) {
+                if cfg!(feature = "__tls") {
                     "tls"
                 } else {
                     "plaintext"
@@ -514,7 +514,7 @@ mod tests {
         };
 
         let config: BaseConfig = BaseConfig::new(&args).unwrap();
-        if cfg!(any(feature = "rustls", feature = "openssl")) {
+        if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
             BaseConfig {
                 renderer: None,

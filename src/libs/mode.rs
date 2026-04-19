@@ -11,34 +11,34 @@ impl std::error::Error for ModeError {}
 #[non_exhaustive]
 pub enum Mode {
     #[cfg_attr(
-        any(feature = "openssl", feature = "rustls"),
+        feature = "__tls",
         doc = "Automatically detect what connection mode should be used.",
         doc = "This will use TLS if the port is 993, and otherwise STARTTLS if available.",
         doc = "If no TLS communication mechanism is available, the connection will fail."
     )]
     #[cfg_attr(
-        not(any(feature = "openssl", feature = "rustls")),
+        not(feature = "__tls"),
         doc = "TLS is disabled, plaintext will be used"
     )]
     AutoTls,
     #[cfg_attr(
-        any(feature = "openssl", feature = "rustls"),
+        feature = "__tls",
         doc = "Automatically detect what connection mode should be used.",
         doc = "This will use TLS if the port is 993, and otherwise STARTTLS if available.",
         doc = "It will fallback to a plaintext connection if no TLS option can be used."
     )]
     #[cfg_attr(
-        not(any(feature = "openssl", feature = "rustls")),
+        not(feature = "__tls"),
         doc = "TLS is disabled, plaintext will be used"
     )]
     Auto,
     /// A plain unencrypted TCP connection
     Plaintext,
     /// An encrypted TLS connection
-    #[cfg(any(feature = "openssl", feature = "rustls"))]
+    #[cfg(feature = "__tls")]
     Tls,
     /// An eventually-encrypted (i.e., STARTTLS) connection
-    #[cfg(any(feature = "openssl", feature = "rustls"))]
+    #[cfg(feature = "__tls")]
     StartTls,
 }
 
@@ -51,12 +51,12 @@ impl FromStr for Mode {
             "auto_tls" | "autotls" => Self::AutoTls,
             "auto" => Self::Auto,
             "plaintext" | "none" => Self::Plaintext,
-            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            #[cfg(feature = "__tls")]
             "tls" => Self::Tls,
-            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            #[cfg(feature = "__tls")]
             "start_tls" | "starttls" => Self::StartTls,
             _ => return Err(ModeError(
-                if cfg!(any(feature = "rustls", feature = "openssl")) {
+                if cfg!(feature = "__tls") {
                     "Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls"
                 } else {
                     "Invalid connection mode, expects: auto_tls, auto, plaintext"
@@ -86,9 +86,9 @@ impl Serialize for Mode {
             Self::AutoTls => "auto_tls",
             Self::Auto => "auto",
             Self::Plaintext => "plaintext",
-            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            #[cfg(feature = "__tls")]
             Self::Tls => "tls",
-            #[cfg(any(feature = "rustls", feature = "openssl"))]
+            #[cfg(feature = "__tls")]
             Self::StartTls => "start_tls",
         };
         serializer.serialize_str(s)
@@ -97,7 +97,7 @@ impl Serialize for Mode {
 
 impl Default for Mode {
     fn default() -> Self {
-        if cfg!(any(feature = "rustls", feature = "openssl")) {
+        if cfg!(feature = "__tls") {
             Self::AutoTls
         } else {
             Self::Plaintext
@@ -143,21 +143,21 @@ mod tests {
         assert_eq!(mode, Mode::Plaintext);
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn from_str_tls() {
         let mode = "tls".parse::<Mode>().expect("tls should parse");
         assert_eq!(mode, Mode::Tls);
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn from_str_start_tls() {
         let mode = "start_tls".parse::<Mode>().expect("start_tls should parse");
         assert_eq!(mode, Mode::StartTls);
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn from_str_starttls_alias() {
         let mode = "starttls".parse::<Mode>().expect("starttls should parse");
@@ -186,7 +186,7 @@ mod tests {
         }
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn serde_roundtrip_tls_modes() {
         for s in &["tls", "start_tls"] {
@@ -197,7 +197,7 @@ mod tests {
         }
     }
 
-    #[cfg(any(feature = "rustls", feature = "openssl"))]
+    #[cfg(feature = "__tls")]
     #[test]
     fn default_is_auto_tls() {
         assert_eq!(Mode::default(), Mode::AutoTls);
