@@ -43,7 +43,7 @@ size = { version = "=0.5.0", features = ["serde"] }
 strfmt = "=0.2.5"
 tracing = { version = "=0.1.44", features = ["log"], optional = true }
 tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional = true }
-serde_json = { version = "1.0.149", optional = true }
+serde_json = { version = "=1.0.149", optional = true }
 
 [dev-dependencies]
 insta = "=1.47.2"
