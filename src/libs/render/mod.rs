@@ -1,4 +1,6 @@
 mod csv;
+#[cfg(feature = "json")]
+mod json;
 mod print;
 #[cfg(feature = "ratatui")]
 mod terminal;
@@ -21,6 +23,9 @@ pub enum RendererArg {
     #[cfg(feature = "ratatui")]
     /// Ratatui-TUI output
     Ratatui,
+    #[cfg(feature = "json")]
+    /// Json output
+    Json,
 }
 
 #[allow(clippy::derivable_impls, reason = "special cases")]
@@ -80,6 +85,11 @@ pub fn new_renderer<const N: usize>(
         RendererArg::Ratatui => Ok(Box::new(
             terminal::Renderer::new(title, format, headers)
                 .or_raise(|| RendererError("terminal".to_owned()))?,
+        )),
+        #[cfg(feature = "json")]
+        RendererArg::Json => Ok(Box::new(
+            json::Renderer::new(title, format, headers)
+                .or_raise(|| RendererError("json".to_owned()))?,
         )),
         RendererArg::Terminal => Ok(Box::new(
             print::Renderer::new(title, format, headers)
