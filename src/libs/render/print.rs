@@ -7,7 +7,7 @@ use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, Rend
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct Renderer {
-    format: &'static str,
+    format: String,
     headers: &'static [&'static str],
     some_output: bool,
     buffer: String,
@@ -27,11 +27,16 @@ impl<const N: usize> RendererTrait<N> for Renderer {
     )]
     fn new(
         _title: &'static str,
-        format: &'static str,
+        format: &'static [&'static str; N],
         headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError> {
         Ok(Self {
-            format,
+            format: format
+                .iter()
+                .enumerate()
+                .map(|(k, v)| format!("{{{k}{v}}}"))
+                .collect::<Vec<_>>()
+                .join(" | "),
             headers,
             some_output: false,
             buffer: String::new(),
@@ -55,7 +60,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
                 .enumerate()
                 .map(|(idx, f)| (idx, *f))
                 .collect();
-            let output = strfmt(self.format, &map)
+            let output = strfmt(&self.format, &map)
                 .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
             self.buffer.push_str(&output);
             self.buffer.push('\n');
@@ -65,7 +70,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
             .enumerate()
             .map(|(idx, f)| (idx, f.to_string()))
             .collect();
-        let output = strfmt(self.format, &map)
+        let output = strfmt(&self.format, &map)
             .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
         self.buffer.push_str(&output);
         self.buffer.push('\n');
@@ -90,11 +95,7 @@ impl Drop for Renderer {
 
 #[cfg(test)]
 mod tests {
-    #![expect(
-        clippy::expect_used,
-        clippy::literal_string_with_formatting_args,
-        reason = "tests"
-    )]
+    #![expect(clippy::expect_used, reason = "tests")]
 
     use insta::assert_snapshot;
 
@@ -104,52 +105,48 @@ mod tests {
         ($($e:expr),* $(,)?) => { [$(&$e as &dyn std::fmt::Display),*] };
     }
 
-    fn make(format: &'static str, headers: &'static [&'static str; 2]) -> impl RendererTrait<2> {
+    fn make(
+        format: &'static [&'static str; 2],
+        headers: &'static [&'static str; 2],
+    ) -> impl RendererTrait<2> {
         Renderer::new("T", format, headers).expect("new renderer")
     }
 
     #[test]
     fn print_empty() {
-        let mut r = make("{0} {1}", &["Name", "Value"]);
+        let mut r = make(&["", ""], &["Name", "Value"]);
         assert_snapshot!(r.output(), @"");
     }
 
     #[test]
     fn print_writes_headers_on_first_row() {
-        let mut r = make("{0} {1}", &["Name", "Value"]);
+        let mut r = make(&["", ""], &["Name", "Value"]);
         r.add_row(&row!["foo", "bar"]).expect("add_row");
         assert_snapshot!(r.output(), @"
-        Name Value
-        foo bar
+        Name | Value
+        foo | bar
         ");
     }
 
     #[test]
     fn print_multiple_rows_headers_once() {
-        let mut r = make("{0} {1}", &["Name", "Value"]);
+        let mut r = make(&["", ""], &["Name", "Value"]);
         r.add_row(&row!["foo", "bar"]).expect("add_row");
         r.add_row(&row!["baz", "qux"]).expect("add_row");
         assert_snapshot!(r.output(), @"
-        Name Value
-        foo bar
-        baz qux
+        Name | Value
+        foo | bar
+        baz | qux
         ");
     }
 
     #[test]
     fn print_format_with_width_specifier() {
-        let mut r = make("{0:<10} {1}", &["Name", "Value"]);
+        let mut r = make(&[":<10", ""], &["Name", "Value"]);
         r.add_row(&row!["foo", "bar"]).expect("add_row");
         assert_snapshot!(r.output(), @"
-        Name       Value
-        foo        bar
+        Name       | Value
+        foo        | bar
         ");
-    }
-
-    #[test]
-    fn print_format_error_propagates() {
-        let mut r = make("{99}", &["A", "B"]);
-        let result = r.add_row(&row!["x", "y"]);
-        assert!(result.is_err());
     }
 }

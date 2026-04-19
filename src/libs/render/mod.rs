@@ -73,7 +73,7 @@ impl std::str::FromStr for RendererArg {
 pub fn new_renderer<const N: usize>(
     renderer: Option<RendererArg>,
     title: &'static str,
-    format: &'static str,
+    format: &'static [&'static str; N],
     headers: &'static [&'static str; N],
 ) -> Result<Box<dyn Renderer<N>>, RendererError> {
     match renderer.unwrap_or_default() {

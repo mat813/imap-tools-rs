@@ -20,7 +20,7 @@ pub trait RendererUsable {
 pub trait Renderer<const N: usize>: RendererUsable {
     fn new(
         title: &'static str,
-        format: &'static str,
+        format: &'static [&'static str; N],
         headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError>
     where

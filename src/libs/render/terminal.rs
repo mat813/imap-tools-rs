@@ -42,7 +42,7 @@ impl<const N: usize> RendererTrait<N> for Renderer<'_> {
     )]
     fn new(
         title: &'static str,
-        _format: &'static str,
+        _format: &'static [&'static str; N],
         headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {

@@ -28,9 +28,9 @@ pub struct List {
 
 type MyExtra = serde_value::Value;
 
-static RENDERER_FORMAT: &str = "{0:<42} {1}";
-static RENDERER_HEADERS_LEN: usize = 2;
-static RENDERER_HEADERS: &[&str; RENDERER_HEADERS_LEN] = &["Mailbox", "Mailbox extra"];
+static RENDERER_LEN: usize = 2;
+static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
+static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &["Mailbox", "Mailbox extra"];
 
 impl List {
     #[cfg_attr(
@@ -57,7 +57,7 @@ impl List {
 
     fn run(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<RENDERER_HEADERS_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
     ) -> Result<(), ListError> {
         for (mailbox, result) in imap.list().or_raise(|| ListError("list"))? {
             renderer

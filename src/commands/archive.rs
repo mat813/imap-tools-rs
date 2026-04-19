@@ -37,9 +37,9 @@ struct MyExtra {
     days: u32, // TODO: should this be a float instead ?
 }
 
-static RENDERER_FORMAT: &str = "{0:<42} | {1:>5} | {2:<25} | {3:>5} | {4:>11} | {5}";
-static RENDERER_HEADERS_LEN: usize = 6;
-static RENDERER_HEADERS: &[&str; RENDERER_HEADERS_LEN] = &[
+static RENDERER_LEN: usize = 6;
+static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ":>5", ":<25", ":>5", ":>11", ""];
+static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &[
     "Mailbox",
     "Msgs",
     "Archive mbx",
@@ -103,7 +103,7 @@ impl Archive {
     )]
     fn archive(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<RENDERER_HEADERS_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
         mailbox: &str,
         extra: &MyExtra,
         dry_run: bool,
