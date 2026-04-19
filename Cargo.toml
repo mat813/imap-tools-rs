@@ -17,8 +17,8 @@ inherits = "dev"
 inherits = "dev"
 
 [features]
-default = ["openssl"]
-openssl = ["dep:tokio-native-tls", "dep:native-tls"]
+default = ["rustls", "tracing"]
+native-tls = ["dep:tokio-native-tls", "dep:native-tls"]
 rustls  = ["dep:tokio-rustls", "dep:rustls-native-certs"]
 ratatui = ["dep:ratatui"]
 tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
