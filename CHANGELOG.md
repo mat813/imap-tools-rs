@@ -5,7 +5,107 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.10.0 (2026-04-19)
+
+### Chore
+
+ - <csr-id-000029104b52f05e8a57825ae8d9b0ac3c8f48d9/> refactor tls cfg* tests a bit
+ - <csr-id-4fd43e298495fe6b67886d501288123ed5711bbb/> lock file maintenance
+
+### New Features
+
+ - <csr-id-00002890af72c73f631283fcd7ffe56856f2ea74/> migrate from sync imap to async-imap on tokio
+ - <csr-id-000028504d8b9d4b3a1e724abfd437c78909c557/> add a json output
+
+### Bug Fixes
+
+ - <csr-id-0000290041d17e5c064c3430ed49c54728487453/> change default feature to rustls
+ - <csr-id-75fdd9f99cfd239c6ef38f183bc436828dc99268/> pin rust crate serde_json to =1.0.149
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.149 | 1.0.149 |
+ - <csr-id-00002870ff9889aca40d8bc215356ee12a994887/> refactor formatting
+ - <csr-id-00002840599043b54927a0dc23bb05f1ec6d9ab0/> note that all those are 'static
+ - <csr-id-0000283000179d2d2eda7947cc0b9bff2bf937de/> put the headers length in a constant
+ - <csr-id-f6dadf4064b5dda1514316d2d2cb5a3fba824c46/> update rust crate clap to v4.6.1
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.0 | 4.6.1 |
+ - <csr-id-0000281064f7f15f5c2b45593d9d493a434a0cdb/> force compile time check of the renderers rows length
+ - <csr-id-000028008ca6723490d637ebacc5c4f2e0882cc1/> delegate formatting to std::fmt::from_fn
+
+### Other
+
+ - <csr-id-00002920863dadf7db2bceb09d9ff144325bce24/> better clippy
+
+### Test
+
+ - <csr-id-00002860ce5a52e2b6b1355025e775a1ba60afbd/> add unit tests for testable renderers
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 14 commits contributed to the release.
+ - 11 days passed between releases.
+ - 14 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Better clippy (0000292)
+    - Refactor tls cfg* tests a bit (0000291)
+    - Change default feature to rustls (0000290)
+    - Migrate from sync imap to async-imap on tokio (0000289)
+    - Pin rust crate serde_json to =1.0.149 (75fdd9f)
+    - Refactor formatting (0000287)
+    - Add unit tests for testable renderers (0000286)
+    - Add a json output (0000285)
+    - Note that all those are 'static (0000284)
+    - Put the headers length in a constant (0000283)
+    - Update rust crate clap to v4.6.1 (f6dadf4)
+    - Force compile time check of the renderers rows length (0000281)
+    - Delegate formatting to std::fmt::from_fn (0000280)
+    - Lock file maintenance (4fd43e2)
+</details>
+
 ## v1.9.0 (2026-04-08)
+
+<csr-id-754207379260f6573a5ede2bf500ec449df49009/>
+<csr-id-000026700e96439e9554d21e9375e870d525e096/>
+<csr-id-00925453af7c272eb4f97a738726164388d3cc44/>
+<csr-id-afe568bd6b2b2035a6d09bb4cedca367771b3f72/>
+<csr-id-00002410a3a85fc9f1a8017fb2d36d30087f7b18/>
+<csr-id-17d9f3f37abc358bb5391477d9a764916caa3131/>
+<csr-id-75d322174b3ef280aae4d389740e32f7b62356a9/>
+<csr-id-0000243076f04f38a14a08d36ba6f004bc3d1455/>
+<csr-id-000024208857f63a01d7d5172a606ecc880e53f4/>
+<csr-id-000025403a5aba4ba9b5f03384862f612a051c08/>
+<csr-id-000025201be47a1a3187c2588d012e0b90150308/>
+<csr-id-00002510880259df2c9c9517c352b8e7a1d007db/>
+<csr-id-000025003c6999b1080e275c79968b8062c41fa4/>
+<csr-id-0000273074ec8dd76d13cf1a21f095e02e435cfb/>
+<csr-id-00002570e69f8ea44aaf68c0dce498cf698c558d/>
+<csr-id-00002400bd15ee73ff03764d6a789642398a2a7c/>
+<csr-id-000027203ead927da209cf04936ffbb1920b409e/>
+<csr-id-00002710a38f03251bac1f6fb5fa4465f688262b/>
+<csr-id-0000270020cc5fc3c1b971b7454868ea1d57f2c8/>
+<csr-id-0000266020b576ca0576f8522d9ce3fb5321c8c5/>
+<csr-id-00002650fae1bc9238e84bf452890ff723c51731/>
+<csr-id-000026408c77280101badcd63edf47f56b42d53e/>
+<csr-id-000026309dd443f0fc9a24ec95b24d417d98028c/>
+<csr-id-0000262061f5a8a9efa13a76fd952f05222e2db3/>
+<csr-id-00002610c1bef6aad96fde1370b2346b83fd7bf6/>
+<csr-id-00002600355e9a8565be885dca14de7de8e74c3e/>
+<csr-id-00002590fd0291a6a8db16fd638b6e9bf5447ba2/>
+<csr-id-000025802f2bcdafc85be44cc9b04633659dba4e/>
+<csr-id-000025609ccc5d2638b525be2a82769282105800/>
+<csr-id-00002550eb965294cc61cb873c820620e2acfd79/>
 
 ### Chore
 
@@ -114,7 +214,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 40 commits contributed to the release.
+ - 41 commits contributed to the release.
  - 40 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -125,6 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.9.0 (20ed598)
     - Add sorting name and size by descending order (0000277)
     - Use clap's value_enum/ValueEnum to get help from enums (0000276)
     - Add csv renderer to args (0000275)
