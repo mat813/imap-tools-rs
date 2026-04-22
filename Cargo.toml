@@ -2,6 +2,7 @@
 name = "imap-tools"
 version = "1.10.0"
 edition = "2024"
+rust-version = "1.93"
 license = "MIT"
 description = "A collection of tools to manipulate IMAP mailboxes"
 readme = "README.md"
