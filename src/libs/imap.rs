@@ -534,6 +534,7 @@ mod tests {
 
     use super::ids_list_to_collapsed_sequence;
 
+    #[cfg_attr(not(debug_assertions), ignore = "testing debug_assert!")]
     #[test]
     #[should_panic(expected = "ids must not be empty")]
     fn empty_set() {
