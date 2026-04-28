@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.10.2 (2026-04-28)
+
+### Other
+
+ - <csr-id-00003090df3ebf6ea037ce143b92064467ea4915/> unset CARGO_HOME so it does not dirty the work directory
+ - <csr-id-00003080c695797bafd8f6e6224e247d33a8b834/> use CI_JOB_TOKEN, it should work
+ - <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/> we don't do releases here
+ - <csr-id-000030600c377e56bc23035ac065a830226b4d4e/> don't depend on the cross*
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Unset CARGO_HOME so it does not dirty the work directory (0000309)
+    - Use CI_JOB_TOKEN, it should work (0000308)
+    - We don't do releases here (0000307)
+    - Don't depend on the cross* (0000306)
+</details>
+
 ## v1.10.1 (2026-04-28)
+
+<csr-id-fb9fc3d376a7e1e11ade63c03423f5ad0b8cea1f/>
+<csr-id-00002950dcd0acc581ea14c062d4ad70155da3fa/>
+<csr-id-a80a7d850a6be0cb0076a4bf0b9294ecdfa0e7a5/>
+<csr-id-00003040de6f80eae48d6710618a5691c0638c84/>
+<csr-id-00003020854675634e299ec6061c08140402aadc/>
+<csr-id-00003010eaf229c64347102583a7f98b25916b86/>
+<csr-id-0000298064a48e33c7b1e81c4d066a7735ad7d29/>
+<csr-id-00002970e7d6586979c2d1c0ddb3be8a216b20a1/>
+<csr-id-00002960201e8c2e7a73b1aa91b1f63543f9ea6d/>
+<csr-id-000029904dc9616d0e56fbc4763673b0a5c6262f/>
 
 ### Chore
 
@@ -34,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release.
+ - 12 commits contributed to the release.
  - 9 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -46,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Bump imap-tools v1.10.1 (50838e7)
     - Use correct token (0000304)
     - Remove SingleOrArray and use a simple custom deserializer (0000303)
     - Unpin (0000302)
