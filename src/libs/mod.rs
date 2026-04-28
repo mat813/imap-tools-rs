@@ -6,4 +6,3 @@ pub mod filters;
 pub mod imap;
 mod mode;
 pub mod render;
-pub mod single_or_array;

@@ -89,24 +89,53 @@ where
             include_re,
             exclude_re,
             extra: intermediate.extra,
-            priv_include: intermediate.include.map(std::convert::Into::into),
-            priv_include_re: intermediate.include_re.map(std::convert::Into::into),
-            priv_exclude: intermediate.exclude.map(std::convert::Into::into),
-            priv_exclude_re: intermediate.exclude_re.map(std::convert::Into::into),
+            priv_include: intermediate.include,
+            priv_include_re: intermediate.include_re,
+            priv_exclude: intermediate.exclude,
+            priv_exclude_re: intermediate.exclude_re,
         })
     }
 }
 
 mod internal {
-    use std::fmt::Debug;
+    use std::{fmt, fmt::Debug};
 
     use derive_more::Display;
     use exn::{Result, ResultExt as _};
     use regex::{Regex, escape};
-    use serde::{Deserialize, Serialize};
+    use serde::{Deserialize, Deserializer, Serialize, de};
 
     use super::Filter as RealFilter;
-    use crate::libs::single_or_array::SingleOrArray;
+
+    fn deserialize_string_or_vec<'de, D>(
+        deserializer: D,
+    ) -> core::result::Result<Option<Vec<String>>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct V;
+
+        impl<'de> de::Visitor<'de> for V {
+            type Value = Vec<String>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a string or a sequence of strings")
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> core::result::Result<Self::Value, E> {
+                Ok(vec![v.to_owned()])
+            }
+
+            fn visit_seq<S: de::SeqAccess<'de>>(
+                self,
+                seq: S,
+            ) -> core::result::Result<Self::Value, S::Error> {
+                Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))
+            }
+        }
+
+        deserializer.deserialize_any(V).map(Some)
+    }
 
     #[derive(Debug, Display)]
     pub struct FilterError(String);
@@ -122,10 +151,14 @@ mod internal {
         pub reference: Option<String>,
         pub pattern: Option<String>,
         pub extra: Option<T>,
-        pub include: Option<SingleOrArray<String>>,
-        pub include_re: Option<SingleOrArray<String>>,
-        pub exclude: Option<SingleOrArray<String>>,
-        pub exclude_re: Option<SingleOrArray<String>>,
+        #[serde(default, deserialize_with = "deserialize_string_or_vec")]
+        pub include: Option<Vec<String>>,
+        #[serde(default, deserialize_with = "deserialize_string_or_vec")]
+        pub include_re: Option<Vec<String>>,
+        #[serde(default, deserialize_with = "deserialize_string_or_vec")]
+        pub exclude: Option<Vec<String>>,
+        #[serde(default, deserialize_with = "deserialize_string_or_vec")]
+        pub exclude_re: Option<Vec<String>>,
     }
 
     impl<T> Filter<T>
@@ -137,7 +170,7 @@ mod internal {
             tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
         )]
         pub fn make_include_filter_re(&self) -> Result<Option<Regex>, FilterError> {
-            Self::make_filter_re(self.include.as_ref(), self.include_re.as_ref())
+            Self::make_filter_re(self.include.as_deref(), self.include_re.as_deref())
         }
 
         #[cfg_attr(
@@ -145,7 +178,7 @@ mod internal {
             tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
         )]
         pub fn make_exclude_filter_re(&self) -> Result<Option<Regex>, FilterError> {
-            Self::make_filter_re(self.exclude.as_ref(), self.exclude_re.as_ref())
+            Self::make_filter_re(self.exclude.as_deref(), self.exclude_re.as_deref())
         }
 
         #[cfg_attr(
@@ -158,8 +191,8 @@ mod internal {
             )
         )]
         fn make_filter_re(
-            filter: Option<&SingleOrArray<String>>,
-            re_filter: Option<&SingleOrArray<String>>,
+            filter: Option<&[String]>,
+            re_filter: Option<&[String]>,
         ) -> Result<Option<Regex>, FilterError> {
             #[cfg(feature = "tracing")]
             tracing::trace!(?filter, ?re_filter);
@@ -167,18 +200,13 @@ mod internal {
             let mut internal: Vec<String> = vec![];
 
             if let Some(exclude) = filter {
-                let mut exclude_escaped: Vec<_> = Into::<Vec<&String>>::into(exclude)
-                    .iter()
-                    .map(|s| escape(s))
-                    .collect();
+                let mut exclude_escaped: Vec<_> = exclude.iter().map(|s| escape(s)).collect();
                 internal.append(&mut exclude_escaped);
             }
 
             if let Some(exclude_re) = re_filter {
-                let mut exclude_re_escaped: Vec<_> = Into::<Vec<&String>>::into(exclude_re)
-                    .iter()
-                    .map(|s| format!("(?:{s})"))
-                    .collect();
+                let mut exclude_re_escaped: Vec<_> =
+                    exclude_re.iter().map(|s| format!("(?:{s})")).collect();
                 internal.append(&mut exclude_re_escaped);
             }
 
@@ -209,10 +237,10 @@ mod internal {
                 reference: filter.reference.clone(),
                 pattern: filter.pattern.clone(),
                 extra: filter.extra.clone(),
-                include: filter.priv_include.clone().map(std::convert::Into::into),
-                include_re: filter.priv_include_re.clone().map(std::convert::Into::into),
-                exclude: filter.priv_exclude.clone().map(std::convert::Into::into),
-                exclude_re: filter.priv_exclude_re.clone().map(std::convert::Into::into),
+                include: filter.priv_include.clone(),
+                include_re: filter.priv_include_re.clone(),
+                exclude: filter.priv_exclude.clone(),
+                exclude_re: filter.priv_exclude_re.clone(),
             }
         }
     }
@@ -294,9 +322,9 @@ mod tests {
         assert!(json.contains(r#""reference":"test_ref""#));
         assert!(json.contains(r#""pattern":"*""#));
         assert!(json.contains(r#""include":["include_this","also_this"]"#));
-        assert!(json.contains(r#""include-re":"^include_pattern.*""#));
-        assert!(json.contains(r#""exclude":"exclude_this""#));
-        assert!(json.contains(r#""exclude-re":"^exclude_pattern.*""#));
+        assert!(json.contains(r#""include-re":["^include_pattern.*"]"#));
+        assert!(json.contains(r#""exclude":["exclude_this"]"#));
+        assert!(json.contains(r#""exclude-re":["^exclude_pattern.*"]"#));
         assert!(json.contains(r#""additional_info":"test info""#));
     }
 
