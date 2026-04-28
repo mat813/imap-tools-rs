@@ -281,4 +281,5 @@ publish:
 
       echo "Token received, running cargo publish"
 
+      unset CARGO_HOME
       CARGO_REGISTRY_TOKEN="$CRATES_IO_PUBLISH_TOKEN" cargo publish
