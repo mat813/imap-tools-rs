@@ -5,7 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.10.1 (2026-04-28)
+
+### Chore
+
+ - <csr-id-fb9fc3d376a7e1e11ade63c03423f5ad0b8cea1f/> lock file maintenance
+ - <csr-id-00002950dcd0acc581ea14c062d4ad70155da3fa/> set rust-version
+ - <csr-id-a80a7d850a6be0cb0076a4bf0b9294ecdfa0e7a5/> lock file maintenance
+
+### Bug Fixes
+
+ - <csr-id-0000303094f96ec23e4d9fe8a24199a014aed073/> remove SingleOrArray and use a simple custom deserializer
+
+### Other
+
+ - <csr-id-00003040de6f80eae48d6710618a5691c0638c84/> use correct token
+ - <csr-id-00003020854675634e299ec6061c08140402aadc/> unpin
+ - <csr-id-00003010eaf229c64347102583a7f98b25916b86/> publishing should not be interrupted
+ - <csr-id-0000298064a48e33c7b1e81c4d066a7735ad7d29/> a lot better
+ - <csr-id-00002970e7d6586979c2d1c0ddb3be8a216b20a1/> better message
+ - <csr-id-00002960201e8c2e7a73b1aa91b1f63543f9ea6d/> add publish via OIDC
+
+### Test
+
+ - <csr-id-000029904dc9616d0e56fbc4763673b0a5c6262f/> don't run when not in debug
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release.
+ - 9 days passed between releases.
+ - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Use correct token (0000304)
+    - Remove SingleOrArray and use a simple custom deserializer (0000303)
+    - Unpin (0000302)
+    - Publishing should not be interrupted (0000301)
+    - Lock file maintenance (fb9fc3d)
+    - Don't run when not in debug (0000299)
+    - A lot better (0000298)
+    - Better message (0000297)
+    - Add publish via OIDC (0000296)
+    - Set rust-version (0000295)
+    - Lock file maintenance (a80a7d8)
+</details>
+
 ## v1.10.0 (2026-04-19)
+
+<csr-id-000029104b52f05e8a57825ae8d9b0ac3c8f48d9/>
+<csr-id-4fd43e298495fe6b67886d501288123ed5711bbb/>
+<csr-id-00002920863dadf7db2bceb09d9ff144325bce24/>
+<csr-id-00002860ce5a52e2b6b1355025e775a1ba60afbd/>
 
 ### Chore
 
@@ -46,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release.
+ - 15 commits contributed to the release.
  - 11 days passed between releases.
  - 14 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -58,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release imap-tools v1.10.0 (4388c52)
     - Better clippy (0000292)
     - Refactor tls cfg* tests a bit (0000291)
     - Change default feature to rustls (0000290)
