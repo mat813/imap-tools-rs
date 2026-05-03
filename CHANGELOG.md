@@ -5,21 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.10.2 (2026-04-28)
+## v1.10.3 (2026-05-03)
+
+### Chore
+
+ - <csr-id-000031508ab175d0171554fc0e8398e6f571573c/> add correct binstall metadata
+ - <csr-id-685b2ccbc1f743700028afab0152ae12860e3cfc/> update dependency cargo-binstall to v1.19.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.18.1 | 1.19.0 |
 
 ### Other
 
- - <csr-id-00003090df3ebf6ea037ce143b92064467ea4915/> unset CARGO_HOME so it does not dirty the work directory
- - <csr-id-00003080c695797bafd8f6e6224e247d33a8b834/> use CI_JOB_TOKEN, it should work
- - <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/> we don't do releases here
- - <csr-id-000030600c377e56bc23035ac065a830226b4d4e/> don't depend on the cross*
+ - <csr-id-000031304641a29028dd736605da7b7227d0d8cc/> fixup release
+ - <csr-id-0000312062788af890bded40f78caa72ca8b5071/> cross release needs release
+ - <csr-id-00003110483c8db9f85c7e6d63fa73b4e6dddde7/> with release creation
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release.
- - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits contributed to the release over the course of 3 calendar days.
+ - 4 days passed between releases.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -29,6 +37,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add correct binstall metadata (0000315)
+    - Update dependency cargo-binstall to v1.19.0 (685b2cc)
+    - Fixup release (0000313)
+    - Cross release needs release (0000312)
+    - With release creation (0000311)
+</details>
+
+## v1.10.2 (2026-04-28)
+
+<csr-id-00003090df3ebf6ea037ce143b92064467ea4915/>
+<csr-id-00003080c695797bafd8f6e6224e247d33a8b834/>
+<csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/>
+<csr-id-000030600c377e56bc23035ac065a830226b4d4e/>
+
+### Other
+
+ - <csr-id-00003090df3ebf6ea037ce143b92064467ea4915/> unset CARGO_HOME so it does not dirty the work directory
+ - <csr-id-00003080c695797bafd8f6e6224e247d33a8b834/> use CI_JOB_TOKEN, it should work
+ - <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/> we don't do releases here
+ - <csr-id-000030600c377e56bc23035ac065a830226b4d4e/> don't depend on the cross*
+
+### Chore
+
+ - <csr-id-4073258f40aeb7b645884730cfd4c2aee496261d/> Bump imap-tools v1.10.2
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Bump imap-tools v1.10.2 (4073258)
     - Unset CARGO_HOME so it does not dirty the work directory (0000309)
     - Use CI_JOB_TOKEN, it should work (0000308)
     - We don't do releases here (0000307)
