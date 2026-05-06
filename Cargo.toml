@@ -55,7 +55,7 @@ tokio-native-tls = { version = "=0.3.1", optional = true }
 native-tls = { version = "=0.2.18", optional = true }
 tokio-rustls = { version = "=0.26.4", optional = true }
 rustls-native-certs = { version = "=0.8.3", optional = true }
-hmac = "=0.12.1"
+hmac = "=0.13.0"
 md-5 = "=0.10.6"
 rsasl = { version = "=2.3.1", default-features = false, features = ["std", "provider", "config_builder", "scram-sha-1", "scram-sha-2"] }
 
