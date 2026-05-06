@@ -120,26 +120,25 @@ impl BaseConfig {
             self.oauth2_command = Some(oauth2_command.clone());
         }
 
-        match self.auth.unwrap_or_default() {
-            AuthMethod::Login => {
-                if self.password.is_none() && self.password_command.is_none() {
-                    bail!(BaseConfigError(
-                        "The password or password command must be set".to_owned()
-                    ));
-                }
-            },
-            AuthMethod::XOAuth2 => {
-                if self.password.is_some() || self.password_command.is_some() {
-                    bail!(BaseConfigError(
-                        "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)".to_owned()
-                    ));
-                }
-                if self.oauth2_command.is_none() {
-                    bail!(BaseConfigError(
-                        "oauth2-command must be set when auth = \"xoauth2\"".to_owned()
-                    ));
-                }
-            },
+        let auth = self.auth.unwrap_or_default();
+        if auth.requires_password() {
+            if self.password.is_none() && self.password_command.is_none() {
+                bail!(BaseConfigError(
+                    "The password or password command must be set".to_owned()
+                ));
+            }
+        } else {
+            // XOAuth2
+            if self.password.is_some() || self.password_command.is_some() {
+                bail!(BaseConfigError(
+                    "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)".to_owned()
+                ));
+            }
+            if self.oauth2_command.is_none() {
+                bail!(BaseConfigError(
+                    "oauth2-command must be set when auth = \"xoauth2\"".to_owned()
+                ));
+            }
         }
 
         if let Some(renderer) = args.renderer {
@@ -379,9 +378,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:165:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:165:22,
+            |-> missing closing quote, at src/libs/base_config.rs:164:22,
         )
         "#);
     }
@@ -403,9 +402,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:172:22
+            password command exec failed, at src/libs/base_config.rs:171:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:172:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
         )
         ");
     }
@@ -427,7 +426,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:168:22,
+            password command is empty, at src/libs/base_config.rs:167:22,
         )
         ");
     }
@@ -464,7 +463,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:126:21,
+            The password or password command must be set, at src/libs/base_config.rs:126:17,
         )
         ");
     }

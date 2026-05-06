@@ -160,6 +160,28 @@ Another example could be:
 
 If the mailbox is `INBOX/bob`, and the email is from september 2024, it will be moved into `INBOX/bob/old/2024/09`.
 
+### Authentication
+
+The `auth` field (config file or `--auth` CLI flag) selects the SASL mechanism. The default is `login` (standard IMAP LOGIN command).
+
+| `auth` value    | Mechanism     | Credential needed           | Notes                                    |
+|-----------------|---------------|-----------------------------|------------------------------------------|
+| `login`         | IMAP LOGIN    | `password` / `password-command` | Default                            |
+| `plain`         | SASL PLAIN    | `password` / `password-command` | Requires TLS to avoid cleartext        |
+| `cram-md5`      | SASL CRAM-MD5 | `password` / `password-command` | Challenge/response, no TLS required    |
+| `scram-sha-1`   | SASL SCRAM-SHA-1 | `password` / `password-command` | Mutual-auth, RFC 5802              |
+| `scram-sha-256` | SASL SCRAM-SHA-256 | `password` / `password-command` | Preferred over SHA-1, RFC 7677   |
+| `xoauth2`       | SASL XOAUTH2  | `oauth2-command`            | Bearer token, for Gmail / Office 365     |
+
+Example using SCRAM-SHA-256:
+
+```toml
+auth             = "scram-sha-256"
+server           = "imap.example.com"
+username         = "user@example.com"
+password-command = "pass show imap/example"
+```
+
 ### OAuth2 (Gmail / Office 365)
 
 Gmail and Office 365 no longer accept plain-password IMAP login. Use `auth = "xoauth2"` together with `oauth2-command`, a shell command whose **stdout** is a valid bearer access token.

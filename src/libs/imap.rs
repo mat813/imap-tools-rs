@@ -14,7 +14,7 @@ use serde::Serialize;
 use tokio::net::TcpStream;
 
 use crate::libs::{
-    auth::{AuthMethod, XOAuth2Auth},
+    auth::{AuthMethod, CramMd5Auth, PlainAuth, ScramAuth, XOAuth2Auth},
     base_config::BaseConfig,
     config::Config,
     filter::Filter,
@@ -104,6 +104,7 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(base), ret, err(level = "info"))
     )]
+    #[expect(clippy::too_many_lines, reason = "many auth methods")]
     pub async fn connect_base(base: &BaseConfig) -> Result<Self, ImapError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
@@ -149,6 +150,56 @@ where
                     .await
                     .map_err(|(err, _client)| err)
                     .or_raise(|| ImapError("imap login failed".to_owned()))?
+            },
+            AuthMethod::Plain => {
+                let password = base
+                    .password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                client
+                    .authenticate("PLAIN", PlainAuth {
+                        user: username.clone(),
+                        password,
+                    })
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap authenticate PLAIN failed".to_owned()))?
+            },
+            AuthMethod::CramMd5 => {
+                let password = base
+                    .password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                client
+                    .authenticate("CRAM-MD5", CramMd5Auth {
+                        user: username.clone(),
+                        password,
+                    })
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap authenticate CRAM-MD5 failed".to_owned()))?
+            },
+            AuthMethod::ScramSha1 => {
+                let password = base
+                    .password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                let auth = ScramAuth::new(b"SCRAM-SHA-1", username.clone(), password)
+                    .or_raise(|| ImapError("SCRAM-SHA-1 session init failed".to_owned()))?;
+                client
+                    .authenticate("SCRAM-SHA-1", auth)
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap authenticate SCRAM-SHA-1 failed".to_owned()))?
+            },
+            AuthMethod::ScramSha256 => {
+                let password = base
+                    .password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                let auth = ScramAuth::new(b"SCRAM-SHA-256", username.clone(), password)
+                    .or_raise(|| ImapError("SCRAM-SHA-256 session init failed".to_owned()))?;
+                client
+                    .authenticate("SCRAM-SHA-256", auth)
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap authenticate SCRAM-SHA-256 failed".to_owned()))?
             },
             AuthMethod::XOAuth2 => {
                 let token = base

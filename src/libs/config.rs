@@ -241,9 +241,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:165:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:165:22,
+            |-> missing closing quote, at src/libs/base_config.rs:164:22,
         )
         "#);
     }
@@ -265,9 +265,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:172:22
+            password command exec failed, at src/libs/base_config.rs:171:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:172:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
         )
         ");
     }
@@ -289,7 +289,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:168:22,
+            password command is empty, at src/libs/base_config.rs:167:22,
         )
         ");
     }
@@ -329,7 +329,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:126:21,
+            |-> The password or password command must be set, at src/libs/base_config.rs:126:17,
         )
         ");
     }
