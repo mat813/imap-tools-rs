@@ -14,7 +14,12 @@ use serde::Serialize;
 use tokio::net::TcpStream;
 
 use crate::libs::{
-    base_config::BaseConfig, config::Config, filter::Filter, filters::Filters, mode::Mode,
+    auth::{AuthMethod, XOAuth2Auth},
+    base_config::BaseConfig,
+    config::Config,
+    filter::Filter,
+    filters::Filters,
+    mode::Mode,
 };
 
 /// Marker trait for streams usable with async-imap.
@@ -133,15 +138,32 @@ where
             .username
             .as_ref()
             .ok_or_raise(|| ImapError("Missing username".to_owned()))?;
-        let password = base
-            .password()
-            .or_raise(|| ImapError("Password error".to_owned()))?;
 
-        let session = client
-            .login(username, password)
-            .await
-            .map_err(|(err, _client)| err)
-            .or_raise(|| ImapError("imap login failed".to_owned()))?;
+        let session = match base.auth.unwrap_or_default() {
+            AuthMethod::Login => {
+                let password = base
+                    .password()
+                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                client
+                    .login(username, password)
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap login failed".to_owned()))?
+            },
+            AuthMethod::XOAuth2 => {
+                let token = base
+                    .oauth2_token()
+                    .or_raise(|| ImapError("OAuth2 token error".to_owned()))?;
+                client
+                    .authenticate("XOAUTH2", XOAuth2Auth {
+                        user: username.clone(),
+                        token,
+                    })
+                    .await
+                    .map_err(|(err, _client)| err)
+                    .or_raise(|| ImapError("imap authenticate XOAUTH2 failed".to_owned()))?
+            },
+        };
 
         let mut ret = Self {
             session,

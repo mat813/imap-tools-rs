@@ -130,6 +130,8 @@ mod tests {
                     ),
                     debug: false,
                     dry_run: false,
+                    auth: None,
+                    oauth2_command: None,
                 },
                 extra: None,
                 filters: None,
@@ -178,7 +180,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The server must be set, at src/libs/base_config.rs:103:13,
+            |-> The server must be set, at src/libs/base_config.rs:108:13,
         )
         ");
     }
@@ -197,7 +199,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The username must be set, at src/libs/base_config.rs:107:13,
+            |-> The username must be set, at src/libs/base_config.rs:112:13,
         )
         ");
     }
@@ -239,9 +241,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:136:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:165:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:136:22,
+            |-> missing closing quote, at src/libs/base_config.rs:165:22,
         )
         "#);
     }
@@ -263,9 +265,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:143:22
+            password command exec failed, at src/libs/base_config.rs:172:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:143:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:172:22,
         )
         ");
     }
@@ -287,7 +289,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:139:22,
+            password command is empty, at src/libs/base_config.rs:168:22,
         )
         ");
     }
@@ -327,7 +329,7 @@ mod tests {
         Err(
             base, at src/libs/config.rs:71:14
             |
-            |-> The password or password command must be set, at src/libs/base_config.rs:111:13,
+            |-> The password or password command must be set, at src/libs/base_config.rs:126:21,
         )
         ");
     }
@@ -395,6 +397,8 @@ mod tests {
                     ),
                     debug: true,
                     dry_run: true,
+                    auth: None,
+                    oauth2_command: None,
                 },
                 extra: None,
                 filters: None,
@@ -483,6 +487,8 @@ mod tests {
                     ),
                     debug: false,
                     dry_run: true,
+                    auth: None,
+                    oauth2_command: None,
                 },
                 extra: None,
                 filters: None,

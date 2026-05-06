@@ -160,6 +160,26 @@ Another example could be:
 
 If the mailbox is `INBOX/bob`, and the email is from september 2024, it will be moved into `INBOX/bob/old/2024/09`.
 
+### OAuth2 (Gmail / Office 365)
+
+Gmail and Office 365 no longer accept plain-password IMAP login. Use `auth = "xoauth2"` together with `oauth2-command`, a shell command whose **stdout** is a valid bearer access token.
+
+```toml
+auth           = "xoauth2"
+server         = "imap.gmail.com"
+port           = 993
+username       = "user@gmail.com"
+oauth2-command = "oauth2l fetch --output_format=bare https://mail.google.com/"
+```
+
+imap-tools does **not** handle token refresh or caching; delegate that to an external tool:
+
+- **Gmail** — [`oauth2l`](https://github.com/google/oauth2l) or [`mutt_oauth2.py`](https://gitlab.com/muttmua/mutt/-/blob/master/contrib/oauth2/mutt_oauth2.py).
+  Obtain a refresh token once (follow the tool's setup guide), then use the command above.
+- **Office 365** — [`mutt_oauth2.py`](https://gitlab.com/muttmua/mutt/-/blob/master/contrib/oauth2/mutt_oauth2.py) with `--provider microsoft`.
+
+The access token is fetched fresh on every invocation. If it has expired, the IMAP server will return an authentication error.
+
 ### imap
 
 Permit somewhat "raw" imap commands

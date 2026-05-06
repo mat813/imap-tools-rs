@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Args;
 
-use crate::libs::{mode::Mode, render::RendererArg};
+use crate::libs::{auth::AuthMethod, mode::Mode, render::RendererArg};
 
 #[derive(Args, Debug, Clone, Default)]
 pub struct Generic {
@@ -45,6 +45,14 @@ pub struct Generic {
     /// Do not actually do any changes to the server.
     #[arg(short = 'n', long)]
     pub dry_run: bool,
+
+    /// Authentication method (login or xoauth2).
+    #[arg(long, value_enum)]
+    pub auth: Option<AuthMethod>,
+
+    /// Command whose stdout is the `OAuth2` access token (required when `--auth xoauth2`).
+    #[arg(long)]
+    pub oauth2_command: Option<String>,
 }
 
 #[cfg(test)]

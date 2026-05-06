@@ -5,7 +5,7 @@ use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 
-use crate::libs::{args::Generic, mode::Mode, render::RendererArg};
+use crate::libs::{args::Generic, auth::AuthMethod, mode::Mode, render::RendererArg};
 
 #[derive(Debug, Display)]
 pub struct BaseConfigError(String);
@@ -35,6 +35,11 @@ pub struct BaseConfig {
 
     #[serde(default)]
     pub dry_run: bool,
+
+    #[serde(default)]
+    pub auth: Option<AuthMethod>,
+
+    pub(self) oauth2_command: Option<String>,
 }
 
 #[derive(Debug, Display)]
@@ -107,10 +112,34 @@ impl BaseConfig {
             bail!(BaseConfigError("The username must be set".to_owned()));
         }
 
-        if self.password.is_none() && self.password_command.is_none() {
-            bail!(BaseConfigError(
-                "The password or password command must be set".to_owned()
-            ));
+        if let Some(auth) = args.auth {
+            self.auth = Some(auth);
+        }
+
+        if let Some(ref oauth2_command) = args.oauth2_command {
+            self.oauth2_command = Some(oauth2_command.clone());
+        }
+
+        match self.auth.unwrap_or_default() {
+            AuthMethod::Login => {
+                if self.password.is_none() && self.password_command.is_none() {
+                    bail!(BaseConfigError(
+                        "The password or password command must be set".to_owned()
+                    ));
+                }
+            },
+            AuthMethod::XOAuth2 => {
+                if self.password.is_some() || self.password_command.is_some() {
+                    bail!(BaseConfigError(
+                        "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)".to_owned()
+                    ));
+                }
+                if self.oauth2_command.is_none() {
+                    bail!(BaseConfigError(
+                        "oauth2-command must be set when auth = \"xoauth2\"".to_owned()
+                    ));
+                }
+            },
         }
 
         if let Some(renderer) = args.renderer {
@@ -156,6 +185,42 @@ impl BaseConfig {
             _ => bail!(BaseConfigError(
                 "The password or password command must be set".to_owned()
             )),
+        }
+    }
+
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    /// Execute `oauth2-command` and return its stdout as the `OAuth2` access token.
+    ///
+    /// # Errors
+    /// Returns an error if the command is missing, fails to parse, fails to execute,
+    /// or produces non-UTF-8 output.
+    pub fn oauth2_token(&self) -> Result<String, BaseConfigError> {
+        match self.oauth2_command {
+            None => bail!(BaseConfigError("oauth2-command is not set".to_owned())),
+            Some(ref command) => {
+                let args = split(command)
+                    .or_raise(|| BaseConfigError(format!("parsing command failed: {command}")))?;
+                let (exe, args) = args
+                    .split_first()
+                    .ok_or_raise(|| BaseConfigError("oauth2-command is empty".to_owned()))?;
+                let output = Command::new(exe)
+                    .args(args)
+                    .output()
+                    .or_raise(|| BaseConfigError("oauth2-command exec failed".to_owned()))?;
+                let mut token = String::from_utf8(output.stdout).or_raise(|| {
+                    BaseConfigError("oauth2-command output is not valid UTF-8".to_owned())
+                })?;
+                if token.ends_with('\n') {
+                    token.pop();
+                    if token.ends_with('\r') {
+                        token.pop();
+                    }
+                }
+                Ok(token)
+            },
         }
     }
 }
@@ -215,6 +280,8 @@ mod tests {
                 ),
                 debug: false,
                 dry_run: false,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         } else {
@@ -254,7 +321,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:103:13,
+            The server must be set, at src/libs/base_config.rs:108:13,
         )
         ");
     }
@@ -271,7 +338,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:107:13,
+            The username must be set, at src/libs/base_config.rs:112:13,
         )
         ");
     }
@@ -312,9 +379,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:136:22
+            parsing command failed: echo "secret_password, at src/libs/base_config.rs:165:22
             |
-            |-> missing closing quote, at src/libs/base_config.rs:136:22,
+            |-> missing closing quote, at src/libs/base_config.rs:165:22,
         )
         "#);
     }
@@ -336,9 +403,9 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:143:22
+            password command exec failed, at src/libs/base_config.rs:172:22
             |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:143:22,
+            |-> No such file or directory (os error 2), at src/libs/base_config.rs:172:22,
         )
         ");
     }
@@ -360,7 +427,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:139:22,
+            password command is empty, at src/libs/base_config.rs:168:22,
         )
         ");
     }
@@ -397,7 +464,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:111:13,
+            The password or password command must be set, at src/libs/base_config.rs:126:21,
         )
         ");
     }
@@ -421,9 +488,9 @@ mod tests {
             config,
             @"
         Err(
-            config file parsing failed, at src/libs/base_config.rs:59:18
+            config file parsing failed, at src/libs/base_config.rs:64:18
             |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:59:18,
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:64:18,
         )
         "
         );
@@ -468,6 +535,8 @@ mod tests {
                 ),
                 debug: true,
                 dry_run: true,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         } else {
@@ -547,6 +616,8 @@ mod tests {
                 ),
                 debug: false,
                 dry_run: true,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         } else {
