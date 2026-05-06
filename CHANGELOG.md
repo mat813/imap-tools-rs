@@ -5,7 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.11.0 (2026-05-06)
+
+### Chore
+
+ - <csr-id-00003240d2427280afdff5fc6179919ef2e8e80a/> add release alias
+ - <csr-id-942354047a99d6e2c8ffbca903b1962bd729f4d3/> lock file maintenance
+
+### New Features
+
+ - <csr-id-000032107c40d89c4acb61f017b3024317466e81/> add a few more auth methods
+ - <csr-id-00003200a9d5d3d9e38a6d8e607fdd2b74e4de75/> add XOAUTH2 auth
+
+### Bug Fixes
+
+ - <csr-id-00003230856f4b63fa066b2815a3b1dee52ed223/> split auth into sub-modules
+ - <csr-id-00003220826364388a2f65318787297a1968d3e8/> add more tracing::instrument
+ - <csr-id-9bcfb45f5b9b70058b71c9f2152adbb18af3114f/> update rust crate tokio to v1.52.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.52.1 | 1.52.2 |
+
+### Test
+
+ - <csr-id-00003190c4726740a46d359e92cf9021bffebe8f/> use expect* instead of unwrap*
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release.
+ - 3 days passed between releases.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add release alias (0000324)
+    - Split auth into sub-modules (0000323)
+    - Add more tracing::instrument (0000322)
+    - Add a few more auth methods (0000321)
+    - Add XOAUTH2 auth (0000320)
+    - Use expect* instead of unwrap* (0000319)
+    - Update rust crate tokio to v1.52.2 (9bcfb45)
+    - Lock file maintenance (9423540)
+</details>
+
 ## v1.10.3 (2026-05-03)
+
+<csr-id-000031508ab175d0171554fc0e8398e6f571573c/>
+<csr-id-685b2ccbc1f743700028afab0152ae12860e3cfc/>
+<csr-id-000031304641a29028dd736605da7b7227d0d8cc/>
+<csr-id-0000312062788af890bded40f78caa72ca8b5071/>
+<csr-id-00003110483c8db9f85c7e6d63fa73b4e6dddde7/>
 
 ### Chore
 
@@ -14,6 +71,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package        | from   | to     |
    | ---------- | -------------- | ------ | ------ |
    | crate      | cargo-binstall | 1.18.1 | 1.19.0 |
+
+### Chore
+
+ - <csr-id-d22076f17e932793a304a507c79ba426255c8526/> Bump imap-tools v1.10.3
 
 ### Other
 
@@ -25,9 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 3 calendar days.
+ - 6 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
- - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -37,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Bump imap-tools v1.10.3 (d22076f)
     - Add correct binstall metadata (0000315)
     - Update dependency cargo-binstall to v1.19.0 (685b2cc)
     - Fixup release (0000313)
@@ -50,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00003080c695797bafd8f6e6224e247d33a8b834/>
 <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/>
 <csr-id-000030600c377e56bc23035ac065a830226b4d4e/>
+<csr-id-4073258f40aeb7b645884730cfd4c2aee496261d/>
 
 ### Other
 
