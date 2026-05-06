@@ -76,7 +76,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::unwrap_used, reason = "test")]
+    #![expect(clippy::expect_used, reason = "test")]
 
     use std::{fs::File, io::Write as _};
 
@@ -88,10 +88,11 @@ mod tests {
     // We have to return the directory too otherwise it goes out of scope, gets
     // destroyed, and the directory is deleteda.
     fn write_temp_config(content: &str) -> (tempfile::TempDir, std::path::PathBuf) {
-        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_dir = tempfile::tempdir().expect("temp dir creation should succeed");
         let temp_file_path = temp_dir.path().join("config.toml");
-        let mut file = File::create(&temp_file_path).unwrap();
-        file.write_all(content.as_bytes()).unwrap();
+        let mut file = File::create(&temp_file_path).expect("temp file creation should succeed");
+        file.write_all(content.as_bytes())
+            .expect("writing to temp file should succeed");
         (temp_dir, temp_file_path)
     }
 
@@ -105,7 +106,8 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("minimal config args should produce valid config");
 
         if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
@@ -209,10 +211,14 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with password-command should be constructable");
 
         // Mock the command execution with a fake password output
-        let password = config.base.password().unwrap();
+        let password = config
+            .base
+            .password()
+            .expect("password-command should execute successfully");
         assert_snapshot!(password.trim(), @"secret_password");
     }
 
@@ -225,7 +231,8 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with unparseable command should be constructable");
 
         // Mock the command execution with a fake password output
         let result = config.base.password();
@@ -248,7 +255,8 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with failing command should be constructable");
 
         // Mock the command execution with a fake password output
         let result = config.base.password();
@@ -271,7 +279,8 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with empty command should be constructable");
 
         // Mock the command execution with a fake password output
         let result = config.base.password();
@@ -292,10 +301,14 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with static password should be valid");
 
         // Mock the command execution with a fake password output
-        let password = config.base.password().unwrap();
+        let password = config
+            .base
+            .password()
+            .expect("static password should be returned");
         assert_snapshot!(password.trim(), @"secret_password");
     }
 
@@ -360,7 +373,7 @@ mod tests {
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> = Config::new(&args).expect("config from valid file should parse");
         if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
             Config {
@@ -442,12 +455,13 @@ mod tests {
                     "plaintext"
                 }
                 .parse()
-                .unwrap(),
+                .expect("'tls' and 'plaintext' are valid TlsMode strings"),
             ),
             ..Default::default()
         };
 
-        let config: Config<()> = Config::new(&args).unwrap();
+        let config: Config<()> =
+            Config::new(&args).expect("config with CLI arg overrides should be valid");
         if cfg!(feature = "__tls") {
             assert_debug_snapshot!(config, @r#"
             Config {

@@ -248,7 +248,7 @@ mod internal {
 
 #[cfg(test)]
 mod tests {
-    #![expect(clippy::unwrap_used, reason = "test")]
+    #![expect(clippy::expect_used, reason = "test")]
 
     use regex::Regex;
     use serde::{Deserialize, Serialize};
@@ -275,19 +275,19 @@ mod tests {
         "extra": {"additional_info": "test info"}
     }"#;
 
-        let filter: Filter<ExtraConfig> = from_str(json_data, Format::Json).unwrap();
+        let filter: Filter<ExtraConfig> = from_str(json_data, Format::Json).expect("should parse");
         assert_eq!(filter.reference, Some("test_ref".to_owned()));
         assert_eq!(filter.pattern, Some("*".to_owned()));
 
         // Test regex patterns created in include_re and exclude_re
         assert!(filter.include_re.is_some());
-        let include_re = filter.include_re.as_ref().unwrap();
+        let include_re = filter.include_re.as_ref().expect("should parse");
         assert!(include_re.is_match("include_this"));
         assert!(include_re.is_match("include_pattern123"));
         assert!(!include_re.is_match("exclude_this"));
 
         assert!(filter.exclude_re.is_some());
-        let exclude_re = filter.exclude_re.as_ref().unwrap();
+        let exclude_re = filter.exclude_re.as_ref().expect("should parse");
         assert!(exclude_re.is_match("exclude_this"));
         assert!(exclude_re.is_match("exclude_pattern123"));
         assert!(!exclude_re.is_match("include_this"));
@@ -307,8 +307,12 @@ mod tests {
         let filter = Filter::<ExtraConfig> {
             reference: Some("test_ref".to_owned()),
             pattern: Some("*".to_owned()),
-            include_re: Some(Regex::new("include_this|^include_pattern.*").unwrap()),
-            exclude_re: Some(Regex::new("exclude_this|^exclude_pattern.*").unwrap()),
+            include_re: Some(
+                Regex::new("include_this|^include_pattern.*").expect("valid include regex pattern"),
+            ),
+            exclude_re: Some(
+                Regex::new("exclude_this|^exclude_pattern.*").expect("valid exclude regex pattern"),
+            ),
             extra: Some(ExtraConfig {
                 additional_info: "test info".to_owned(),
             }),
@@ -318,7 +322,7 @@ mod tests {
             priv_exclude_re: Some(vec!["^exclude_pattern.*".to_owned()]),
         };
 
-        let json = to_string(&filter, Format::Json).unwrap();
+        let json = to_string(&filter, Format::Json).expect("filter should serialize to JSON");
         assert!(json.contains(r#""reference":"test_ref""#));
         assert!(json.contains(r#""pattern":"*""#));
         assert!(json.contains(r#""include":["include_this","also_this"]"#));
@@ -351,7 +355,8 @@ mod tests {
         "pattern": "*"
     }"#;
 
-        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
+        let filter: Filter<()> =
+            from_str(json_data, Format::Json).expect("valid JSON should parse into Filter");
         assert!(filter.include_re.is_none());
         assert!(filter.exclude_re.is_none());
     }
@@ -360,8 +365,12 @@ mod tests {
     #[test]
     fn filter_only_literal_includes() {
         let json_data = r#"{"pattern": "*", "include": ["foo", "b.r"]}"#;
-        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
-        let re = filter.include_re.as_ref().unwrap();
+        let filter: Filter<()> =
+            from_str(json_data, Format::Json).expect("valid JSON should parse into Filter");
+        let re = filter
+            .include_re
+            .as_ref()
+            .expect("include_re should be set after parsing literal includes");
         // Literals are regex-escaped: "foo" matches exactly, "b.r" does NOT match "bar"
         assert!(re.is_match("foo"), "literal 'foo' should match");
         assert!(re.is_match("b.r"), "literal 'b.r' should match");
@@ -372,8 +381,12 @@ mod tests {
     #[test]
     fn filter_only_regex_includes() {
         let json_data = r#"{"pattern": "*", "include-re": ["^prefix.*"]}"#;
-        let filter: Filter<()> = from_str(json_data, Format::Json).unwrap();
-        let re = filter.include_re.as_ref().unwrap();
+        let filter: Filter<()> =
+            from_str(json_data, Format::Json).expect("valid JSON should parse into Filter");
+        let re = filter
+            .include_re
+            .as_ref()
+            .expect("include_re should be set after parsing regex includes");
         assert!(
             re.is_match("prefix_anything"),
             "prefix_anything should match"
