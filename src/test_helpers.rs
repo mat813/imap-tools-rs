@@ -14,6 +14,7 @@ use tokio::{
 };
 
 /// An expected IMAP command, either literal or regex-matched.
+#[derive(Debug)]
 pub enum ExpectCommand {
     /// Expect an exact literal command string.
     Static(String),
@@ -24,6 +25,10 @@ pub enum ExpectCommand {
 impl std::str::FromStr for ExpectCommand {
     type Err = regex::Error;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(s), ret, err(level = "debug"))
+    )]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() >= 3
             && s.starts_with('/')
@@ -38,6 +43,10 @@ impl std::str::FromStr for ExpectCommand {
 }
 
 impl From<String> for ExpectCommand {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(value), ret)
+    )]
     #[track_caller]
     fn from(value: String) -> Self {
         value.parse().expect("should parse")
@@ -45,6 +54,10 @@ impl From<String> for ExpectCommand {
 }
 
 impl From<&str> for ExpectCommand {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(value), ret)
+    )]
     #[track_caller]
     fn from(value: &str) -> Self {
         value.parse().expect("should parse")
@@ -52,6 +65,7 @@ impl From<&str> for ExpectCommand {
 }
 
 /// A scripted IMAP exchange: untagged response lines + final tagged response.
+#[derive(Debug)]
 pub struct MockExchange {
     /// Untagged lines sent before the tagged response (each must include `\r\n`).
     pub untagged: Vec<String>,
@@ -63,6 +77,10 @@ pub struct MockExchange {
 }
 
 impl MockExchange {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(command, untagged), ret)
+    )]
     /// Successful exchange: tagged `OK completed` after the untagged lines.
     #[track_caller]
     pub fn ok(command: impl Into<ExpectCommand>, untagged: Vec<String>) -> Self {
@@ -73,6 +91,10 @@ impl MockExchange {
         }
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(command, reason), ret)
+    )]
     /// Failed exchange: tagged `NO <reason>`, no untagged lines.
     #[track_caller]
     pub fn no(command: impl Into<ExpectCommand>, reason: impl Into<String>) -> Self {
@@ -88,6 +110,7 @@ impl MockExchange {
 ///
 /// Handles `CAPABILITY`, `LOGIN`, and `LOGOUT` automatically.
 /// All other commands are answered from the provided script in order.
+#[derive(Debug)]
 pub struct MockServer {
     /// The local port the mock server is listening on.
     pub port: u16,
@@ -96,6 +119,10 @@ pub struct MockServer {
 }
 
 impl MockServer {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(extra_caps, script), ret)
+    )]
     /// Start the server on a random local port.
     ///
     /// `extra_caps`: additional capabilities beyond `IMAP4rev1 UIDPLUS` (e.g. `&["MOVE"]`).
@@ -112,12 +139,17 @@ impl MockServer {
         Self { port, handle }
     }
 
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     /// Wait for the mock server task to complete.
     pub async fn join(self) {
         self.handle.await.expect("mock server task panicked");
     }
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(stream, extra_caps, script))
+)]
 async fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExchange>) {
     let mut script: VecDeque<MockExchange> = script.into();
     let (read_half, mut writer) = stream.into_split();
@@ -207,6 +239,7 @@ async fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExc
     }
 }
 
+#[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(), ret))]
 /// Create a minimal `BaseConfig` pointing at 127.0.0.1 with test credentials.
 pub fn test_base() -> crate::libs::base_config::BaseConfig {
     crate::libs::base_config::BaseConfig::new(&crate::libs::args::Generic {
@@ -218,6 +251,10 @@ pub fn test_base() -> crate::libs::base_config::BaseConfig {
     .expect("test base config")
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(seq, uid, msg_id), ret)
+)]
 /// Build a `BODY[HEADER.FIELDS ("MESSAGE-ID")]` FETCH response line for one message.
 ///
 /// `seq` is the sequence number, `uid` is the UID, `msg_id` is e.g. `"<foo@bar.com>"`.

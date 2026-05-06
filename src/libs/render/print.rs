@@ -78,6 +78,10 @@ impl<const N: usize> RendererTrait<N> for Renderer {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), ret)
+    )]
     #[cfg(test)]
     fn output(&mut self) -> String {
         self.buffer.clone()
@@ -85,6 +89,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
 }
 
 impl Drop for Renderer {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     #[expect(clippy::print_stdout, reason = "we print")]
     fn drop(&mut self) {
         if !cfg!(test) {
@@ -105,6 +110,10 @@ mod tests {
         ($($e:expr),* $(,)?) => { [$(&$e as &dyn std::fmt::Display),*] };
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(format, headers))
+    )]
     fn make(
         format: &'static [&'static str; 2],
         headers: &'static [&'static str; 2],

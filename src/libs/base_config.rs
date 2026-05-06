@@ -237,6 +237,10 @@ mod tests {
     // Helper to create temporary config files with given content.
     // We have to return the directory too otherwise it goes out of scope, gets
     // destroyed, and the directory is deleteda.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(content), ret)
+    )]
     fn write_temp_config(content: &str) -> (tempfile::TempDir, std::path::PathBuf) {
         let temp_dir = tempfile::tempdir().expect("should work");
         let temp_file_path = temp_dir.path().join("config.toml");

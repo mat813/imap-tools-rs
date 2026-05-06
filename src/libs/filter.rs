@@ -28,6 +28,7 @@ impl<T> Default for Filter<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
         Self {
             reference: None,
@@ -107,6 +108,10 @@ mod internal {
 
     use super::Filter as RealFilter;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(deserializer), ret, err(level = "debug"))
+    )]
     fn deserialize_string_or_vec<'de, D>(
         deserializer: D,
     ) -> core::result::Result<Option<Vec<String>>, D::Error>
@@ -118,14 +123,26 @@ mod internal {
         impl<'de> de::Visitor<'de> for V {
             type Value = Vec<String>;
 
+            #[cfg_attr(
+                feature = "tracing",
+                tracing::instrument(level = "trace", skip(self, formatter), err(level = "debug"))
+            )]
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("a string or a sequence of strings")
             }
 
+            #[cfg_attr(
+                feature = "tracing",
+                tracing::instrument(level = "trace", skip(self, v), ret, err(level = "debug"))
+            )]
             fn visit_str<E: de::Error>(self, v: &str) -> core::result::Result<Self::Value, E> {
                 Ok(vec![v.to_owned()])
             }
 
+            #[cfg_attr(
+                feature = "tracing",
+                tracing::instrument(level = "trace", skip(self, seq), ret, err(level = "debug"))
+            )]
             fn visit_seq<S: de::SeqAccess<'de>>(
                 self,
                 seq: S,

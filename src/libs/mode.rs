@@ -45,6 +45,10 @@ pub enum Mode {
 impl FromStr for Mode {
     type Err = ModeError;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", ret, err(level = "debug"))
+    )]
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let v = s.to_ascii_lowercase();
         Ok(match v.as_str() {
@@ -68,6 +72,10 @@ impl FromStr for Mode {
 }
 
 impl<'de> Deserialize<'de> for Mode {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(deserializer), ret, err(level = "debug"))
+    )]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -78,6 +86,10 @@ impl<'de> Deserialize<'de> for Mode {
 }
 
 impl Serialize for Mode {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, serializer), err(level = "debug"))
+    )]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -96,6 +108,7 @@ impl Serialize for Mode {
 }
 
 impl Default for Mode {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
         if cfg!(feature = "__tls") {
             Self::AutoTls

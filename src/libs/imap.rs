@@ -70,6 +70,7 @@ impl<T> Drop for Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     fn drop(&mut self) {
         if !self.closed {
             #[cfg(feature = "tracing")]
@@ -84,6 +85,10 @@ impl<T> Imap<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "debug"))
+    )]
     /// Explicitly close the IMAP session by sending LOGOUT.
     ///
     /// # Errors
@@ -231,6 +236,10 @@ where
         Ok(ret)
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(base, port), ret, err(level = "debug"))
+    )]
     /// Test-only: connect to a specific port in plaintext mode (no TLS).
     /// Useful for connecting to a mock IMAP server.
     #[cfg(test)]
@@ -394,6 +403,15 @@ where
     }
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(
+        level = "trace",
+        skip(tcp, mode, server, port),
+        ret,
+        err(level = "debug")
+    )
+)]
 /// Wrap a raw `TcpStream` in the appropriate TLS layer (or leave as-is for plaintext),
 /// returning the opaque `ImapStream` and whether the server greeting has already been consumed.
 #[cfg_attr(
@@ -496,6 +514,10 @@ async fn build_stream(
     }
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(tcp, server), ret, err(level = "debug"))
+)]
 /// Wrap a `TcpStream` in a TLS layer using the OpenSSL backend.
 #[cfg(feature = "native-tls")]
 async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {
@@ -509,6 +531,10 @@ async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError>
     Ok(Box::new(tls))
 }
 
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(tcp, server), ret, err(level = "debug"))
+)]
 /// Wrap a `TcpStream` in a TLS layer using the rustls backend.
 #[cfg(feature = "rustls")]
 async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {

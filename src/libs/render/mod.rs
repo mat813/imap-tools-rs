@@ -30,6 +30,7 @@ pub enum RendererArg {
 
 #[allow(clippy::derivable_impls, reason = "special cases")]
 impl Default for RendererArg {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
         if cfg!(test) {
             return Self::Csv;
@@ -55,6 +56,10 @@ impl std::error::Error for RendererArgError {}
 impl std::str::FromStr for RendererArg {
     type Err = Exn<RendererArgError>;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(s), ret, err(level = "debug"))
+    )]
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
             "csv" => Ok(Self::Csv),

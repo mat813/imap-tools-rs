@@ -79,6 +79,10 @@ impl List {
         result
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, imap, renderer), err(level = "debug"))
+    )]
     async fn run(
         &self,
         imap: &mut Imap<()>,
@@ -145,6 +149,7 @@ mod tests {
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(), ret))]
     fn default_list() -> List {
         List {
             config: args::Generic {

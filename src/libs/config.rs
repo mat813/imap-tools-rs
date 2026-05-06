@@ -33,6 +33,7 @@ impl<T> Default for Config<T>
 where
     T: Clone + Debug + Serialize,
 {
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
         Self {
             base: BaseConfig::default(),
@@ -87,6 +88,10 @@ mod tests {
     // Helper to create temporary config files with given content.
     // We have to return the directory too otherwise it goes out of scope, gets
     // destroyed, and the directory is deleteda.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(content), ret)
+    )]
     fn write_temp_config(content: &str) -> (tempfile::TempDir, std::path::PathBuf) {
         let temp_dir = tempfile::tempdir().expect("temp dir creation should succeed");
         let temp_file_path = temp_dir.path().join("config.toml");
@@ -178,7 +183,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:71:14
+            base, at src/libs/config.rs:72:14
             |
             |-> The server must be set, at src/libs/base_config.rs:108:13,
         )
@@ -197,7 +202,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:71:14
+            base, at src/libs/config.rs:72:14
             |
             |-> The username must be set, at src/libs/base_config.rs:112:13,
         )
@@ -327,7 +332,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            base, at src/libs/config.rs:71:14
+            base, at src/libs/config.rs:72:14
             |
             |-> The password or password command must be set, at src/libs/base_config.rs:126:17,
         )
@@ -351,9 +356,9 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            config file parsing failed, at src/libs/config.rs:63:18
+            config file parsing failed, at src/libs/config.rs:64:18
             |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:63:18,
+            |-> TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:64:18,
         )
         ");
     }

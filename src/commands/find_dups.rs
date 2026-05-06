@@ -174,6 +174,10 @@ impl FindDups {
         Ok(())
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(header), ret)
+    )]
     #[cfg(test)]
     pub(super) fn parse_message_id_pub(header: Option<&[u8]>) -> Option<String> {
         Self::parse_message_id(header)

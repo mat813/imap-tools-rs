@@ -61,6 +61,10 @@ impl List {
         result
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(imap, renderer), err(level = "debug"))
+    )]
     async fn run(
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,

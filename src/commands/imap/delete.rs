@@ -43,6 +43,10 @@ impl Delete {
         result
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, imap, out), err(level = "debug"))
+    )]
     async fn run(
         &self,
         imap: &mut Imap<()>,

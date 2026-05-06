@@ -217,6 +217,7 @@ mod tests {
     use super::*;
     use crate::test_helpers::{MockExchange, MockServer, test_base};
 
+    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(), ret))]
     fn test_extra() -> MyExtra {
         // Delete messages older than 30 days when mailbox exceeds 1 MB
         [(Size::from_bytes(1_000_000_i64), 30_u64)].into()

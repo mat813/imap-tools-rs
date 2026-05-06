@@ -48,6 +48,10 @@ impl AuthMethod {
 impl FromStr for AuthMethod {
     type Err = AuthError;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(s), ret, err(level = "debug"))
+    )]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s.to_ascii_lowercase().as_str() {
             "login" => Self::Login,
@@ -66,6 +70,10 @@ impl FromStr for AuthMethod {
 }
 
 impl<'de> Deserialize<'de> for AuthMethod {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(deserializer), ret, err(level = "debug"))
+    )]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -76,6 +84,10 @@ impl<'de> Deserialize<'de> for AuthMethod {
 }
 
 impl Serialize for AuthMethod {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, serializer), err(level = "debug"))
+    )]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -104,6 +116,10 @@ pub struct PlainAuth {
 impl async_imap::Authenticator for PlainAuth {
     type Response = Vec<u8>;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, _challenge), ret)
+    )]
     fn process(&mut self, _challenge: &[u8]) -> Self::Response {
         let mut r = Vec::with_capacity(self.user.len() + self.password.len() + 2);
         r.push(0); // empty authzid
@@ -127,6 +143,10 @@ pub struct CramMd5Auth {
 impl async_imap::Authenticator for CramMd5Auth {
     type Response = Vec<u8>;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, challenge), ret)
+    )]
     fn process(&mut self, challenge: &[u8]) -> Self::Response {
         #[expect(clippy::expect_used, reason = "HMAC accepts keys of any length")]
         let mut mac = Hmac::<Md5>::new_from_slice(self.password.as_bytes())
@@ -145,14 +165,25 @@ impl async_imap::Authenticator for CramMd5Auth {
 /// SASL SCRAM authenticator (SHA-1 or SHA-256) via `rsasl`.
 ///
 /// Drives the multi-step SCRAM exchange; async-imap handles base64 wrapping.
+#[derive(derive_more::Debug)]
 pub struct ScramAuth {
     /// Active rsasl session driving the SCRAM state machine.
+    #[debug(skip)]
     session: rsasl::prelude::Session,
     /// `false` on the first call to `process` (client-first step needs `None` input).
     started: bool,
 }
 
 impl ScramAuth {
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(
+            level = "trace",
+            skip(mech, user, password),
+            ret,
+            err(level = "debug")
+        )
+    )]
     /// Create a new SCRAM session for the given mechanism name (e.g. `"SCRAM-SHA-256"`).
     ///
     /// # Errors
@@ -176,6 +207,10 @@ impl ScramAuth {
 impl async_imap::Authenticator for ScramAuth {
     type Response = Vec<u8>;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, challenge), ret)
+    )]
     fn process(&mut self, challenge: &[u8]) -> Self::Response {
         let input = if self.started {
             Some(challenge)
@@ -203,6 +238,10 @@ pub struct XOAuth2Auth {
 impl async_imap::Authenticator for XOAuth2Auth {
     type Response = Vec<u8>;
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, _challenge), ret)
+    )]
     fn process(&mut self, _challenge: &[u8]) -> Self::Response {
         format!("user={}\x01auth=Bearer {}\x01\x01", self.user, self.token).into_bytes()
     }

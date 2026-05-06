@@ -67,6 +67,10 @@ mod tests {
         generic: Generic,
     }
 
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(args), ret)
+    )]
     fn get_generic_from_args<I, T>(args: I) -> Generic
     where
         I: IntoIterator<Item = T>,
