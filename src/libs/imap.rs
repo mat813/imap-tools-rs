@@ -415,7 +415,7 @@ where
 /// Wrap a raw `TcpStream` in the appropriate TLS layer (or leave as-is for plaintext),
 /// returning the opaque `ImapStream` and whether the server greeting has already been consumed.
 #[cfg_attr(
-    not(feature = "__tls"),
+    not(any(feature = "__tls", feature = "tracing")),
     expect(clippy::unused_async, reason = "only needed when using tls")
 )]
 async fn build_stream(
