@@ -5,12 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.11.1 (2026-05-07)
+
+### Chore
+
+ - <csr-id-eee7225baae0addfb5aa5930a9a3b3d4f1ec936c/> update dependency cargo-binstall to v1.19.1
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.19.0 | 1.19.1 |
+
+### Bug Fixes
+
+ - <csr-id-0000330035788267cd93fd898162d74f7658450c/> update crypto bits
+ - <csr-id-2c4a44c4c97a879d9e4a3521460230d14c0c608b/> update rust crate md-5 to v0.11.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | md-5    | 0.10.6 | 0.11.0 |
+ - <csr-id-764ed3d58f22a9cbeb71374af090aa30da98ecae/> update rust crate hmac to v0.13.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | hmac    | 0.12.1 | 0.13.0 |
+
+### Style
+
+ - <csr-id-00003260409f54e53fa1086124b91f96945b9b5d/> clippy
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release.
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Update crypto bits (0000330)
+    - Update rust crate md-5 to v0.11.0 (2c4a44c)
+    - Update rust crate hmac to v0.13.0 (764ed3d)
+    - Update dependency cargo-binstall to v1.19.1 (eee7225)
+    - Clippy (0000326)
+</details>
+
 ## v1.11.0 (2026-05-06)
+
+<csr-id-00003240d2427280afdff5fc6179919ef2e8e80a/>
+<csr-id-942354047a99d6e2c8ffbca903b1962bd729f4d3/>
+<csr-id-00003190c4726740a46d359e92cf9021bffebe8f/>
 
 ### Chore
 
  - <csr-id-00003240d2427280afdff5fc6179919ef2e8e80a/> add release alias
  - <csr-id-942354047a99d6e2c8ffbca903b1962bd729f4d3/> lock file maintenance
+
+### Other
+
+ - <csr-id-60bc5b34e6d287436f8cb58bfc64b3838a8683d1/> " Bump imap-tools v1.11.0
 
 ### New Features
 
@@ -34,9 +89,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release.
+ - 9 commits contributed to the release.
  - 3 days passed between releases.
- - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -46,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - " Bump imap-tools v1.11.0 (60bc5b3)
     - Add release alias (0000324)
     - Split auth into sub-modules (0000323)
     - Add more tracing::instrument (0000322)
@@ -63,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-000031304641a29028dd736605da7b7227d0d8cc/>
 <csr-id-0000312062788af890bded40f78caa72ca8b5071/>
 <csr-id-00003110483c8db9f85c7e6d63fa73b4e6dddde7/>
+<csr-id-d22076f17e932793a304a507c79ba426255c8526/>
 
 ### Chore
 
