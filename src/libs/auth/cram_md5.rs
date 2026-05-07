@@ -1,6 +1,6 @@
 use std::fmt::Write as _;
 
-use hmac::{Hmac, Mac as _};
+use hmac::{Hmac, KeyInit as _, Mac as _};
 use md5::Md5;
 
 /// SASL CRAM-MD5 authenticator for use with [`async_imap::Client::authenticate`].
