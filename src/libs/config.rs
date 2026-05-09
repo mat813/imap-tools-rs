@@ -184,8 +184,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             base, at src/libs/config.rs:72:14
-            |
-            |-> The server must be set, at src/libs/base_config.rs:108:13,
+            `-- The server must be set, at src/libs/base_config.rs:108:13,
         )
         ");
     }
@@ -203,8 +202,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             base, at src/libs/config.rs:72:14
-            |
-            |-> The username must be set, at src/libs/base_config.rs:112:13,
+            `-- The username must be set, at src/libs/base_config.rs:112:13,
         )
         ");
     }
@@ -247,8 +245,7 @@ mod tests {
         assert_debug_snapshot!(result, @r#"
         Err(
             parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
-            |
-            |-> missing closing quote, at src/libs/base_config.rs:164:22,
+            `-- missing closing quote, at src/libs/base_config.rs:164:22,
         )
         "#);
     }
@@ -271,8 +268,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             password command exec failed, at src/libs/base_config.rs:171:22
-            |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
         )
         ");
     }
@@ -333,8 +329,7 @@ mod tests {
         assert_debug_snapshot!(config, @"
         Err(
             base, at src/libs/config.rs:72:14
-            |
-            |-> The password or password command must be set, at src/libs/base_config.rs:126:17,
+            `-- The password or password command must be set, at src/libs/base_config.rs:126:17,
         )
         ");
     }
@@ -357,8 +352,7 @@ mod tests {
         assert_debug_snapshot!(config, @"
         Err(
             config file parsing failed, at src/libs/config.rs:64:18
-            |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:64:18,
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:64:18,
         )
         ");
     }

@@ -383,8 +383,7 @@ mod tests {
         assert_debug_snapshot!(result, @r#"
         Err(
             parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
-            |
-            |-> missing closing quote, at src/libs/base_config.rs:164:22,
+            `-- missing closing quote, at src/libs/base_config.rs:164:22,
         )
         "#);
     }
@@ -407,8 +406,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             password command exec failed, at src/libs/base_config.rs:171:22
-            |
-            |-> No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
         )
         ");
     }
@@ -492,8 +490,7 @@ mod tests {
             @"
         Err(
             config file parsing failed, at src/libs/base_config.rs:64:18
-            |
-            |-> TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:64:18,
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:64:18,
         )
         "
         );
