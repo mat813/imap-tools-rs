@@ -307,6 +307,8 @@ mod tests {
                 ),
                 debug: false,
                 dry_run: false,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         }
@@ -559,6 +561,8 @@ mod tests {
                 ),
                 debug: true,
                 dry_run: true,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         }
@@ -640,6 +644,8 @@ mod tests {
                 ),
                 debug: false,
                 dry_run: true,
+                auth: None,
+                oauth2_command: None,
             }
             "#);
         }
