@@ -16,7 +16,7 @@ struct MainError;
 
 impl std::error::Error for MainError {}
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", err(level = "info"))
