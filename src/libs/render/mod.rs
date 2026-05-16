@@ -1,4 +1,6 @@
 mod csv;
+#[cfg(feature = "cursive")]
+mod cursive;
 #[cfg(feature = "json")]
 mod json;
 mod print;
@@ -11,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::libs::render::traits::Renderer;
 use crate::libs::render::traits::RendererError;
-#[cfg(feature = "ratatui")]
+#[cfg(any(feature = "ratatui", feature = "cursive"))]
 use crate::libs::render::traits::RendererUsable as _;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display, clap::ValueEnum)]
@@ -26,6 +28,9 @@ pub enum RendererArg {
     #[cfg(feature = "json")]
     /// Json output
     Json,
+    #[cfg(feature = "cursive")]
+    /// Interactive TUI output (cursive)
+    Cursive,
 }
 
 #[allow(clippy::derivable_impls, reason = "special cases")]
@@ -34,6 +39,11 @@ impl Default for RendererArg {
     fn default() -> Self {
         if cfg!(test) {
             return Self::Csv;
+        }
+
+        #[cfg(feature = "cursive")]
+        if cursive::CursiveRenderer::is_usable() {
+            return Self::Cursive;
         }
 
         #[cfg(feature = "ratatui")]
@@ -66,6 +76,8 @@ impl std::str::FromStr for RendererArg {
             #[cfg(feature = "ratatui")]
             "ratatui" => Ok(Self::Ratatui),
             "terminal" => Ok(Self::Terminal),
+            #[cfg(feature = "cursive")]
+            "cursive" => Ok(Self::Cursive),
             s => bail!(RendererArgError::Unknown(s.to_owned())),
         }
     }
@@ -99,6 +111,11 @@ pub fn new_renderer<const N: usize>(
         RendererArg::Terminal => Ok(Box::new(
             print::PrintRenderer::new(title, format, headers)
                 .or_raise(|| RendererError("print".to_owned()))?,
+        )),
+        #[cfg(feature = "cursive")]
+        RendererArg::Cursive => Ok(Box::new(
+            cursive::CursiveRenderer::new(title, format, headers)
+                .or_raise(|| RendererError("cursive".to_owned()))?,
         )),
     }
 }

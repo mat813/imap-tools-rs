@@ -29,6 +29,7 @@ rustls  = ["dep:tokio-rustls", "dep:rustls-native-certs", "__tls"]
 ratatui = ["dep:ratatui"]
 tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 json = ["dep:serde_json"]
+cursive = ["dep:cursive"]
 
 [dependencies]
 chrono = "=0.4.44"
@@ -39,6 +40,7 @@ exn = "=0.3.1"
 futures = { version = "=0.3.32", default-features = false, features = ["std"] }
 indicatif = "=0.18.4"
 ratatui = { version = "=0.30.0", optional = true }
+cursive = { version = "=0.21.1", optional = true, default-features = false, features = ["crossterm-backend"] }
 regex = "=1.12.3"
 serde = { version = "=1.0.228", features = ["derive"] }
 serde-value = "=0.7.0"
@@ -58,6 +60,7 @@ rustls-native-certs = { version = "=0.8.3", optional = true }
 hmac = "=0.13.0"
 md-5 = "=0.11.0"
 rsasl = { version = "=2.3.1", default-features = false, features = ["std", "provider", "config_builder", "scram-sha-1", "scram-sha-2"] }
+better-cursive-table = "0.3.0"
 
 [dev-dependencies]
 insta = "=1.47.2"
