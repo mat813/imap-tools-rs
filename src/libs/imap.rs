@@ -149,7 +149,7 @@ where
             AuthMethod::Login => {
                 let password = base
                     .password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?;
+                    .or_raise(|| ImapError("getting password".to_owned()))?;
                 client
                     .login(username, password)
                     .await

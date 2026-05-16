@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{fmt::Write as _, process::Command};
 
 use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
@@ -160,18 +160,44 @@ impl BaseConfig {
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
             (_, &Some(ref command)) => {
-                let args = split(command)
+                let command_vec = split(command)
                     .or_raise(|| BaseConfigError(format!("parsing command failed: {command}")))?;
-                let (exe, args) = args
+                let (exe, args) = command_vec
                     .split_first()
                     .ok_or_raise(|| BaseConfigError("password command is empty".to_owned()))?;
                 let output = Command::new(exe)
                     .args(args)
                     .output()
                     .or_raise(|| BaseConfigError("password command exec failed".to_owned()))?;
+
+                if !output.status.success() {
+                    let indent_output = |prefix: &str, bytes: &[u8]| -> String {
+                        let s = String::from_utf8_lossy(bytes);
+                        let indent = " ".repeat(prefix.len());
+                        let mut lines = s.lines();
+                        lines.next().map_or_else(
+                            || format!("{prefix}(empty)"),
+                            |first| {
+                                let rest = lines.fold(String::new(), |mut output, l| {
+                                    let _ = write!(output, "\n{indent}{l}");
+                                    output
+                                });
+                                format!("{prefix}{first}{rest}")
+                            },
+                        )
+                    };
+                    bail!(BaseConfigError(format!(
+                        "password command {command:?} failed with status {status}.\n{stdout}\n{stderr}",
+                        status = output.status,
+                        stdout = indent_output("STDOUT: ", &output.stdout),
+                        stderr = indent_output("STDERR: ", &output.stderr),
+                    )))
+                }
+
                 let mut password = String::from_utf8(output.stdout).or_raise(|| {
                     BaseConfigError("password command output is not valid UTF-8".to_owned())
                 })?;
+
                 // Strip trailing newline added by most password commands
                 if password.ends_with('\n') {
                     password.pop();
