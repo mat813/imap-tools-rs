@@ -331,7 +331,7 @@ impl Archive {
 mod tests {
     #![expect(clippy::expect_used, clippy::indexing_slicing, reason = "tests")]
 
-    use chrono::{FixedOffset, TimeZone as _};
+    use chrono::TimeZone as _;
     use insta::assert_snapshot;
 
     use super::*;

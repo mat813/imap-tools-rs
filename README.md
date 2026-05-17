@@ -182,7 +182,7 @@ username         = "user@example.com"
 password-command = "pass show imap/example"
 ```
 
-### OAuth2 (Gmail / Office 365)
+### `OAuth2` (Gmail / Office 365)
 
 Gmail and Office 365 no longer accept plain-password IMAP login. Use `auth = "xoauth2"` together with `oauth2-command`, a shell command whose **stdout** is a valid bearer access token.
 

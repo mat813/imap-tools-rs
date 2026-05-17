@@ -1,3 +1,4 @@
+#![doc = include_str!("../README.md")]
 #![allow(clippy::missing_docs_in_private_items, reason = "TODO: docs")]
 #![allow(clippy::todo, reason = "TODO: fixup last todos")]
 // We use tokio current_thread runtime, so futures don't need to be Send.
