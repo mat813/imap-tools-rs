@@ -37,7 +37,7 @@ impl Default for RendererArg {
         }
 
         #[cfg(feature = "ratatui")]
-        if terminal::Renderer::is_usable() {
+        if terminal::TerminalRenderer::is_usable() {
             return Self::Ratatui;
         }
 
@@ -83,21 +83,21 @@ pub fn new_renderer<const N: usize>(
 ) -> Result<Box<dyn Renderer<N>>, RendererError> {
     match renderer.unwrap_or_default() {
         RendererArg::Csv => Ok(Box::new(
-            csv::Renderer::new(title, format, headers)
+            csv::CsvRenderer::new(title, format, headers)
                 .or_raise(|| RendererError("csv".to_owned()))?,
         )),
         #[cfg(feature = "ratatui")]
         RendererArg::Ratatui => Ok(Box::new(
-            terminal::Renderer::new(title, format, headers)
+            terminal::TerminalRenderer::new(title, format, headers)
                 .or_raise(|| RendererError("terminal".to_owned()))?,
         )),
         #[cfg(feature = "json")]
         RendererArg::Json => Ok(Box::new(
-            json::Renderer::new(title, format, headers)
+            json::JsonRenderer::new(title, format, headers)
                 .or_raise(|| RendererError("json".to_owned()))?,
         )),
         RendererArg::Terminal => Ok(Box::new(
-            print::Renderer::new(title, format, headers)
+            print::PrintRenderer::new(title, format, headers)
                 .or_raise(|| RendererError("print".to_owned()))?,
         )),
     }

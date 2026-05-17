@@ -3,19 +3,19 @@ use std::{collections::HashMap, fmt::Display};
 use exn::{Result, ResultExt as _};
 use strfmt::strfmt;
 
-use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
-pub struct Renderer {
+pub struct PrintRenderer {
     format: String,
     headers: &'static [&'static str],
     some_output: bool,
     buffer: String,
 }
 
-impl RendererUsable for Renderer {}
+impl RendererUsable for PrintRenderer {}
 
-impl<const N: usize> RendererTrait<N> for Renderer {
+impl<const N: usize> Renderer<N> for PrintRenderer {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -88,7 +88,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
     }
 }
 
-impl Drop for Renderer {
+impl Drop for PrintRenderer {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     #[expect(clippy::print_stdout, reason = "we print")]
     fn drop(&mut self) {
@@ -117,8 +117,8 @@ mod tests {
     fn make(
         format: &'static [&'static str; 2],
         headers: &'static [&'static str; 2],
-    ) -> impl RendererTrait<2> {
-        Renderer::new("T", format, headers).expect("new renderer")
+    ) -> impl Renderer<2> {
+        PrintRenderer::new("T", format, headers).expect("new renderer")
     }
 
     #[test]

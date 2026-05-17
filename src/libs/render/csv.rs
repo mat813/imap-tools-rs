@@ -2,18 +2,18 @@ use std::fmt::Display;
 
 use exn::{Result, ResultExt as _};
 
-use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
 #[cfg_attr(feature = "tracing", derive(Debug))]
-pub struct Renderer {
+pub struct CsvRenderer {
     writer: csv::Writer<Vec<u8>>,
 }
 
-impl RendererUsable for Renderer {}
+impl RendererUsable for CsvRenderer {}
 
-impl<const N: usize> RendererTrait<N> for Renderer {
+impl<const N: usize> Renderer<N> for CsvRenderer {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -61,7 +61,7 @@ impl<const N: usize> RendererTrait<N> for Renderer {
     }
 }
 
-impl Drop for Renderer {
+impl Drop for CsvRenderer {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     #[expect(clippy::print_stdout, reason = "we print")]
     fn drop(&mut self) {
@@ -88,8 +88,8 @@ mod tests {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(headers))
     )]
-    fn make(headers: &'static [&'static str; 2]) -> impl RendererTrait<2> {
-        Renderer::new("T", &["", ""], headers).expect("new renderer")
+    fn make(headers: &'static [&'static str; 2]) -> impl Renderer<2> {
+        CsvRenderer::new("T", &["", ""], headers).expect("new renderer")
     }
 
     #[test]

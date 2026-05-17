@@ -12,10 +12,10 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table},
 };
 
-use crate::libs::render::traits::{Renderer as RendererTrait, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
-pub struct Renderer<'a> {
+pub struct TerminalRenderer<'a> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
     table_rows: Vec<Row<'a>>,
     column_widths: Vec<u16>,
@@ -23,14 +23,14 @@ pub struct Renderer<'a> {
     title: &'static str,
 }
 
-impl RendererUsable for Renderer<'_> {
+impl RendererUsable for TerminalRenderer<'_> {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
     fn is_usable() -> bool {
         stdout().is_terminal()
     }
 }
 
-impl<const N: usize> RendererTrait<N> for Renderer<'_> {
+impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(
@@ -126,7 +126,7 @@ impl<const N: usize> RendererTrait<N> for Renderer<'_> {
     }
 }
 
-impl Renderer<'_> {
+impl TerminalRenderer<'_> {
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), ret)
@@ -147,7 +147,7 @@ impl Renderer<'_> {
     }
 }
 
-impl Drop for Renderer<'_> {
+impl Drop for TerminalRenderer<'_> {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     fn drop(&mut self) {
         ratatui::restore();
