@@ -25,15 +25,23 @@ async fn main() -> Result<(), MainError> {
     #[cfg(feature = "tracing")]
     {
         use tracing_subscriber::{
-            Layer as _, fmt::format::FmtSpan, layer::SubscriberExt as _,
+            Layer as _,
+            fmt::{format::FmtSpan, writer::BoxMakeWriter},
+            layer::SubscriberExt as _,
             util::SubscriberInitExt as _,
         };
 
         tracing_subscriber::registry()
             .with(
                 tracing_subscriber::fmt::layer()
+                    .with_writer(
+                        if let Some(file) = option_env!("LOG_OUTPUT") {
+                            BoxMakeWriter::new(std::fs::File::create(file).or_raise(|| MainError)?)
+                        } else {
+                            BoxMakeWriter::new(std::io::stdout)
+                        },
+                    )
                     .pretty()
-                    // .json()
                     .with_level(true)
                     .with_span_events(FmtSpan::ENTER | FmtSpan::EXIT)
                     .with_ansi(true)
