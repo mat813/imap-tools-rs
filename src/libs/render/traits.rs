@@ -4,6 +4,7 @@ use exn::Result;
 
 #[derive(Debug, derive_more::Display)]
 pub enum RendererError {
+    // Generic
     #[display("formatting {format:?} for {display:?}")]
     Strfmt {
         format: String,
@@ -16,6 +17,7 @@ pub enum RendererError {
     CsvWriteHeaders,
     #[display("write record")]
     CsvWriteRecord,
+
     // Cursive specific
     #[cfg(feature = "cursive")]
     Cursive,
@@ -28,10 +30,13 @@ pub enum RendererError {
     #[display("rendering interrupted by user")]
     #[cfg(feature = "cursive")]
     CursiveInterrupted,
+
     // JSON specific
     Json,
+
     // Print specific
     Print,
+
     // Terminal specific
     #[cfg(feature = "ratatui")]
     Terminal,
