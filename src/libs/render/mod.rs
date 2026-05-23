@@ -95,27 +95,24 @@ pub fn new_renderer<const N: usize>(
 ) -> Result<Box<dyn Renderer<N>>, RendererError> {
     match renderer.unwrap_or_default() {
         RendererArg::Csv => Ok(Box::new(
-            csv::CsvRenderer::new(title, format, headers)
-                .or_raise(|| RendererError("csv".to_owned()))?,
+            csv::CsvRenderer::new(title, format, headers).or_raise(|| RendererError::Csv)?,
         )),
         #[cfg(feature = "ratatui")]
         RendererArg::Ratatui => Ok(Box::new(
             terminal::TerminalRenderer::new(title, format, headers)
-                .or_raise(|| RendererError("terminal".to_owned()))?,
+                .or_raise(|| RendererError::Terminal)?,
         )),
         #[cfg(feature = "json")]
         RendererArg::Json => Ok(Box::new(
-            json::JsonRenderer::new(title, format, headers)
-                .or_raise(|| RendererError("json".to_owned()))?,
+            json::JsonRenderer::new(title, format, headers).or_raise(|| RendererError::Json)?,
         )),
         RendererArg::Terminal => Ok(Box::new(
-            print::PrintRenderer::new(title, format, headers)
-                .or_raise(|| RendererError("print".to_owned()))?,
+            print::PrintRenderer::new(title, format, headers).or_raise(|| RendererError::Print)?,
         )),
         #[cfg(feature = "cursive")]
         RendererArg::Cursive => Ok(Box::new(
             cursive::CursiveRenderer::new(title, format, headers)
-                .or_raise(|| RendererError("cursive".to_owned()))?,
+                .or_raise(|| RendererError::Cursive)?,
         )),
     }
 }

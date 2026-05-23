@@ -60,8 +60,10 @@ impl<const N: usize> Renderer<N> for PrintRenderer {
                 .enumerate()
                 .map(|(idx, f)| (idx, *f))
                 .collect();
-            let output = strfmt(&self.format, &map)
-                .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
+            let output = strfmt(&self.format, &map).or_raise(|| RendererError::Strfmt {
+                format: self.format.clone(),
+                display: Box::new(map),
+            })?;
             self.buffer.push_str(&output);
             self.buffer.push('\n');
         }
@@ -70,8 +72,10 @@ impl<const N: usize> Renderer<N> for PrintRenderer {
             .enumerate()
             .map(|(idx, f)| (idx, f.to_string()))
             .collect();
-        let output = strfmt(&self.format, &map)
-            .or_raise(|| RendererError(format!("strfmt failed {:?} {:?}", self.format, map)))?;
+        let output = strfmt(&self.format, &map).or_raise(|| RendererError::Strfmt {
+            format: self.format.clone(),
+            display: Box::new(map),
+        })?;
         self.buffer.push_str(&output);
         self.buffer.push('\n');
 

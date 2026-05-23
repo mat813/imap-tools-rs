@@ -42,7 +42,10 @@ impl TableState {
         }
     }
 
-    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self, row)))]
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self, row))
+    )]
     fn add_row(&mut self, row: Vec<String>) {
         self.data.push(row);
     }
@@ -103,7 +106,7 @@ impl<const N: usize> Renderer<N> for CursiveRenderer {
         headers: &'static [&'static str; N],
     ) -> Result<Self, RendererError> {
         if !cfg!(test) && !stdout().is_terminal() {
-            bail!(RendererError("tui renderer requires a terminal".to_owned()));
+            bail!(RendererError::CursiveRequireTerminal);
         }
 
         let quit = Arc::new(AtomicBool::new(false));
@@ -146,9 +149,7 @@ impl<const N: usize> Renderer<N> for CursiveRenderer {
             quit_thread.store(true, Ordering::Relaxed);
         });
 
-        let cb_sink = rx
-            .recv()
-            .or_raise(|| RendererError("tui: backend init failed".to_owned()))?;
+        let cb_sink = rx.recv().or_raise(|| RendererError::CursiveBackendInit)?;
 
         Ok(Self {
             state,
@@ -165,15 +166,19 @@ impl<const N: usize> Renderer<N> for CursiveRenderer {
     )]
     fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError> {
         if self.quit.load(Ordering::Relaxed) {
-            bail!(RendererError("rendering interrupted by user".to_owned()));
+            bail!(RendererError::CursiveInterrupted);
         }
 
         let row = row
             .iter()
             .zip(&self.format)
-            .map(|(row, format)| strfmt!(format, value => row.to_string()))
-            .collect::<std::result::Result<Vec<_>, _>>()
-            .or_raise(|| RendererError("strfmt".to_owned()))?;
+            .map(|(row, format)| {
+                strfmt!(format, value => row.to_string()).or_raise(|| RendererError::Strfmt {
+                    format: format.clone(),
+                    display: Box::new(row.to_string()),
+                })
+            })
+            .collect::<std::result::Result<Vec<_>, _>>()?;
 
         #[cfg(feature = "tracing")]
         tracing::trace!(row = ?row);

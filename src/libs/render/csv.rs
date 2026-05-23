@@ -31,7 +31,7 @@ impl<const N: usize> Renderer<N> for CsvRenderer {
         let mut writer = csv::Writer::from_writer(Vec::new());
         writer
             .write_record(headers)
-            .or_raise(|| RendererError("csv write headers failed".to_owned()))?;
+            .or_raise(|| RendererError::CsvWriteHeaders)?;
         Ok(Self { writer })
     }
 
@@ -46,7 +46,7 @@ impl<const N: usize> Renderer<N> for CsvRenderer {
         let record: Vec<String> = row.iter().map(std::string::ToString::to_string).collect();
         self.writer
             .write_record(&record)
-            .or_raise(|| RendererError("csv write record failed".to_owned()))?;
+            .or_raise(|| RendererError::CsvWriteRecord)?;
         Ok(())
     }
 

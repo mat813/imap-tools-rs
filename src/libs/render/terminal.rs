@@ -48,10 +48,8 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
         })
-        .or_raise(|| RendererError("ratatui init failed".to_owned()))?;
-        terminal
-            .clear()
-            .or_raise(|| RendererError("terminal clear failed".to_owned()))?;
+        .or_raise(|| RendererError::TerminalInit)?;
+        terminal.clear().or_raise(|| RendererError::TerminalClear)?;
         Ok(Self {
             terminal,
             table_rows: vec![],
@@ -94,20 +92,19 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
         #[expect(clippy::indexing_slicing, reason = "it's ok")]
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
-            let width = u16::try_from(width)
-                .or_raise(|| RendererError(format!("failed converting {width} in a u16")))?;
+            let width = u16::try_from(width).or_raise(|| RendererError::TerminalU16(width))?;
             if width > self.column_widths[idx] {
                 self.column_widths[idx] = width;
             }
         }
 
         let table_width = self.table_rows.len();
-        let table_width = u16::try_from(table_width)
-            .or_raise(|| RendererError(format!("convert {table_width} into a u16 failed")))?;
+        let table_width =
+            u16::try_from(table_width).or_raise(|| RendererError::TerminalU16(table_width))?;
         self.terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(table_width + 3),
         })
-        .or_raise(|| RendererError("ratatui init failed".to_owned()))?;
+        .or_raise(|| RendererError::TerminalInit)?;
 
         let rows = self.table_rows.clone();
         let widths = self.column_widths();
@@ -120,7 +117,7 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
                     .block(Block::default().title(self.title).borders(Borders::ALL));
                 frame.render_widget(table, frame.area());
             })
-            .or_raise(|| RendererError("terminal draw failed".to_owned()))?;
+            .or_raise(|| RendererError::TerminalDraw)?;
 
         Ok(())
     }
