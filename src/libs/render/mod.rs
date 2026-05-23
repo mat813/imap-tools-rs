@@ -1,7 +1,6 @@
 mod csv;
 #[cfg(feature = "cursive")]
 mod cursive;
-#[cfg(feature = "json")]
 mod json;
 mod print;
 #[cfg(feature = "ratatui")]
@@ -25,7 +24,6 @@ pub enum RendererArg {
     #[cfg(feature = "ratatui")]
     /// Ratatui-TUI output
     Ratatui,
-    #[cfg(feature = "json")]
     /// Json output
     Json,
     #[cfg(feature = "cursive")]
@@ -102,7 +100,6 @@ pub fn new_renderer<const N: usize>(
             terminal::TerminalRenderer::new(title, format, headers)
                 .or_raise(|| RendererError::Terminal)?,
         )),
-        #[cfg(feature = "json")]
         RendererArg::Json => Ok(Box::new(
             json::JsonRenderer::new(title, format, headers).or_raise(|| RendererError::Json)?,
         )),

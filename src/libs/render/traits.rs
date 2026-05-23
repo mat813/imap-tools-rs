@@ -29,7 +29,6 @@ pub enum RendererError {
     #[cfg(feature = "cursive")]
     CursiveInterrupted,
     // JSON specific
-    #[cfg(feature = "json")]
     Json,
     // Print specific
     Print,
