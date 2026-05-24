@@ -65,7 +65,7 @@ impl Delete {
     async fn run(
         &self,
         imap: &mut Imap<()>,
-        out: &mut dyn std::io::Write,
+        out: &mut (dyn std::io::Write + Send),
     ) -> Result<(), ImapDeleteCommandError> {
         let mailbox = &self.mailbox;
 

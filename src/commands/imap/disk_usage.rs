@@ -135,7 +135,7 @@ impl DiskUsage {
     async fn run(
         &self,
         imap: &mut Imap<()>,
-        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
     ) -> Result<(), ImapDuCommandError> {
         let mut result: Vec<(String, u64)> = vec![];
 

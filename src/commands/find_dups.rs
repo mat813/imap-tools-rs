@@ -117,7 +117,7 @@ impl FindDups {
     )]
     async fn process(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
         mailbox: &str,
         dry_run: bool,
     ) -> Result<(), DuError> {

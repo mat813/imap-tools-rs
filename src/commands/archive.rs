@@ -150,7 +150,7 @@ impl Archive {
     )]
     async fn archive(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
         mailbox: &str,
         extra: &MyExtra,
         dry_run: bool,

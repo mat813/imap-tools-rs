@@ -81,7 +81,7 @@ impl List {
     )]
     async fn run(
         imap: &mut Imap<MyExtra>,
-        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
     ) -> Result<(), ListError> {
         for (mailbox, result) in imap.list().await.or_raise(|| ListError::ImapList)? {
             renderer

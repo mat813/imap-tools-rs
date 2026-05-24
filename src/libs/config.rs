@@ -24,7 +24,7 @@ impl std::error::Error for ConfigError {}
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Config<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug + Serialize + Send + Sync,
 {
     #[serde(flatten)]
     pub base: BaseConfig,
@@ -36,7 +36,7 @@ where
 
 impl<T> Default for Config<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug + Serialize + Send + Sync,
 {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
@@ -50,7 +50,7 @@ where
 
 impl<T> Config<T>
 where
-    T: Clone + Debug + Serialize + for<'de> Deserialize<'de>,
+    T: Clone + Debug + Serialize + for<'de> Deserialize<'de> + Send + Sync,
 {
     #[cfg_attr(
         feature = "tracing",

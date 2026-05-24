@@ -106,7 +106,7 @@ impl List {
     async fn run(
         &self,
         imap: &mut Imap<()>,
-        renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
+        renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
     ) -> Result<(), ImapListCommandError> {
         let names: Vec<_> = {
             let stream = imap

@@ -153,7 +153,7 @@ where
 
 impl<T> Imap<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug + Serialize + Send + Sync,
 {
     #[cfg_attr(
         feature = "tracing",

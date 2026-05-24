@@ -1,7 +1,5 @@
 #![doc = include_str!("../README.md")]
 #![allow(clippy::missing_docs_in_private_items, reason = "TODO: docs")]
-// We use tokio current_thread runtime, so futures don't need to be Send.
-#![expect(clippy::future_not_send, reason = "current_thread runtime")]
 
 use exn::{Result, ResultExt as _};
 mod commands;
