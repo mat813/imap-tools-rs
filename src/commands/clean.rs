@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 
 use chrono::{Duration, Utc};
 use clap::Args;
-use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use size::Size;
@@ -14,8 +13,35 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct CleanError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum CleanError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Cleaning up mailbox {mailbox}")]
+    Cleanup { mailbox: String },
+    #[display("Connecting to IMAP server")]
+    ImapConnect,
+    #[display("Listing mailboxes")]
+    ImapList,
+    #[display("Mailbox {mailbox} does not have an extra parameter")]
+    MissingExtra { mailbox: String },
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Examining mailbox {mailbox}")]
+    ImapExamine { mailbox: String },
+    #[display("Fetching message size and date in {mailbox}")]
+    ImapUidFetch { mailbox: String },
+    #[display("Could not find the first message where there should be one")]
+    NoFirstDate,
+    #[display("Searching old messages in {mailbox}")]
+    ImapUidSearch { mailbox: String },
+    #[display("Deleting messages by UID in {mailbox}")]
+    ImapDeleteUid { mailbox: String },
+    #[display("Adding renderer row")]
+    RendererAddRow,
+}
 impl std::error::Error for CleanError {}
 
 #[derive(Args, Debug, Clone)]
@@ -58,14 +84,13 @@ impl Clean {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), CleanError> {
-        let config =
-            Config::<MyExtra>::new(&self.config).or_raise(|| CleanError("config".to_owned()))?;
+        let config = Config::<MyExtra>::new(&self.config).or_raise(|| CleanError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap = Imap::connect(&config)
             .await
-            .or_raise(|| CleanError("connect".to_owned()))?;
+            .or_raise(|| CleanError::ImapConnect)?;
 
         let mut renderer = new_renderer(
             config.base.renderer,
@@ -77,13 +102,9 @@ impl Clean {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| CleanError("new renderer".to_owned()))?;
+        .or_raise(|| CleanError::NewRenderer)?;
 
-        for (mailbox, result) in imap
-            .list()
-            .await
-            .or_raise(|| CleanError("list".to_owned()))?
-        {
+        for (mailbox, result) in imap.list().await.or_raise(|| CleanError::ImapList)? {
             match result.extra {
                 Some(ref extra) => {
                     Self::cleanup_mailbox(
@@ -94,17 +115,13 @@ impl Clean {
                         config.base.dry_run,
                     )
                     .await
-                    .or_raise(|| CleanError("cleanup mailbox".to_owned()))?;
+                    .or_raise(|| CleanError::Cleanup { mailbox })?;
                 },
-                None => bail!(CleanError(format!(
-                    "Mailbox {mailbox} does not have an extra parameter"
-                ))),
+                None => bail!(CleanError::MissingExtra { mailbox }),
             }
         }
 
-        imap.close()
-            .await
-            .or_raise(|| CleanError("imap close failed".to_owned()))?;
+        imap.close().await.or_raise(|| CleanError::ImapClose)?;
 
         Ok(())
     }
@@ -124,7 +141,9 @@ impl Clean {
             .session
             .examine(mailbox)
             .await
-            .or_raise(|| CleanError(format!("imap examine {mailbox:?} failed")))?;
+            .or_raise(|| CleanError::ImapExamine {
+                mailbox: mailbox.to_owned(),
+            })?;
 
         // If there are not enough messages, skip
         if mbx.exists <= MIN_MESSAGE_COUNT {
@@ -139,12 +158,16 @@ impl Clean {
                 .session
                 .uid_fetch("1:*", "(RFC822.SIZE INTERNALDATE)")
                 .await
-                .or_raise(|| CleanError("imap uid fetch failed".to_owned()))?;
+                .or_raise(|| CleanError::ImapUidFetch {
+                    mailbox: mailbox.to_owned(),
+                })?;
 
             while let Some(m) = stream
                 .try_next()
                 .await
-                .or_raise(|| CleanError("uid fetch stream error".to_owned()))?
+                .or_raise(|| CleanError::ImapUidFetch {
+                    mailbox: mailbox.to_owned(),
+                })?
             {
                 total_size = total_size.saturating_add(i64::from(m.size.unwrap_or(0)));
                 if first_date.is_none() {
@@ -153,9 +176,7 @@ impl Clean {
             }
         }
 
-        let first_date = first_date.ok_or_raise(|| {
-            CleanError("Could not find the first message where there should be one".to_owned())
-        })?;
+        let first_date = first_date.ok_or_raise(|| CleanError::NoFirstDate)?;
 
         // If size is less than the minimum, skip
         if total_size <= MIN_TOTAL_SIZE_BYTES {
@@ -173,7 +194,9 @@ impl Clean {
                 .session
                 .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
                 .await
-                .or_raise(|| CleanError("imap uid search failed".to_owned()))?;
+                .or_raise(|| CleanError::ImapUidSearch {
+                    mailbox: mailbox.to_owned(),
+                })?;
 
             // Only delete if the rule applies based on mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
@@ -182,9 +205,11 @@ impl Clean {
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
                 if !dry_run {
-                    imap.delete_uids(mailbox, &sequence)
-                        .await
-                        .or_raise(|| CleanError("imap delete uids failed".to_owned()))?;
+                    imap.delete_uids(mailbox, &sequence).await.or_raise(|| {
+                        CleanError::ImapDeleteUid {
+                            mailbox: mailbox.to_owned(),
+                        }
+                    })?;
                 }
 
                 renderer
@@ -198,7 +223,7 @@ impl Clean {
                         &cutoff_date.signed_duration_since(first_date).num_days(),
                         &sequence,
                     ])
-                    .or_raise(|| CleanError("add row".to_owned()))?;
+                    .or_raise(|| CleanError::RendererAddRow)?;
 
                 break;
             }

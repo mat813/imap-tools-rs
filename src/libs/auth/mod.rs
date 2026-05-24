@@ -5,14 +5,25 @@ mod xoauth2;
 
 use std::str::FromStr;
 
-use derive_more::Display;
+use exn::bail;
 use serde::{Deserialize, Serialize};
 
 pub use self::{cram_md5::CramMd5Auth, plain::PlainAuth, scram::ScramAuth, xoauth2::XOAuth2Auth};
 
-#[derive(Debug, Display)]
+#[derive(Debug, derive_more::Display)]
 /// Error type for auth-method parsing.
-pub struct AuthError(String);
+pub enum AuthError {
+    #[display(
+        "Invalid auth method, expects: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+    )]
+    InvalidMethod,
+    #[display("Building SCRAM client configuration")]
+    ScramConfig,
+    #[display("Selecting SCRAM authentication mechanism")]
+    ScramInvalidMech,
+    #[display("Initializing SCRAM session")]
+    ScramSessionInit,
+}
 impl std::error::Error for AuthError {}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
@@ -50,7 +61,7 @@ impl AuthMethod {
 }
 
 impl FromStr for AuthMethod {
-    type Err = AuthError;
+    type Err = exn::Exn<AuthError>;
 
     #[cfg_attr(
         feature = "tracing",
@@ -65,9 +76,7 @@ impl FromStr for AuthMethod {
             "scram-sha-256" => Self::ScramSha256,
             "xoauth2" => Self::XOAuth2,
             _ => {
-                return Err(AuthError(
-                    "Invalid auth method, expects: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2".to_owned(),
-                ));
+                bail!(AuthError::InvalidMethod);
             },
         })
     }

@@ -1,3 +1,4 @@
+use exn::ResultExt as _;
 use rsasl::prelude::{Mechname, SASLClient, SASLConfig};
 
 use crate::libs::auth::AuthError;
@@ -28,15 +29,14 @@ impl ScramAuth {
     ///
     /// # Errors
     /// Returns [`AuthError`] if rsasl cannot initialise the session.
-    pub fn new(mech: &[u8], user: String, password: String) -> Result<Self, AuthError> {
+    pub fn new(mech: &[u8], user: String, password: String) -> exn::Result<Self, AuthError> {
         let config = SASLConfig::with_credentials(None, user, password)
-            .map_err(|e| AuthError(format!("SCRAM config error: {e}")))?;
+            .or_raise(|| AuthError::ScramConfig)?;
         let client = SASLClient::new(config);
-        let mechname =
-            Mechname::parse(mech).map_err(|e| AuthError(format!("invalid mechanism: {e}")))?;
+        let mechname = Mechname::parse(mech).or_raise(|| AuthError::ScramInvalidMech)?;
         let session = client
             .start_suggested(&[mechname])
-            .map_err(|e| AuthError(format!("SCRAM session init: {e}")))?;
+            .or_raise(|| AuthError::ScramSessionInit)?;
         Ok(Self {
             session,
             started: false,

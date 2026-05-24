@@ -1,5 +1,4 @@
 use clap::Args;
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 
 use crate::libs::{
@@ -9,8 +8,23 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct ListError(&'static str);
+#[derive(Debug, derive_more::Display)]
+pub enum ListError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Listing mailboxes")]
+    ImapList,
+    #[display("Running list command")]
+    Run,
+    #[display("Adding renderer row")]
+    RendererAddRow,
+}
 impl std::error::Error for ListError {}
 
 #[derive(Args, Debug, Clone)]
@@ -38,13 +52,13 @@ impl List {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ListError> {
-        let config = Config::<MyExtra>::new(&self.config).or_raise(|| ListError("config"))?;
+        let config = Config::<MyExtra>::new(&self.config).or_raise(|| ListError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap = Imap::connect(&config)
             .await
-            .or_raise(|| ListError("connect"))?;
+            .or_raise(|| ListError::Connect)?;
 
         let mut renderer = new_renderer(
             config.base.renderer,
@@ -52,13 +66,13 @@ impl List {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| ListError("new renderer"))?;
+        .or_raise(|| ListError::NewRenderer)?;
 
-        let result = Self::run(&mut imap, &mut renderer).await;
-        imap.close()
+        Self::run(&mut imap, &mut renderer)
             .await
-            .or_raise(|| ListError("imap close failed"))?;
-        result
+            .or_raise(|| ListError::Run)?;
+        imap.close().await.or_raise(|| ListError::ImapClose)?;
+        Ok(())
     }
 
     #[cfg_attr(
@@ -69,13 +83,13 @@ impl List {
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN>>,
     ) -> Result<(), ListError> {
-        for (mailbox, result) in imap.list().await.or_raise(|| ListError("list"))? {
+        for (mailbox, result) in imap.list().await.or_raise(|| ListError::ImapList)? {
             renderer
                 .add_row(&[
                     &mailbox,
                     &std::fmt::from_fn(|f| write!(f, "{:?}", result.extra)),
                 ])
-                .or_raise(|| ListError("renderer add row"))?;
+                .or_raise(|| ListError::RendererAddRow)?;
         }
 
         Ok(())

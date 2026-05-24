@@ -1,6 +1,5 @@
 use async_imap::imap_proto::NameAttribute;
 use clap::Args;
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use regex::Regex;
@@ -12,8 +11,28 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct ImapListCommandError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ImapListCommandError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Running list command")]
+    Run,
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Listing mailboxes with reference {reference:?} and pattern {pattern:?}")]
+    ImapList {
+        reference: Option<String>,
+        pattern: Option<String>,
+    },
+    #[display("Collecting LIST stream results")]
+    ImapListCollect,
+    #[display("Adding renderer row")]
+    RendererAddRow,
+}
 impl std::error::Error for ImapListCommandError {}
 
 #[derive(Args, Debug, Clone)]
@@ -55,14 +74,13 @@ impl List {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ImapListCommandError> {
-        let config =
-            BaseConfig::new(&self.config).or_raise(|| ImapListCommandError("config".into()))?;
+        let config = BaseConfig::new(&self.config).or_raise(|| ImapListCommandError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)
             .await
-            .or_raise(|| ImapListCommandError("connect".into()))?;
+            .or_raise(|| ImapListCommandError::Connect)?;
 
         let mut renderer = new_renderer(
             config.renderer,
@@ -70,13 +88,15 @@ impl List {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| ImapListCommandError("new renderer".to_owned()))?;
+        .or_raise(|| ImapListCommandError::NewRenderer)?;
 
-        let result = self.run(&mut imap, &mut renderer).await;
+        self.run(&mut imap, &mut renderer)
+            .await
+            .or_raise(|| ImapListCommandError::Run)?;
         imap.close()
             .await
-            .or_raise(|| ImapListCommandError("imap close failed".to_owned()))?;
-        result
+            .or_raise(|| ImapListCommandError::ImapClose)?;
+        Ok(())
     }
 
     #[cfg_attr(
@@ -93,16 +113,14 @@ impl List {
                 .session
                 .list(self.reference.as_deref(), self.pattern.as_deref())
                 .await
-                .or_raise(|| {
-                    ImapListCommandError(format!(
-                        "imap list failed with ref:{:?} and pattern:{:?}",
-                        self.reference, self.pattern
-                    ))
+                .or_raise(|| ImapListCommandError::ImapList {
+                    reference: self.reference.clone(),
+                    pattern: self.pattern.clone(),
                 })?;
             stream
                 .try_collect()
                 .await
-                .or_raise(|| ImapListCommandError("imap list stream error".to_owned()))?
+                .or_raise(|| ImapListCommandError::ImapListCollect)?
         };
 
         for mailbox in names
@@ -133,7 +151,7 @@ impl List {
                     &mailbox.name(),
                     &std::fmt::from_fn(|f| write!(f, "{:?}", mailbox.attributes())),
                 ])
-                .or_raise(|| ImapListCommandError("renderer add row".to_owned()))?;
+                .or_raise(|| ImapListCommandError::RendererAddRow)?;
         }
 
         Ok(())

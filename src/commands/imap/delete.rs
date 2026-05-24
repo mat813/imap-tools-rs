@@ -1,11 +1,23 @@
 use clap::Args;
-use derive_more::Display;
-use exn::{Result, ResultExt as _, bail};
+use exn::{Result, ResultExt as _};
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
-#[derive(Debug, Display)]
-pub struct ImapDeleteCommandError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ImapDeleteCommandError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Running delete command")]
+    Run,
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Writing command output")]
+    Write,
+    #[display("Deleting mailbox {mailbox}")]
+    ImapDelete { mailbox: String },
+}
 impl std::error::Error for ImapDeleteCommandError {}
 
 #[derive(Args, Debug, Clone)]
@@ -27,20 +39,23 @@ impl Delete {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ImapDeleteCommandError> {
-        let config = BaseConfig::new(&self.config)
-            .or_raise(|| ImapDeleteCommandError("config".to_owned()))?;
+        let config = BaseConfig::new(&self.config).or_raise(|| ImapDeleteCommandError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)
             .await
-            .or_raise(|| ImapDeleteCommandError("connect".to_owned()))?;
+            .or_raise(|| ImapDeleteCommandError::Connect)?;
 
-        let result = self.run(&mut imap, &mut std::io::stdout()).await;
+        self.run(&mut imap, &mut std::io::stdout())
+            .await
+            .or_raise(|| ImapDeleteCommandError::Run)?;
+
         imap.close()
             .await
-            .or_raise(|| ImapDeleteCommandError("imap close failed".to_owned()))?;
-        result
+            .or_raise(|| ImapDeleteCommandError::ImapClose)?;
+
+        Ok(())
     }
 
     #[cfg_attr(
@@ -56,7 +71,7 @@ impl Delete {
 
         match imap.session.delete(mailbox).await {
             Ok(()) => writeln!(out, "The mailbox {mailbox} has been removed")
-                .or_raise(|| ImapDeleteCommandError("write output".to_owned()))?,
+                .or_raise(|| ImapDeleteCommandError::Write)?,
             Err(async_imap::error::Error::No(reason))
                 if reason.contains("Mailbox doesn't exist") =>
             {
@@ -64,11 +79,13 @@ impl Delete {
                     out,
                     "Cannot remove {mailbox:?}, it does not exist: {reason}"
                 )
-                .or_raise(|| ImapDeleteCommandError("write output".to_owned()))?;
+                .or_raise(|| ImapDeleteCommandError::Write)?;
             },
-            Err(e) => bail!(ImapDeleteCommandError(format!(
-                "imap delete {mailbox:?} failed: {e:?}"
-            ))),
+            Err(e) => {
+                return Err(e).or_raise(|| ImapDeleteCommandError::ImapDelete {
+                    mailbox: mailbox.clone(),
+                });
+            },
         }
 
         Ok(())

@@ -1,6 +1,5 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, path::PathBuf};
 
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 use serde::{Deserialize, Serialize};
 
@@ -10,8 +9,14 @@ use crate::libs::{
     filters::Filters,
 };
 
-#[derive(Debug, Display)]
-pub struct ConfigError(&'static str);
+#[derive(Debug, derive_more::Display)]
+pub enum ConfigError {
+    #[cfg_attr(not(test), display("Parsing config file {file:?}"))]
+    #[cfg_attr(test, display("Parsing config file"))]
+    Parsing { file: PathBuf },
+    #[display("Applying CLI args to configuration")]
+    ApplyArgs,
+}
 
 impl std::error::Error for ConfigError {}
 
@@ -61,7 +66,9 @@ where
         let mut config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
                 .map_err(SerdeAnyWrapper)
-                .or_raise(|| ConfigError("config file parsing failed"))?
+                .or_raise(|| ConfigError::Parsing {
+                    file: config.clone(),
+                })?
         } else {
             Self::default()
         };
@@ -69,7 +76,7 @@ where
         config.base = config
             .base
             .apply_args(args)
-            .or_raise(|| ConfigError("base"))?;
+            .or_raise(|| ConfigError::ApplyArgs)?;
 
         Ok(config)
     }
@@ -185,8 +192,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:72:14
-            `-- The server must be set, at src/libs/base_config.rs:108:13,
+            Applying CLI args to configuration, at src/libs/config.rs:79:14
+            `-- The server must be set, at src/libs/base_config.rs:156:13,
         )
         ");
     }
@@ -203,8 +210,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            base, at src/libs/config.rs:72:14
-            `-- The username must be set, at src/libs/base_config.rs:112:13,
+            Applying CLI args to configuration, at src/libs/config.rs:79:14
+            `-- The username must be set, at src/libs/base_config.rs:160:13,
         )
         ");
     }
@@ -246,8 +253,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
-            `-- missing closing quote, at src/libs/base_config.rs:164:22,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:205:50
+            `-- missing closing quote, at src/libs/base_config.rs:205:50,
         )
         "#);
     }
@@ -269,8 +276,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:171:22
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
+            Executing password command, at src/libs/base_config.rs:215:68
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:215:68,
         )
         ");
     }
@@ -292,7 +299,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:167:22,
+            password command is empty, at src/libs/base_config.rs:212:26,
         )
         ");
     }
@@ -330,8 +337,8 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            base, at src/libs/config.rs:72:14
-            `-- The password or password command must be set, at src/libs/base_config.rs:126:17,
+            Applying CLI args to configuration, at src/libs/config.rs:79:14
+            `-- The password or password command must be set, at src/libs/base_config.rs:174:17,
         )
         ");
     }
@@ -353,8 +360,8 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            config file parsing failed, at src/libs/config.rs:64:18
-            `-- TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:64:18,
+            Parsing config file, at src/libs/config.rs:69:18
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:69:18,
         )
         ");
     }

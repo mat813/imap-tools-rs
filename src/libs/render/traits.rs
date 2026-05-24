@@ -12,19 +12,21 @@ pub enum RendererError {
     },
 
     // CSV specific
+    #[display("Writing CSV output")]
     Csv,
-    #[display("write headers")]
+    #[display("Writing CSV headers")]
     CsvWriteHeaders,
-    #[display("write record")]
+    #[display("Writing CSV record")]
     CsvWriteRecord,
 
     // Cursive specific
+    #[display("Running cursive renderer")]
     #[cfg(feature = "cursive")]
     Cursive,
     #[display("renderer requires a terminal")]
     #[cfg(feature = "cursive")]
     CursiveRequireTerminal,
-    #[display("backend init")]
+    #[display("Initializing cursive backend")]
     #[cfg(feature = "cursive")]
     CursiveBackendInit,
     #[display("rendering interrupted by user")]
@@ -32,26 +34,29 @@ pub enum RendererError {
     CursiveInterrupted,
 
     // JSON specific
+    #[display("Serializing output to JSON")]
     Json,
 
     // Print specific
+    #[display("Printing output")]
     Print,
 
     // Terminal specific
+    #[display("Running ratatui renderer")]
     #[cfg(feature = "ratatui")]
     Terminal,
-    #[display("ratatui init")]
+    #[display("Initializing ratatui terminal")]
     #[cfg(feature = "ratatui")]
     TerminalInit,
-    #[display("term clear")]
+    #[display("Clearing terminal")]
     #[cfg(feature = "ratatui")]
     TerminalClear,
-    #[display("term draw")]
+    #[display("Drawing terminal frame")]
     #[cfg(feature = "ratatui")]
     TerminalDraw,
-    #[display("converting {_0} in a u16")]
+    #[display("Converting {width} to u16")]
     #[cfg(feature = "ratatui")]
-    TerminalU16(usize),
+    TerminalU16 { width: usize },
 }
 impl std::error::Error for RendererError {}
 

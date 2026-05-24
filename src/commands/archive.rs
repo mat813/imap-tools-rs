@@ -3,7 +3,6 @@ use std::collections::{BTreeMap, HashSet};
 use async_imap::{imap_proto::NameAttribute, types::Uid};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
-use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use serde::{Deserialize, Serialize};
@@ -15,8 +14,53 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct ArchiveError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ArchiveError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Connecting to IMAP server")]
+    ImapConnect,
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Checking IMAP capability {cap}")]
+    ImapCapability { cap: String },
+    #[display("Creating archive mailbox {mailbox}")]
+    ImapCreate { mailbox: String },
+    #[display("Listing mailboxes")]
+    ImapList,
+    #[display("Listing mailboxes matching pattern {pattern:?}")]
+    ImapListPattern { pattern: String },
+    #[display("Examining mailbox {mailbox}")]
+    ImapExamine { mailbox: String },
+    #[display("Selecting mailbox {mailbox}")]
+    ImapSelect { mailbox: String },
+    #[display("Searching UIDs before cutoff {cutoff_str}")]
+    ImapUidSearch { cutoff_str: String },
+    #[display("Adding renderer row")]
+    RendererAddRow,
+    #[display("Archiving mailbox {mailbox}")]
+    Archive { mailbox: String },
+    #[display("Mailbox {mailbox} does not have an extra parameter")]
+    MissingExtra { mailbox: String },
+    #[display("Moving messages to {mailbox:?}")]
+    ImapMove { mailbox: String },
+    #[display("Copying messages to {mailbox:?}")]
+    ImapCopy { mailbox: String },
+    #[display("Storing message flags")]
+    ImapStore,
+    #[display("Fetching messages by UID")]
+    ImapUidFetch,
+    #[display("server did not return INTERNALDATE for UID {uid:?}")]
+    ImapNoInternalDate { uid: Option<u32> },
+    #[display(
+        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
+    )]
+    ImapNoUidPlus,
+    #[display("Computing archive destinations")]
+    ComputeDestinations,
+}
 impl std::error::Error for ArchiveError {}
 
 #[derive(Args, Debug, Clone)]
@@ -54,8 +98,7 @@ impl Archive {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ArchiveError> {
-        let config =
-            Config::<MyExtra>::new(&self.config).or_raise(|| ArchiveError("config".to_owned()))?;
+        let config = Config::<MyExtra>::new(&self.config).or_raise(|| ArchiveError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
@@ -69,17 +112,13 @@ impl Archive {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| ArchiveError("new renderer".to_owned()))?;
+        .or_raise(|| ArchiveError::NewRenderer)?;
 
         let mut imap = Imap::connect(&config)
             .await
-            .or_raise(|| ArchiveError("connect".to_owned()))?;
+            .or_raise(|| ArchiveError::ImapConnect)?;
 
-        for (mailbox, result) in imap
-            .list()
-            .await
-            .or_raise(|| ArchiveError("imap list".to_owned()))?
-        {
+        for (mailbox, result) in imap.list().await.or_raise(|| ArchiveError::ImapList)? {
             match result.extra {
                 Some(ref extra) => {
                     Self::archive(
@@ -90,17 +129,13 @@ impl Archive {
                         config.base.dry_run,
                     )
                     .await
-                    .or_raise(|| ArchiveError("archive".to_owned()))?;
+                    .or_raise(|| ArchiveError::Archive { mailbox })?;
                 },
-                None => bail!(ArchiveError(format!(
-                    "Mailbox {mailbox} does not have an extra parameter"
-                ))),
+                None => bail!(ArchiveError::MissingExtra { mailbox }),
             }
         }
 
-        imap.close()
-            .await
-            .or_raise(|| ArchiveError("imap close failed".to_owned()))?;
+        imap.close().await.or_raise(|| ArchiveError::ImapClose)?;
 
         Ok(())
     }
@@ -124,7 +159,9 @@ impl Archive {
             .session
             .examine(mailbox)
             .await
-            .or_raise(|| ArchiveError(format!("imap examine {mailbox:?} failed")))?;
+            .or_raise(|| ArchiveError::ImapExamine {
+                mailbox: mailbox.to_owned(),
+            })?;
 
         // If there are no messages, skip
         if mbx.exists == 0 {
@@ -140,7 +177,9 @@ impl Archive {
             .session
             .uid_search(format!("SEEN UNFLAGGED BEFORE {cutoff_str}"))
             .await
-            .or_raise(|| ArchiveError("imap uid search failed".to_owned()))?;
+            .or_raise(|| ArchiveError::ImapUidSearch {
+                cutoff_str: cutoff_str.clone(),
+            })?;
 
         // Only delete if the rule applies based on mailbox size and message age
         if !uids_to_move.is_empty() {
@@ -150,7 +189,8 @@ impl Archive {
                 extra,
                 ids_list_to_collapsed_sequence(&uids_to_move),
             )
-            .await?;
+            .await
+            .or_raise(|| ArchiveError::ComputeDestinations)?;
 
             if dry_run {
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
@@ -163,13 +203,15 @@ impl Archive {
                             &cutoff_str,
                             &sequence,
                         ])
-                        .or_raise(|| ArchiveError("renderer add row".to_owned()))?;
+                        .or_raise(|| ArchiveError::RendererAddRow)?;
                 }
             } else {
                 imap.session
                     .select(mailbox)
                     .await
-                    .or_raise(|| ArchiveError(format!("imap select {mailbox:?} failed")))?;
+                    .or_raise(|| ArchiveError::ImapSelect {
+                        mailbox: mailbox.to_owned(),
+                    })?;
 
                 for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
                     let quoted_mailbox =
@@ -182,18 +224,18 @@ impl Archive {
                             &archive_mailbox
                         };
 
-                    let names: Vec<_> = {
-                        let s = imap
-                            .session
-                            .list(None, Some(quoted_mailbox))
-                            .await
-                            .or_raise(|| {
-                                ArchiveError(format!("imap list pattern {quoted_mailbox:?} failed"))
-                            })?;
-                        s.try_collect().await.or_raise(|| {
-                            ArchiveError(format!("imap list stream {quoted_mailbox:?} error"))
+                    let names: Vec<_> = imap
+                        .session
+                        .list(None, Some(quoted_mailbox))
+                        .await
+                        .or_raise(|| ArchiveError::ImapListPattern {
+                            pattern: quoted_mailbox.clone(),
                         })?
-                    };
+                        .try_collect()
+                        .await
+                        .or_raise(|| ArchiveError::ImapListPattern {
+                            pattern: quoted_mailbox.clone(),
+                        })?;
 
                     // If archive mailbox does not exist, or is a simple folder that is not a mailbox, create it
                     if names.is_empty()
@@ -202,29 +244,31 @@ impl Archive {
                             .all(|n| n.attributes().contains(&NameAttribute::NoSelect))
                     {
                         imap.session.create(&archive_mailbox).await.or_raise(|| {
-                            ArchiveError(format!("imap create {archive_mailbox:?} failed"))
+                            ArchiveError::ImapCreate {
+                                mailbox: archive_mailbox.clone(),
+                            }
                         })?;
                     }
 
-                    if imap
-                        .has_capability("MOVE")
-                        .await
-                        .or_raise(|| ArchiveError("has capability".to_owned()))?
-                    {
+                    if imap.has_capability("MOVE").await.or_raise(|| {
+                        ArchiveError::ImapCapability {
+                            cap: "MOVE".to_owned(),
+                        }
+                    })? {
                         // MV does COPY / MARK \Deleted / EXPUNGE all in one go
                         imap.session
                             .uid_mv(&sequence, quoted_mailbox)
                             .await
-                            .or_raise(|| {
-                                ArchiveError(format!("imap move to {quoted_mailbox:?} failed"))
+                            .or_raise(|| ArchiveError::ImapMove {
+                                mailbox: quoted_mailbox.clone(),
                             })?;
                     } else {
                         // If we don't have MV, do it the old fashion way.
                         imap.session
                             .uid_copy(&sequence, quoted_mailbox)
                             .await
-                            .or_raise(|| {
-                                ArchiveError(format!("imap copy to {quoted_mailbox:?} failed"))
+                            .or_raise(|| ArchiveError::ImapCopy {
+                                mailbox: quoted_mailbox.clone(),
                             })?;
 
                         {
@@ -232,11 +276,11 @@ impl Archive {
                                 .session
                                 .uid_store(&sequence, "+FLAGS (\\Deleted)")
                                 .await
-                                .or_raise(|| ArchiveError("imap store failed".to_owned()))?;
+                                .or_raise(|| ArchiveError::ImapStore)?;
                             while stream
                                 .try_next()
                                 .await
-                                .or_raise(|| ArchiveError("uid store stream error".to_owned()))?
+                                .or_raise(|| ArchiveError::ImapStore)?
                                 .is_some()
                             {}
                         }
@@ -251,14 +295,14 @@ impl Archive {
                             &cutoff_str,
                             &sequence,
                         ])
-                        .or_raise(|| ArchiveError("renderer add row".to_owned()))?;
+                        .or_raise(|| ArchiveError::RendererAddRow)?;
                 }
 
                 // Close the moved messages
                 imap.session
                     .close()
                     .await
-                    .or_raise(|| ArchiveError("imap close failed".to_owned()))?;
+                    .or_raise(|| ArchiveError::ImapClose)?;
             }
         }
 
@@ -283,29 +327,22 @@ impl Archive {
                 .session
                 .uid_fetch(&uid_set, "INTERNALDATE")
                 .await
-                .or_raise(|| ArchiveError("imap uid fetch failed".to_owned()))?;
+                .or_raise(|| ArchiveError::ImapUidFetch)?;
 
             while let Some(message) = stream
                 .try_next()
                 .await
-                .or_raise(|| ArchiveError("uid fetch stream error".to_owned()))?
+                .or_raise(|| ArchiveError::ImapUidFetch)?
             {
                 let mbx = Self::archive_mbx(
                     mailbox,
                     &extra.format,
-                    message.internal_date().ok_or_raise(|| {
-                        ArchiveError(format!(
-                            "server did not return INTERNALDATE for UID {:?}",
-                            message.uid
-                        ))
-                    })?,
+                    message
+                        .internal_date()
+                        .ok_or_raise(|| ArchiveError::ImapNoInternalDate { uid: message.uid })?,
                 );
 
-                let uid = message.uid.ok_or_raise(|| {
-                    ArchiveError(
-                        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned(),
-                    )
-                })?;
+                let uid = message.uid.ok_or_raise(|| ArchiveError::ImapNoUidPlus)?;
                 uids_by_mailbox.entry(mbx).or_default().insert(uid);
             }
         }

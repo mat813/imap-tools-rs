@@ -7,7 +7,6 @@ use std::{
 };
 
 use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
-use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use serde::Serialize;
@@ -29,9 +28,80 @@ impl<T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + Debug> Asy
 /// Boxed async stream type alias.
 pub type ImapStream = Box<dyn AsyncStream>;
 
-#[derive(Debug, Display)]
+#[derive(Debug, derive_more::Display)]
 /// Error type for IMAP operations.
-pub struct ImapError(String);
+pub enum ImapError {
+    #[display("Sending LOGOUT command")]
+    Logout,
+    #[display("missing server")]
+    NoServer,
+    #[display("Connecting to IMAP server")]
+    ConnectBase,
+    #[display("Connecting to {server} on port {port}")]
+    Connect { server: String, port: u16 },
+    #[display("Setting up TLS connection")]
+    TlsSetup,
+    #[display("Reading server greeting")]
+    Greeting,
+    #[display("Missing username")]
+    NoUsername,
+    #[display("Retrieving password")]
+    Password,
+    #[display("Authenticating via IMAP {method}")]
+    Login { method: &'static str },
+    #[display("Initializing {method} SCRAM session")]
+    ScramSession { method: &'static str },
+    #[display("Generating OAuth2 token")]
+    OAuth2Token,
+    #[display(
+        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
+    )]
+    UidPlus,
+    #[display("Querying IMAP capabilities")]
+    ImapCapabilities,
+    #[display("Selecting mailbox {mailbox:?}")]
+    ImapSelect { mailbox: String },
+    #[display("Storing message flags by UID")]
+    UidStore,
+    #[display("Streaming FETCH results")]
+    Stream,
+    #[display("Closing mailbox")]
+    ImapClose,
+    #[display("Listing mailboxes with filter {filter}")]
+    ImapList { filter: String },
+    #[display("This filter did not return anything {filter}")]
+    ImapListEmpty { filter: String },
+    #[display("Reading server greeting before STARTTLS")]
+    #[cfg(feature = "__tls")]
+    GreetingStarttls,
+    #[display("Wrapping connection with TLS")]
+    #[cfg(feature = "__tls")]
+    WrapTls,
+    #[display("Sending STARTTLS command")]
+    #[cfg(feature = "__tls")]
+    StartTls,
+    #[display("Creating native TLS connector")]
+    #[cfg(feature = "native-tls")]
+    NativeTlsConnector,
+    #[display("Performing TLS handshake with {server}")]
+    #[cfg(feature = "__tls")]
+    TlsHandshake { server: String },
+    #[display("Loading native root certificates: {errors:?}")]
+    #[cfg(feature = "rustls")]
+    LoadNativeCerts {
+        errors: Vec<rustls_native_certs::Error>,
+    },
+    #[display("Loading native root certificates")]
+    #[cfg(feature = "rustls")]
+    LoadingNativeCerts,
+    #[display("Adding root certificates to TLS root store")]
+    #[cfg(feature = "rustls")]
+    AddCerts,
+    #[cfg(feature = "rustls")]
+    #[display("invalid server name: {server:?}")]
+    RustlsInvalidServer { server: String },
+}
+// #[display()]
 impl std::error::Error for ImapError {}
 
 /// The result of listing a mailbox, including optional command-specific extra data.
@@ -95,10 +165,7 @@ where
     /// Returns an error if the LOGOUT command fails.
     pub async fn close(mut self) -> Result<(), ImapError> {
         self.closed = true;
-        self.session
-            .logout()
-            .await
-            .or_raise(|| ImapError("imap logout failed".to_owned()))
+        self.session.logout().await.or_raise(|| ImapError::Logout)
     }
 
     /// Connect and login to the IMAP server described by `base`.
@@ -114,22 +181,22 @@ where
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
 
-        let server = base
-            .server
-            .as_ref()
-            .ok_or_raise(|| ImapError("Missing server".to_owned()))?;
+        let server = base.server.as_ref().ok_or_raise(|| ImapError::NoServer)?;
 
         let port = base.port.unwrap_or(143);
         let mode = base.mode.clone().unwrap_or_default();
 
         let tcp = TcpStream::connect((server.as_str(), port))
             .await
-            .or_raise(|| ImapError(format!("failed to connect to {server} on port {port}")))?;
+            .or_raise(|| ImapError::Connect {
+                server: server.clone(),
+                port,
+            })?;
 
         let (stream, greeting_consumed): (ImapStream, bool) =
             build_stream(tcp, &mode, server, port)
                 .await
-                .or_raise(|| ImapError("TLS setup failed".to_owned()))?;
+                .or_raise(|| ImapError::TlsSetup)?;
 
         let mut client = async_imap::Client::new(stream);
 
@@ -137,89 +204,86 @@ where
             client
                 .read_response()
                 .await
-                .or_raise(|| ImapError("failed to read server greeting".to_owned()))?;
+                .or_raise(|| ImapError::Greeting)?;
         }
 
         let username = base
             .username
             .as_ref()
-            .ok_or_raise(|| ImapError("Missing username".to_owned()))?;
+            .ok_or_raise(|| ImapError::NoUsername)?;
 
-        let session = match base.auth.unwrap_or_default() {
-            AuthMethod::Login => {
-                let password = base
-                    .password()
-                    .or_raise(|| ImapError("getting password".to_owned()))?;
-                client
-                    .login(username, password)
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap login failed".to_owned()))?
-            },
-            AuthMethod::Plain => {
-                let password = base
-                    .password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?;
-                client
-                    .authenticate("PLAIN", PlainAuth {
-                        user: username.clone(),
-                        password,
-                    })
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap authenticate PLAIN failed".to_owned()))?
-            },
-            AuthMethod::CramMd5 => {
-                let password = base
-                    .password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?;
-                client
-                    .authenticate("CRAM-MD5", CramMd5Auth {
-                        user: username.clone(),
-                        password,
-                    })
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap authenticate CRAM-MD5 failed".to_owned()))?
-            },
-            AuthMethod::ScramSha1 => {
-                let password = base
-                    .password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?;
-                let auth = ScramAuth::new(b"SCRAM-SHA-1", username.clone(), password)
-                    .or_raise(|| ImapError("SCRAM-SHA-1 session init failed".to_owned()))?;
-                client
-                    .authenticate("SCRAM-SHA-1", auth)
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap authenticate SCRAM-SHA-1 failed".to_owned()))?
-            },
-            AuthMethod::ScramSha256 => {
-                let password = base
-                    .password()
-                    .or_raise(|| ImapError("Password error".to_owned()))?;
-                let auth = ScramAuth::new(b"SCRAM-SHA-256", username.clone(), password)
-                    .or_raise(|| ImapError("SCRAM-SHA-256 session init failed".to_owned()))?;
-                client
-                    .authenticate("SCRAM-SHA-256", auth)
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap authenticate SCRAM-SHA-256 failed".to_owned()))?
-            },
-            AuthMethod::XOAuth2 => {
-                let token = base
-                    .oauth2_token()
-                    .or_raise(|| ImapError("OAuth2 token error".to_owned()))?;
-                client
-                    .authenticate("XOAUTH2", XOAuth2Auth {
-                        user: username.clone(),
-                        token,
-                    })
-                    .await
-                    .map_err(|(err, _client)| err)
-                    .or_raise(|| ImapError("imap authenticate XOAUTH2 failed".to_owned()))?
-            },
-        };
+        let session =
+            match base.auth.unwrap_or_default() {
+                AuthMethod::Login => {
+                    let password = base.password().or_raise(|| ImapError::Password)?;
+                    client
+                        .login(username, password)
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login { method: "LOGIN" })?
+                },
+                AuthMethod::Plain => {
+                    let password = base.password().or_raise(|| ImapError::Password)?;
+                    client
+                        .authenticate("PLAIN", PlainAuth {
+                            user: username.clone(),
+                            password,
+                        })
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login { method: "PLAIN" })?
+                },
+                AuthMethod::CramMd5 => {
+                    let password = base.password().or_raise(|| ImapError::Password)?;
+                    client
+                        .authenticate("CRAM-MD5", CramMd5Auth {
+                            user: username.clone(),
+                            password,
+                        })
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login { method: "CRAM-MD5" })?
+                },
+                AuthMethod::ScramSha1 => {
+                    let password = base.password().or_raise(|| ImapError::Password)?;
+                    let auth = ScramAuth::new(b"SCRAM-SHA-1", username.clone(), password)
+                        .or_raise(|| ImapError::ScramSession {
+                            method: "SCRAM-SHA-1",
+                        })?;
+                    client
+                        .authenticate("SCRAM-SHA-1", auth)
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login {
+                            method: "SCRAM-SHA-1",
+                        })?
+                },
+                AuthMethod::ScramSha256 => {
+                    let password = base.password().or_raise(|| ImapError::Password)?;
+                    let auth = ScramAuth::new(b"SCRAM-SHA-256", username.clone(), password)
+                        .or_raise(|| ImapError::ScramSession {
+                            method: "SCRAM-SHA-256",
+                        })?;
+                    client
+                        .authenticate("SCRAM-SHA-256", auth)
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login {
+                            method: "SCRAM-SHA-256",
+                        })?
+                },
+                AuthMethod::XOAuth2 => {
+                    let token = base.oauth2_token().or_raise(|| ImapError::OAuth2Token)?;
+                    client
+                        .authenticate("XOAUTH2", XOAuth2Auth {
+                            user: username.clone(),
+                            token,
+                        })
+                        .await
+                        .map_err(|(err, _client)| err)
+                        .or_raise(|| ImapError::Login { method: "XOAUTH2" })?
+                },
+            };
 
         let mut ret = Self {
             session,
@@ -230,7 +294,7 @@ where
         };
 
         if !ret.has_capability("UIDPLUS").await? {
-            bail!(ImapError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned()));
+            bail!(ImapError::UidPlus);
         }
 
         Ok(ret)
@@ -262,7 +326,9 @@ where
         tracing::instrument(level = "trace", skip(config), ret, err(level = "info"))
     )]
     pub async fn connect(config: &Config<T>) -> Result<Self, ImapError> {
-        let mut ret = Self::connect_base(&config.base).await?;
+        let mut ret = Self::connect_base(&config.base)
+            .await
+            .or_raise(|| ImapError::ConnectBase)?;
 
         ret.extra.clone_from(&config.extra);
         ret.filters.clone_from(&config.filters);
@@ -290,7 +356,7 @@ where
             .session
             .capabilities()
             .await
-            .or_raise(|| ImapError("imap capabilities failed".to_owned()))?
+            .or_raise(|| ImapError::ImapCapabilities)?
             .has_str(cap.as_ref());
 
         self.cached_capabilities
@@ -312,18 +378,20 @@ where
         self.session
             .select(mailbox)
             .await
-            .or_raise(|| ImapError(format!("imap select {mailbox:?} failed")))?;
+            .or_raise(|| ImapError::ImapSelect {
+                mailbox: mailbox.to_owned(),
+            })?;
 
         {
             let mut stream = self
                 .session
                 .uid_store(sequence, "+FLAGS (\\Deleted)")
                 .await
-                .or_raise(|| ImapError("imap uid store failed".to_owned()))?;
+                .or_raise(|| ImapError::UidStore)?;
             while stream
                 .try_next()
                 .await
-                .or_raise(|| ImapError("uid store stream error".to_owned()))?
+                .or_raise(|| ImapError::Stream)?
                 .is_some()
             {}
         }
@@ -331,7 +399,7 @@ where
         self.session
             .close()
             .await
-            .or_raise(|| ImapError("imap close failed".to_owned()))?;
+            .or_raise(|| ImapError::ImapClose)?;
 
         Ok(())
     }
@@ -363,11 +431,10 @@ where
                     .session
                     .list(filter.reference.as_deref(), filter.pattern.as_deref())
                     .await
-                    .or_raise(|| ImapError(format!("imap list failed with {filter:?}")))?;
-                stream
-                    .try_collect()
-                    .await
-                    .or_raise(|| ImapError("imap list stream error".to_owned()))?
+                    .or_raise(|| ImapError::ImapList {
+                        filter: format!("{filter:?}"),
+                    })?;
+                stream.try_collect().await.or_raise(|| ImapError::Stream)?
             };
 
             for mailbox in names
@@ -393,9 +460,9 @@ where
             }
 
             if !found {
-                bail!(ImapError(format!(
-                    "This filter did not return anything {filter:?}"
-                )));
+                bail!(ImapError::ImapListEmpty {
+                    filter: format!("{filter:?}")
+                });
             }
         }
 
@@ -432,7 +499,9 @@ async fn build_stream(
         Mode::Plaintext => Ok((Box::new(tcp), false)),
         #[cfg(feature = "__tls")]
         Mode::Tls => {
-            let tls = wrap_tls(tcp, server).await?;
+            let tls = wrap_tls(tcp, server)
+                .await
+                .or_raise(|| ImapError::WrapTls)?;
             Ok((tls, false))
         },
         #[cfg(feature = "__tls")]
@@ -441,33 +510,40 @@ async fn build_stream(
             plain_client
                 .read_response()
                 .await
-                .or_raise(|| ImapError("failed to read greeting before STARTTLS".to_owned()))?;
+                .or_raise(|| ImapError::GreetingStarttls)?;
             plain_client
                 .run_command_and_check_ok("STARTTLS", None)
                 .await
-                .or_raise(|| ImapError("STARTTLS command failed".to_owned()))?;
+                .or_raise(|| ImapError::StartTls)?;
             let tcp_back: TcpStream = plain_client.into_inner();
-            let tls = wrap_tls(tcp_back, server).await?;
+            let tls = wrap_tls(tcp_back, server)
+                .await
+                .or_raise(|| ImapError::WrapTls)?;
             Ok((tls, true))
         },
         Mode::AutoTls => {
             #[cfg(feature = "__tls")]
             {
                 if port == 993 {
-                    let tls = wrap_tls(tcp, server).await?;
+                    let tls = wrap_tls(tcp, server)
+                        .await
+                        .or_raise(|| ImapError::WrapTls)?;
                     Ok((tls, false))
                 } else {
                     // Treat as StartTls
                     let mut plain_client = async_imap::Client::new(tcp);
-                    plain_client.read_response().await.or_raise(|| {
-                        ImapError("failed to read greeting before STARTTLS".to_owned())
-                    })?;
+                    plain_client
+                        .read_response()
+                        .await
+                        .or_raise(|| ImapError::GreetingStarttls)?;
                     plain_client
                         .run_command_and_check_ok("STARTTLS", None)
                         .await
-                        .or_raise(|| ImapError("STARTTLS command failed".to_owned()))?;
+                        .or_raise(|| ImapError::StartTls)?;
                     let tcp_back: TcpStream = plain_client.into_inner();
-                    let tls = wrap_tls(tcp_back, server).await?;
+                    let tls = wrap_tls(tcp_back, server)
+                        .await
+                        .or_raise(|| ImapError::WrapTls)?;
                     Ok((tls, true))
                 }
             }
@@ -481,7 +557,9 @@ async fn build_stream(
             #[cfg(feature = "__tls")]
             {
                 if port == 993 {
-                    let tls = wrap_tls(tcp, server).await?;
+                    let tls = wrap_tls(tcp, server)
+                        .await
+                        .or_raise(|| ImapError::WrapTls)?;
                     return Ok((tls, false));
                 }
                 // Non-993: read greeting then attempt STARTTLS; fall back to plaintext if not supported
@@ -489,7 +567,7 @@ async fn build_stream(
                 plain_client
                     .read_response()
                     .await
-                    .or_raise(|| ImapError("failed to read server greeting".to_owned()))?;
+                    .or_raise(|| ImapError::Greeting)?;
                 // Try STARTTLS; if the server returns NO/BAD, fall back to plaintext
                 let starttls_ok = plain_client
                     .run_command_and_check_ok("STARTTLS", None)
@@ -497,7 +575,9 @@ async fn build_stream(
                     .is_ok();
                 if starttls_ok {
                     let tcp_back: TcpStream = plain_client.into_inner();
-                    let tls = wrap_tls(tcp_back, server).await?;
+                    let tls = wrap_tls(tcp_back, server)
+                        .await
+                        .or_raise(|| ImapError::WrapTls)?;
                     Ok((tls, true))
                 } else {
                     // Server does not support STARTTLS; use plaintext
@@ -521,13 +601,14 @@ async fn build_stream(
 /// Wrap a `TcpStream` in a TLS layer using the OpenSSL backend.
 #[cfg(feature = "native-tls")]
 async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError> {
-    let connector = native_tls::TlsConnector::new()
-        .or_raise(|| ImapError("native TLS connector creation failed".to_owned()))?;
+    let connector = native_tls::TlsConnector::new().or_raise(|| ImapError::NativeTlsConnector)?;
     let connector = tokio_native_tls::TlsConnector::from(connector);
     let tls = connector
         .connect(server, tcp)
         .await
-        .or_raise(|| ImapError(format!("TLS handshake with {server} failed")))?;
+        .or_raise(|| ImapError::TlsHandshake {
+            server: server.to_owned(),
+        })?;
     Ok(Box::new(tls))
 }
 
@@ -544,28 +625,30 @@ async fn wrap_tls(tcp: TcpStream, server: &str) -> Result<ImapStream, ImapError>
 
     let cert_result = rustls_native_certs::load_native_certs();
     if !cert_result.errors.is_empty() {
-        return Err(ImapError(format!(
-            "failed to load native certs: {:?}",
-            cert_result.errors
-        )))
-        .or_raise(|| ImapError("failed to load native certs".to_owned()));
+        return Err(ImapError::LoadNativeCerts {
+            errors: cert_result.errors,
+        })
+        .or_raise(|| ImapError::LoadingNativeCerts);
     }
     let mut roots = rustls::RootCertStore::empty();
     for cert in cert_result.certs {
-        roots
-            .add(cert)
-            .or_raise(|| ImapError("failed to add cert".to_owned()))?;
+        roots.add(cert).or_raise(|| ImapError::AddCerts)?;
     }
     let config = rustls::ClientConfig::builder()
         .with_root_certificates(roots)
         .with_no_client_auth();
     let connector = tokio_rustls::TlsConnector::from(Arc::new(config));
-    let dns = rustls::pki_types::ServerName::try_from(server.to_owned())
-        .or_raise(|| ImapError(format!("invalid server name: {server}")))?;
+    let dns = rustls::pki_types::ServerName::try_from(server.to_owned()).or_raise(|| {
+        ImapError::RustlsInvalidServer {
+            server: server.to_owned(),
+        }
+    })?;
     let tls = connector
         .connect(dns, tcp)
         .await
-        .or_raise(|| ImapError(format!("TLS handshake with {server} failed")))?;
+        .or_raise(|| ImapError::TlsHandshake {
+            server: server.to_owned(),
+        })?;
     Ok(Box::new(tls))
 }
 

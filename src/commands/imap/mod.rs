@@ -1,5 +1,4 @@
 use clap::Subcommand;
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 mod create;
 mod delete;
@@ -21,8 +20,17 @@ pub enum ImapCommands {
     DiskUsage(disk_usage::DiskUsage),
 }
 
-#[derive(Debug, Display)]
-pub struct ImapCommandsError(&'static str);
+#[derive(Debug, derive_more::Display)]
+pub enum ImapCommandsError {
+    #[display("Running imap list subcommand")]
+    List,
+    #[display("Running imap create subcommand")]
+    Create,
+    #[display("Running imap delete subcommand")]
+    Delete,
+    #[display("Running imap disk-usage subcommand")]
+    DiskUsage,
+}
 impl std::error::Error for ImapCommandsError {}
 
 impl ImapCommands {
@@ -32,16 +40,16 @@ impl ImapCommands {
     )]
     pub async fn execute(&self) -> Result<(), ImapCommandsError> {
         match *self {
-            Self::List(ref list) => list.execute().await.or_raise(|| ImapCommandsError("list")),
+            Self::List(ref list) => list.execute().await.or_raise(|| ImapCommandsError::List),
             Self::Create(ref create) => create
                 .execute()
                 .await
-                .or_raise(|| ImapCommandsError("create")),
+                .or_raise(|| ImapCommandsError::Create),
             Self::Delete(ref delete) => delete
                 .execute()
                 .await
-                .or_raise(|| ImapCommandsError("delete")),
-            Self::DiskUsage(ref du) => du.execute().await.or_raise(|| ImapCommandsError("du")),
+                .or_raise(|| ImapCommandsError::Delete),
+            Self::DiskUsage(ref du) => du.execute().await.or_raise(|| ImapCommandsError::DiskUsage),
         }
     }
 }

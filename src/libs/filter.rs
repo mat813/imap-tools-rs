@@ -101,7 +101,6 @@ where
 mod internal {
     use std::{fmt, fmt::Debug};
 
-    use derive_more::Display;
     use exn::{Result, ResultExt as _};
     use regex::{Regex, escape};
     use serde::{Deserialize, Deserializer, Serialize, de};
@@ -154,8 +153,11 @@ mod internal {
         deserializer.deserialize_any(V).map(Some)
     }
 
-    #[derive(Debug, Display)]
-    pub struct FilterError(String);
+    #[derive(Debug, derive_more::Display)]
+    pub enum FilterError {
+        #[display("Compiling regexp {re:?}")]
+        BadRegex { re: String },
+    }
     impl std::error::Error for FilterError {}
 
     /// Private structure without the regex
@@ -232,7 +234,7 @@ mod internal {
             } else {
                 let full_re = internal.join("|");
                 Regex::new(&full_re)
-                    .or_raise(|| FilterError(format!("regexp creation failed for {full_re:?}")))
+                    .or_raise(|| FilterError::BadRegex { re: full_re })
                     .map(Some)
             }
         }

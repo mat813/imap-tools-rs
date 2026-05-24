@@ -1,11 +1,23 @@
 use clap::Args;
-use derive_more::Display;
-use exn::{Result, ResultExt as _, bail};
+use exn::{Result, ResultExt as _};
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
-#[derive(Debug, Display)]
-pub struct ImapCreateCommandError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ImapCreateCommandError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Closing IMAP session")]
+    Close,
+    #[display("Running create command")]
+    Run,
+    #[display("Writing command output")]
+    WriteOutput,
+    #[display("Creating mailbox {mailbox}")]
+    ImapCreate { mailbox: String },
+}
 impl std::error::Error for ImapCreateCommandError {}
 
 #[derive(Args, Debug, Clone)]
@@ -27,20 +39,21 @@ impl Create {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ImapCreateCommandError> {
-        let config = BaseConfig::new(&self.config)
-            .or_raise(|| ImapCreateCommandError("config".to_owned()))?;
+        let config = BaseConfig::new(&self.config).or_raise(|| ImapCreateCommandError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)
             .await
-            .or_raise(|| ImapCreateCommandError("connect".to_owned()))?;
+            .or_raise(|| ImapCreateCommandError::Connect)?;
 
-        let result = self.run(&mut imap, &mut std::io::stdout()).await;
+        self.run(&mut imap, &mut std::io::stdout())
+            .await
+            .or_raise(|| ImapCreateCommandError::Run)?;
         imap.close()
             .await
-            .or_raise(|| ImapCreateCommandError("imap close failed".to_owned()))?;
-        result
+            .or_raise(|| ImapCreateCommandError::Close)?;
+        Ok(())
     }
 
     #[cfg_attr(
@@ -56,16 +69,18 @@ impl Create {
 
         match imap.session.create(mailbox).await {
             Ok(()) => writeln!(out, "The mailbox {mailbox} has been created")
-                .or_raise(|| ImapCreateCommandError("write output".to_owned()))?,
+                .or_raise(|| ImapCreateCommandError::WriteOutput)?,
             Err(async_imap::error::Error::No(reason))
                 if reason.contains("Mailbox already exist") =>
             {
                 writeln!(out, "Cannot create {mailbox:?}, it already exist: {reason}")
-                    .or_raise(|| ImapCreateCommandError("write output".to_owned()))?;
+                    .or_raise(|| ImapCreateCommandError::WriteOutput)?;
             },
-            Err(e) => bail!(ImapCreateCommandError(format!(
-                "imap create {mailbox:?} failed: {e:?}"
-            ))),
+            Err(e) => {
+                return Err(e).or_raise(|| ImapCreateCommandError::ImapCreate {
+                    mailbox: mailbox.clone(),
+                });
+            },
         }
 
         Ok(())

@@ -92,15 +92,15 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
         #[expect(clippy::indexing_slicing, reason = "it's ok")]
         for (idx, cell) in str_row.iter().enumerate() {
             let width = cell.len();
-            let width = u16::try_from(width).or_raise(|| RendererError::TerminalU16(width))?;
+            let width = u16::try_from(width).or_raise(|| RendererError::TerminalU16 { width })?;
             if width > self.column_widths[idx] {
                 self.column_widths[idx] = width;
             }
         }
 
         let table_width = self.table_rows.len();
-        let table_width =
-            u16::try_from(table_width).or_raise(|| RendererError::TerminalU16(table_width))?;
+        let table_width = u16::try_from(table_width)
+            .or_raise(|| RendererError::TerminalU16 { width: table_width })?;
         self.terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(table_width + 3),
         })

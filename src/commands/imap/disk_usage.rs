@@ -1,6 +1,5 @@
 use async_imap::imap_proto::NameAttribute;
 use clap::Args;
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -14,8 +13,38 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct ImapDuCommandError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ImapDuCommandError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Running disk-usage command")]
+    Run,
+    #[display("Closing IMAP session")]
+    Close,
+    #[display("Listing mailboxes with reference {reference:?} and pattern {pattern:?}")]
+    ImapList {
+        reference: Option<String>,
+        pattern: Option<String>,
+    },
+    #[display("Streaming LIST results")]
+    ImapListStream,
+    #[display("Parsing message length {len}")]
+    ParseU64 { len: usize },
+    #[display("Building progress bar style")]
+    ProgressStyle,
+    #[display("Examining mailbox {mailbox}")]
+    ImapExamine { mailbox: String },
+    #[display("Fetching message sizes by UID")]
+    ImapUidFetch,
+    #[display("Streaming UID FETCH results")]
+    ImapUidFetchStream,
+    #[display("Adding renderer row")]
+    RendererAddRow,
+}
 impl std::error::Error for ImapDuCommandError {}
 
 #[derive(Debug, Clone, Default, clap::ValueEnum)]
@@ -74,14 +103,13 @@ impl DiskUsage {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), ImapDuCommandError> {
-        let config =
-            BaseConfig::new(&self.config).or_raise(|| ImapDuCommandError("config".to_owned()))?;
+        let config = BaseConfig::new(&self.config).or_raise(|| ImapDuCommandError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
         let mut imap: Imap<()> = Imap::connect_base(&config)
             .await
-            .or_raise(|| ImapDuCommandError("connect".to_owned()))?;
+            .or_raise(|| ImapDuCommandError::Connect)?;
 
         let mut renderer = new_renderer(
             config.renderer,
@@ -89,13 +117,15 @@ impl DiskUsage {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| ImapDuCommandError("new renderer".to_owned()))?;
+        .or_raise(|| ImapDuCommandError::NewRenderer)?;
 
-        let result = self.run(&mut imap, &mut renderer).await;
-        imap.close()
+        self.run(&mut imap, &mut renderer)
             .await
-            .or_raise(|| ImapDuCommandError("imap close failed".to_owned()))?;
-        result
+            .or_raise(|| ImapDuCommandError::Run)?;
+
+        imap.close().await.or_raise(|| ImapDuCommandError::Close)?;
+
+        Ok(())
     }
 
     #[cfg_attr(
@@ -114,16 +144,14 @@ impl DiskUsage {
                 .session
                 .list(self.reference.as_deref(), self.pattern.as_deref())
                 .await
-                .or_raise(|| {
-                    ImapDuCommandError(format!(
-                        "imap list failed with ref:{:?} and pattern:{:?}",
-                        self.reference, self.pattern
-                    ))
+                .or_raise(|| ImapDuCommandError::ImapList {
+                    reference: self.reference.clone(),
+                    pattern: self.pattern.clone(),
                 })?;
             stream
                 .try_collect()
                 .await
-                .or_raise(|| ImapDuCommandError("imap list stream error".to_owned()))?
+                .or_raise(|| ImapDuCommandError::ImapListStream)?
         };
 
         let mailboxes: Vec<_> = names
@@ -150,8 +178,10 @@ impl DiskUsage {
             })
             .collect();
 
-        let len_mbox = u64::try_from(mailboxes.len())
-            .or_raise(|| ImapDuCommandError("parse length".to_owned()))?;
+        let len_mbox =
+            u64::try_from(mailboxes.len()).or_raise(|| ImapDuCommandError::ParseU64 {
+                len: mailboxes.len(),
+            })?;
 
         let bar = self.progress.then(|| ProgressBar::new(len_mbox));
 
@@ -159,7 +189,7 @@ impl DiskUsage {
             b.set_style(
                 ProgressStyle::with_template(
                     "[{elapsed_precise}/{duration_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-                ).or_raise(|| ImapDuCommandError("new progress style".to_owned()))?
+                ).or_raise(|| ImapDuCommandError::ProgressStyle)?
                 .progress_chars("##-"),
             );
         }
@@ -170,11 +200,11 @@ impl DiskUsage {
                 b.set_message(mailbox.name().to_owned());
             }
 
-            let mbx = imap
-                .session
-                .examine(mailbox.name())
-                .await
-                .or_raise(|| ImapDuCommandError("imap examine".to_owned()))?;
+            let mbx = imap.session.examine(mailbox.name()).await.or_raise(|| {
+                ImapDuCommandError::ImapExamine {
+                    mailbox: mailbox.name().to_owned(),
+                }
+            })?;
 
             if mbx.exists == 0 {
                 result.push((mailbox.name().to_owned(), 0));
@@ -187,11 +217,11 @@ impl DiskUsage {
                     .session
                     .uid_fetch("1:*", "(RFC822.SIZE)")
                     .await
-                    .or_raise(|| ImapDuCommandError("imap uid fetch".to_owned()))?;
+                    .or_raise(|| ImapDuCommandError::ImapUidFetch)?;
                 while let Some(m) = stream
                     .try_next()
                     .await
-                    .or_raise(|| ImapDuCommandError("uid fetch stream error".to_owned()))?
+                    .or_raise(|| ImapDuCommandError::ImapUidFetchStream)?
                 {
                     sum = sum.saturating_add(u64::from(m.size.unwrap_or(0)));
                 }
@@ -215,7 +245,7 @@ impl DiskUsage {
         for (mbx, total) in result {
             renderer
                 .add_row(&[&mbx, &Size::from_bytes(total).format()])
-                .or_raise(|| ImapDuCommandError("renderer add row".to_owned()))?;
+                .or_raise(|| ImapDuCommandError::RendererAddRow)?;
         }
 
         Ok(())

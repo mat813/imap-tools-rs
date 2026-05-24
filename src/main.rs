@@ -4,7 +4,6 @@
 // We use tokio current_thread runtime, so futures don't need to be Send.
 #![allow(clippy::future_not_send, reason = "current_thread runtime")]
 
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 mod commands;
 mod libs;
@@ -12,8 +11,14 @@ mod run;
 #[cfg(test)]
 mod test_helpers;
 
-#[derive(Debug, Display)]
-struct MainError;
+#[derive(Debug, derive_more::Display)]
+enum MainError {
+    #[display("opening log file {file:?}")]
+    #[cfg(feature = "tracing")]
+    Tracing { file: String },
+    #[display("Running CLI")]
+    Run,
+}
 
 impl std::error::Error for MainError {}
 
@@ -37,7 +42,11 @@ async fn main() -> Result<(), MainError> {
                 tracing_subscriber::fmt::layer()
                     .with_writer(
                         if let Some(file) = option_env!("LOG_OUTPUT") {
-                            BoxMakeWriter::new(std::fs::File::create(file).or_raise(|| MainError)?)
+                            BoxMakeWriter::new(std::fs::File::create(file).or_raise(|| {
+                                MainError::Tracing {
+                                    file: file.to_owned(),
+                                }
+                            })?)
                         } else {
                             BoxMakeWriter::new(std::io::stdout)
                         },
@@ -51,5 +60,5 @@ async fn main() -> Result<(), MainError> {
             .init();
     }
 
-    run::run().await.or_raise(|| MainError)
+    run::run().await.or_raise(|| MainError::Run)
 }

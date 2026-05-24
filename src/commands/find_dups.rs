@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use async_imap::types::Uid;
 use clap::Args;
-use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use regex::Regex;
@@ -14,8 +13,35 @@ use crate::libs::{
     render::{Renderer, new_renderer},
 };
 
-#[derive(Debug, Display)]
-pub struct DuError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum DuError {
+    #[display("Loading configuration")]
+    Config,
+    #[display("Connecting to IMAP server")]
+    Connect,
+    #[display("Creating renderer")]
+    NewRenderer,
+    #[display("Listing mailboxes")]
+    ImapList,
+    #[display("Closing IMAP session")]
+    ImapClose,
+    #[display("Processing mailbox {mailbox}")]
+    Process { mailbox: String },
+    #[display("Examining mailbox {mailbox}")]
+    ImapExamine { mailbox: String },
+    #[display("Fetching message headers by UID in {mailbox}")]
+    ImapUidFetch { mailbox: String },
+    #[display("Streaming UID FETCH results for {mailbox}")]
+    ImapUidFetchStream { mailbox: String },
+    #[display(
+        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
+    )]
+    NoUidPlus,
+    #[display("Deleting duplicate messages in {mailbox}")]
+    DeleteUids { mailbox: String },
+    #[display("Adding renderer row")]
+    RendererAddRow,
+}
 impl std::error::Error for DuError {}
 
 #[derive(Args, Debug, Clone)]
@@ -56,8 +82,7 @@ impl FindDups {
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
     pub async fn execute(&self) -> Result<(), DuError> {
-        let config =
-            Config::<MyExtra>::new(&self.config).or_raise(|| DuError("config".to_owned()))?;
+        let config = Config::<MyExtra>::new(&self.config).or_raise(|| DuError::Config)?;
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
@@ -71,25 +96,17 @@ impl FindDups {
             RENDERER_FORMAT,
             RENDERER_HEADERS,
         )
-        .or_raise(|| DuError("new renderer".to_owned()))?;
+        .or_raise(|| DuError::NewRenderer)?;
 
-        let mut imap = Imap::connect(&config)
-            .await
-            .or_raise(|| DuError("connect".to_owned()))?;
+        let mut imap = Imap::connect(&config).await.or_raise(|| DuError::Connect)?;
 
-        for (mailbox, _result) in imap
-            .list()
-            .await
-            .or_raise(|| DuError("imap list".to_owned()))?
-        {
+        for (mailbox, _result) in imap.list().await.or_raise(|| DuError::ImapList)? {
             Self::process(&mut imap, &mut renderer, &mailbox, config.base.dry_run)
                 .await
-                .or_raise(|| DuError("process".to_owned()))?;
+                .or_raise(|| DuError::Process { mailbox })?;
         }
 
-        imap.close()
-            .await
-            .or_raise(|| DuError("imap close failed".to_owned()))?;
+        imap.close().await.or_raise(|| DuError::ImapClose)?;
 
         Ok(())
     }
@@ -110,7 +127,9 @@ impl FindDups {
             .session
             .examine(mailbox)
             .await
-            .or_raise(|| DuError(format!("imap examine {mailbox:?} failed")))?;
+            .or_raise(|| DuError::ImapExamine {
+                mailbox: mailbox.to_owned(),
+            })?;
 
         // If there are less than 2 messages, there cannot possible be
         // duplicates, stop here
@@ -126,17 +145,20 @@ impl FindDups {
                 .session
                 .uid_fetch("1:*", "(BODY.PEEK[HEADER.FIELDS (MESSAGE-ID)])")
                 .await
-                .or_raise(|| DuError("imap uid fetch failed".to_owned()))?;
+                .or_raise(|| DuError::ImapUidFetch {
+                    mailbox: mailbox.to_owned(),
+                })?;
 
-            while let Some(message) = stream
-                .try_next()
-                .await
-                .or_raise(|| DuError("uid fetch stream error".to_owned()))?
+            while let Some(message) =
+                stream
+                    .try_next()
+                    .await
+                    .or_raise(|| DuError::ImapUidFetchStream {
+                        mailbox: mailbox.to_owned(),
+                    })?
             {
                 if let Some(id) = Self::parse_message_id(message.header()) {
-                    let uid = message.uid.ok_or_raise(|| {
-                        DuError("The server does not support the UIDPLUS capability, and all our operations need UIDs for safety".to_owned())
-                    })?;
+                    let uid = message.uid.ok_or_raise(|| DuError::NoUidPlus)?;
                     message_ids.entry(id).or_default().push(uid);
                 }
             }
@@ -163,12 +185,14 @@ impl FindDups {
             if !dry_run {
                 imap.delete_uids(mailbox, &duplicate_set)
                     .await
-                    .or_raise(|| DuError("imap delete uids failed".to_owned()))?;
+                    .or_raise(|| DuError::DeleteUids {
+                        mailbox: mailbox.to_owned(),
+                    })?;
             }
 
             renderer
                 .add_row(&[&mailbox, &duplicates.len(), &duplicate_set])
-                .or_raise(|| DuError("renderer add row".to_owned()))?;
+                .or_raise(|| DuError::RendererAddRow)?;
         }
 
         Ok(())

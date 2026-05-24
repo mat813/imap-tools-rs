@@ -1,14 +1,60 @@
-use std::{fmt::Write as _, process::Command};
+use std::{
+    fmt::Write as _,
+    path::PathBuf,
+    process::{Command, ExitStatus},
+};
 
-use derive_more::Display;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 
 use crate::libs::{args::Generic, auth::AuthMethod, mode::Mode, render::RendererArg};
 
-#[derive(Debug, Display)]
-pub struct BaseConfigError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum CommandType {
+    #[display("password")]
+    Password,
+    #[display("oauth2")]
+    Oauth2,
+}
+
+#[derive(Debug, derive_more::Display)]
+pub enum BaseConfigError {
+    #[cfg_attr(not(test), display("Parsing config file {file:?}"))]
+    #[cfg_attr(test, display("Parsing config file"))]
+    ParseFile { file: PathBuf },
+    #[display("The server must be set")]
+    NoServer,
+    #[display("The username must be set")]
+    NoUsername,
+    #[display("The password or password command must be set")]
+    NoPassword,
+    #[display(
+        "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)"
+    )]
+    Oauth2Password,
+    #[display("oauth2-command must be set when auth = \"xoauth2\"")]
+    Oauth2NoCommand,
+    #[display("Parsing {command_type} command {command}")]
+    ParsingCommand {
+        command_type: CommandType,
+        command: String,
+    },
+    #[display("{command_type} command is empty")]
+    CommandEmpty { command_type: CommandType },
+    #[display("Executing {command_type} command")]
+    CommandExec { command_type: CommandType },
+    #[display("Running {command_type} command {command:?} (exit {status})\n{stdout}\n{stderr}")]
+    CommandFail {
+        command_type: CommandType,
+        command: String,
+        status: ExitStatus,
+        stdout: String,
+        stderr: String,
+    },
+    #[display("{command_type} command output is not valid UTF-8")]
+    PasswordCommandOutput { command_type: CommandType },
+}
 impl std::error::Error for BaseConfigError {}
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -42,7 +88,7 @@ pub struct BaseConfig {
     pub(self) oauth2_command: Option<String>,
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, derive_more::Display)]
 pub struct SerdeAnyWrapper(pub serde_any::Error);
 impl std::error::Error for SerdeAnyWrapper {}
 
@@ -61,7 +107,9 @@ impl BaseConfig {
         let config = if let Some(ref config) = args.config {
             serde_any::from_file(config)
                 .map_err(SerdeAnyWrapper)
-                .or_raise(|| BaseConfigError("config file parsing failed".to_owned()))?
+                .or_raise(|| BaseConfigError::ParseFile {
+                    file: config.clone(),
+                })?
         } else {
             Self::default()
         };
@@ -105,11 +153,11 @@ impl BaseConfig {
         }
 
         if self.server.is_none() {
-            bail!(BaseConfigError("The server must be set".to_owned()));
+            bail!(BaseConfigError::NoServer);
         }
 
         if self.username.is_none() {
-            bail!(BaseConfigError("The username must be set".to_owned()));
+            bail!(BaseConfigError::NoUsername);
         }
 
         if let Some(auth) = args.auth {
@@ -123,21 +171,15 @@ impl BaseConfig {
         let auth = self.auth.unwrap_or_default();
         if auth.requires_password() {
             if self.password.is_none() && self.password_command.is_none() {
-                bail!(BaseConfigError(
-                    "The password or password command must be set".to_owned()
-                ));
+                bail!(BaseConfigError::NoPassword);
             }
         } else {
             // XOAuth2
             if self.password.is_some() || self.password_command.is_some() {
-                bail!(BaseConfigError(
-                    "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)".to_owned()
-                ));
+                bail!(BaseConfigError::Oauth2Password);
             }
             if self.oauth2_command.is_none() {
-                bail!(BaseConfigError(
-                    "oauth2-command must be set when auth = \"xoauth2\"".to_owned()
-                ));
+                bail!(BaseConfigError::Oauth2NoCommand);
             }
         }
 
@@ -160,42 +202,36 @@ impl BaseConfig {
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
             (_, &Some(ref command)) => {
-                let command_vec = split(command)
-                    .or_raise(|| BaseConfigError(format!("parsing command failed: {command}")))?;
-                let (exe, args) = command_vec
-                    .split_first()
-                    .ok_or_raise(|| BaseConfigError("password command is empty".to_owned()))?;
-                let output = Command::new(exe)
-                    .args(args)
-                    .output()
-                    .or_raise(|| BaseConfigError("password command exec failed".to_owned()))?;
+                let command_vec = split(command).or_raise(|| BaseConfigError::ParsingCommand {
+                    command_type: CommandType::Password,
+                    command: command.clone(),
+                })?;
+                let (exe, args) =
+                    command_vec
+                        .split_first()
+                        .ok_or_raise(|| BaseConfigError::CommandEmpty {
+                            command_type: CommandType::Password,
+                        })?;
+                let output = Command::new(exe).args(args).output().or_raise(|| {
+                    BaseConfigError::CommandExec {
+                        command_type: CommandType::Password,
+                    }
+                })?;
 
                 if !output.status.success() {
-                    let indent_output = |prefix: &str, bytes: &[u8]| -> String {
-                        let s = String::from_utf8_lossy(bytes);
-                        let indent = " ".repeat(prefix.len());
-                        let mut lines = s.lines();
-                        lines.next().map_or_else(
-                            || format!("{prefix}(empty)"),
-                            |first| {
-                                let rest = lines.fold(String::new(), |mut output, l| {
-                                    let _ = write!(output, "\n{indent}{l}");
-                                    output
-                                });
-                                format!("{prefix}{first}{rest}")
-                            },
-                        )
-                    };
-                    bail!(BaseConfigError(format!(
-                        "password command {command:?} failed with status {status}.\n{stdout}\n{stderr}",
-                        status = output.status,
-                        stdout = indent_output("STDOUT: ", &output.stdout),
-                        stderr = indent_output("STDERR: ", &output.stderr),
-                    )))
+                    bail!(BaseConfigError::CommandFail {
+                        command_type: CommandType::Password,
+                        command: command.clone(),
+                        status: output.status,
+                        stdout: indent_output("STDOUT: ", &output.stdout),
+                        stderr: indent_output("STDERR: ", &output.stderr),
+                    })
                 }
 
                 let mut password = String::from_utf8(output.stdout).or_raise(|| {
-                    BaseConfigError("password command output is not valid UTF-8".to_owned())
+                    BaseConfigError::PasswordCommandOutput {
+                        command_type: CommandType::Password,
+                    }
                 })?;
 
                 // Strip trailing newline added by most password commands
@@ -207,9 +243,7 @@ impl BaseConfig {
                 }
                 Ok(password)
             },
-            _ => bail!(BaseConfigError(
-                "The password or password command must be set".to_owned()
-            )),
+            _ => bail!(BaseConfigError::NoPassword),
         }
     }
 
@@ -224,19 +258,35 @@ impl BaseConfig {
     /// or produces non-UTF-8 output.
     pub fn oauth2_token(&self) -> Result<String, BaseConfigError> {
         match self.oauth2_command {
-            None => bail!(BaseConfigError("oauth2-command is not set".to_owned())),
+            None => bail!(BaseConfigError::Oauth2NoCommand),
             Some(ref command) => {
-                let args = split(command)
-                    .or_raise(|| BaseConfigError(format!("parsing command failed: {command}")))?;
-                let (exe, args) = args
-                    .split_first()
-                    .ok_or_raise(|| BaseConfigError("oauth2-command is empty".to_owned()))?;
-                let output = Command::new(exe)
-                    .args(args)
-                    .output()
-                    .or_raise(|| BaseConfigError("oauth2-command exec failed".to_owned()))?;
+                let args = split(command).or_raise(|| BaseConfigError::ParsingCommand {
+                    command_type: CommandType::Oauth2,
+                    command: command.clone(),
+                })?;
+                let (exe, args) =
+                    args.split_first()
+                        .ok_or_raise(|| BaseConfigError::CommandEmpty {
+                            command_type: CommandType::Oauth2,
+                        })?;
+                let output = Command::new(exe).args(args).output().or_raise(|| {
+                    BaseConfigError::CommandExec {
+                        command_type: CommandType::Oauth2,
+                    }
+                })?;
+                if !output.status.success() {
+                    bail!(BaseConfigError::CommandFail {
+                        command_type: CommandType::Oauth2,
+                        command: command.clone(),
+                        status: output.status,
+                        stdout: indent_output("STDOUT: ", &output.stdout),
+                        stderr: indent_output("STDERR: ", &output.stderr),
+                    })
+                }
                 let mut token = String::from_utf8(output.stdout).or_raise(|| {
-                    BaseConfigError("oauth2-command output is not valid UTF-8".to_owned())
+                    BaseConfigError::PasswordCommandOutput {
+                        command_type: CommandType::Oauth2,
+                    }
                 })?;
                 if token.ends_with('\n') {
                     token.pop();
@@ -248,6 +298,26 @@ impl BaseConfig {
             },
         }
     }
+}
+
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(prefix, bytes))
+)]
+fn indent_output(prefix: &str, bytes: &[u8]) -> String {
+    let s = String::from_utf8_lossy(bytes);
+    let indent = " ".repeat(prefix.len());
+    let mut lines = s.lines();
+    lines.next().map_or_else(
+        || format!("{prefix}(empty)"),
+        |first| {
+            let rest = lines.fold(String::new(), |mut output, l| {
+                let _ = write!(output, "\n{indent}{l}");
+                output
+            });
+            format!("{prefix}{first}{rest}")
+        },
+    )
 }
 
 #[cfg(test)]
@@ -352,7 +422,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:108:13,
+            The server must be set, at src/libs/base_config.rs:156:13,
         )
         ");
     }
@@ -369,7 +439,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:112:13,
+            The username must be set, at src/libs/base_config.rs:160:13,
         )
         ");
     }
@@ -410,8 +480,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            parsing command failed: echo "secret_password, at src/libs/base_config.rs:164:22
-            `-- missing closing quote, at src/libs/base_config.rs:164:22,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:205:50
+            `-- missing closing quote, at src/libs/base_config.rs:205:50,
         )
         "#);
     }
@@ -433,8 +503,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command exec failed, at src/libs/base_config.rs:171:22
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:171:22,
+            Executing password command, at src/libs/base_config.rs:215:68
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:215:68,
         )
         ");
     }
@@ -456,7 +526,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:167:22,
+            password command is empty, at src/libs/base_config.rs:212:26,
         )
         ");
     }
@@ -493,7 +563,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:126:17,
+            The password or password command must be set, at src/libs/base_config.rs:174:17,
         )
         ");
     }
@@ -517,8 +587,8 @@ mod tests {
             config,
             @"
         Err(
-            config file parsing failed, at src/libs/base_config.rs:64:18
-            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:64:18,
+            Parsing config file, at src/libs/base_config.rs:110:18
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:110:18,
         )
         "
         );

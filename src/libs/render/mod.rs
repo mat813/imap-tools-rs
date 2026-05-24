@@ -55,8 +55,8 @@ impl Default for RendererArg {
 
 #[derive(Clone, Debug, derive_more::Display)]
 pub enum RendererArgError {
-    #[display("Unknown renderer {_0:?}")]
-    Unknown(String),
+    #[display("Unknown renderer {renderer:?}")]
+    Unknown { renderer: String },
 }
 
 impl std::error::Error for RendererArgError {}
@@ -76,7 +76,9 @@ impl std::str::FromStr for RendererArg {
             "terminal" => Ok(Self::Terminal),
             #[cfg(feature = "cursive")]
             "cursive" => Ok(Self::Cursive),
-            s => bail!(RendererArgError::Unknown(s.to_owned())),
+            s => bail!(RendererArgError::Unknown {
+                renderer: s.to_owned()
+            }),
         }
     }
 }

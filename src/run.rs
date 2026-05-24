@@ -1,5 +1,4 @@
 use clap::Parser;
-use derive_more::Display;
 use exn::{Result, ResultExt as _};
 
 use crate::commands::MainCommands;
@@ -18,7 +17,8 @@ struct MainArgs {
     command: MainCommands,
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, derive_more::Display)]
+#[display("running command")]
 pub struct RunError;
 
 impl std::error::Error for RunError {}

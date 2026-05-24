@@ -1,10 +1,15 @@
 use std::str::FromStr;
 
-use derive_more::Display;
+use exn::bail;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Display)]
-pub struct ModeError(String);
+#[derive(Debug, derive_more::Display)]
+pub enum ModeError {
+    #[display("Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls")]
+    InvalidModeTls,
+    #[display("Invalid connection mode, expects: auto_tls, auto, plaintext")]
+    InvalidMode,
+}
 impl std::error::Error for ModeError {}
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::ValueEnum)]
@@ -43,7 +48,7 @@ pub enum Mode {
 }
 
 impl FromStr for Mode {
-    type Err = ModeError;
+    type Err = exn::Exn<ModeError>;
 
     #[cfg_attr(
         feature = "tracing",
@@ -59,14 +64,15 @@ impl FromStr for Mode {
             "tls" => Self::Tls,
             #[cfg(feature = "__tls")]
             "start_tls" | "starttls" => Self::StartTls,
-            _ => return Err(ModeError(
-                if cfg!(feature = "__tls") {
-                    "Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls"
-                } else {
-                    "Invalid connection mode, expects: auto_tls, auto, plaintext"
-                }
-                .to_owned(),
-            )),
+            _ => {
+                bail!(
+                    if cfg!(feature = "__tls") {
+                        ModeError::InvalidModeTls
+                    } else {
+                        ModeError::InvalidMode
+                    }
+                );
+            },
         })
     }
 }
