@@ -5,7 +5,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.12.0 (2026-05-24)
+
+### Chore
+
+ - <csr-id-00003550c0993e2a98ffab2a2760093cee098208/> add some Send+Sync
+ - <csr-id-00003540cbce51aefc41aeb75b33c830e997dc4b/> clippy
+ - <csr-id-00003530c17ff40ffa090319d6f4fb0cfaf378c7/> add coverage script
+ - <csr-id-00003510b774f711bdf901c30760b74484f0d391/> tidy
+ - <csr-id-0ce7dadd5dc7fb9f349b85589b6e2c40c9d33f3e/> lock file maintenance
+ - <csr-id-0000344067bd34f1a1c4338dd10b5c0dbea12d7f/> rename renderers structs
+ - <csr-id-e8483e030df8676cf9ff45cf0ce72dae822998e7/> update dependency cargo-nextest to v0.9.136
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.135 | 0.9.136 |
+ - <csr-id-ab49290684c55b5feadbcc2d1fe8572b71d1e979/> update dependency cargo-nextest to v0.9.135
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.133 | 0.9.135 |
+ - <csr-id-e106129269b489348ea531dc4d33e2186c054f44/> lock file maintenance
+ - <csr-id-000033502fef1dc1d5890a13123ddecd400e42df/> fixup alias
+
+### New Features
+
+ - <csr-id-00003470295ea638fdb9cff12f43ca50d8ad4d35/> add interactive TUI renderer based on cursive
+   Adds --renderer cursive, a new full-screen interactive table renderer.
+   Rows stream into the view incrementally via a background thread and
+   CbSink.  Pressing q, Esc, or Ctrl+C will make the next add_row call
+   returns an error to abort the running command cleanly.
+
+### Bug Fixes
+
+ - <csr-id-000035200d03625bf507af467d8b4c3fe4f38891/> harmonise error messages to describe in-progress operation
+ - <csr-id-00003500dc7ab663140bd7cbc90b09c7037cb9dd/> remove json feature, always on
+ - <csr-id-2635b907e3b0a7c907d37789c3cf8976bb693b06/> pin rust crate better-cursive-table to =0.3.0
+   | datasource | package              | from  | to    |
+   | ---------- | -------------------- | ----- | ----- |
+   | crate      | better-cursive-table | 0.3.0 | 0.3.0 |
+ - <csr-id-00003480c66b7dec46134d00dcb6bd9fb2dd34e0/> make RendererError an enum
+ - <csr-id-a530fcc947f3ebcd36f9fd7e7c7073ff004b8116/> update rust crate serde_json to v1.0.150
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.149 | 1.0.150 |
+ - <csr-id-000034204667238770c77ae6f939aa08a777c417/> allow tracing to a file
+ - <csr-id-000034109b136bcc74d409d014274e516ddb0b20/> report password command failures
+ - <csr-id-00003400528c9ffdee061752e6e74f6e5d0928bd/> use the multi thread version
+ - <csr-id-4d3b57c6719438c8877eb13bc1c61b25f40ebdb6/> update rust crate exn to v0.3.1
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | exn     | 0.3.0 | 0.3.1 |
+ - <csr-id-01cc538237288ed295e2a317978fbfbc62c4044b/> update rust crate tokio to v1.52.3
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.52.2 | 1.52.3 |
+
+### Style
+
+ - <csr-id-00003430d4f10f7a304e8992cce3ed83f5d181a0/> lints
+
+### Test
+
+ - <csr-id-00003370b8b013398a1bf612f3c0fb656794aee4/> update snapshots when no tls is enabled
+ - <csr-id-0000334067c5d0961dcca4b15ce2a4c4e0acd433/> regen
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 24 commits contributed to the release.
+ - 17 days passed between releases.
+ - 24 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add some Send+Sync (0000355)
+    - Clippy (0000354)
+    - Add coverage script (0000353)
+    - Harmonise error messages to describe in-progress operation (0000352)
+    - Tidy (0000351)
+    - Remove json feature, always on (0000350)
+    - Pin rust crate better-cursive-table to =0.3.0 (2635b90)
+    - Make RendererError an enum (0000348)
+    - Add interactive TUI renderer based on cursive (0000347)
+    - Update rust crate serde_json to v1.0.150 (a530fcc)
+    - Lock file maintenance (0ce7dad)
+    - Rename renderers structs (0000344)
+    - Lints (0000343)
+    - Allow tracing to a file (0000342)
+    - Report password command failures (0000341)
+    - Use the multi thread version (0000340)
+    - Update dependency cargo-nextest to v0.9.136 (e8483e0)
+    - Update dependency cargo-nextest to v0.9.135 (ab49290)
+    - Update snapshots when no tls is enabled (0000337)
+    - Lock file maintenance (e106129)
+    - Fixup alias (0000335)
+    - Regen (0000334)
+    - Update rust crate exn to v0.3.1 (4d3b57c)
+    - Update rust crate tokio to v1.52.3 (01cc538)
+</details>
+
 ## v1.11.1 (2026-05-07)
+
+<csr-id-eee7225baae0addfb5aa5930a9a3b3d4f1ec936c/>
+<csr-id-00003260409f54e53fa1086124b91f96945b9b5d/>
 
 ### Chore
 
@@ -13,6 +121,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package        | from   | to     |
    | ---------- | -------------- | ------ | ------ |
    | crate      | cargo-binstall | 1.19.0 | 1.19.1 |
+
+### Other
+
+ - <csr-id-da14b74aa9231983021fe12da182f62812b009cd/> " Bump imap-tools v1.11.1
 
 ### Bug Fixes
 
@@ -34,8 +146,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release.
- - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits contributed to the release.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -45,6 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - " Bump imap-tools v1.11.1 (da14b74)
     - Update crypto bits (0000330)
     - Update rust crate md-5 to v0.11.0 (2c4a44c)
     - Update rust crate hmac to v0.13.0 (764ed3d)
@@ -57,6 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00003240d2427280afdff5fc6179919ef2e8e80a/>
 <csr-id-942354047a99d6e2c8ffbca903b1962bd729f4d3/>
 <csr-id-00003190c4726740a46d359e92cf9021bffebe8f/>
+<csr-id-60bc5b34e6d287436f8cb58bfc64b3838a8683d1/>
 
 ### Chore
 
