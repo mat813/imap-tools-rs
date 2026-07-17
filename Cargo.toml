@@ -50,7 +50,7 @@ strfmt = "=0.2.5"
 tracing = { version = "=0.1.44", features = ["log"], optional = true }
 tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional = true }
 serde_json = { version = "=1.0.150" }
-async-imap = { version = "=0.11.2", default-features = false, features = ["runtime-tokio"] }
+async-imap = { version = "=0.11.3", default-features = false, features = ["runtime-tokio"] }
 tokio = { version = "=1.52.4", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
 tokio-native-tls = { version = "=0.3.1", optional = true }
 native-tls = { version = "=0.2.18", optional = true }
