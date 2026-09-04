@@ -54,7 +54,7 @@ async-imap = { version = "=0.11.3", default-features = false, features = ["runti
 tokio = { version = "=1.53.1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
 tokio-native-tls = { version = "=0.3.1", optional = true }
 native-tls = { version = "=0.2.18", optional = true }
-tokio-rustls = { version = "=0.26.4", optional = true }
+tokio-rustls = { version = "=0.26.5", optional = true }
 rustls-native-certs = { version = "=0.8.4", optional = true }
 hmac = "=0.13.0"
 md-5 = "=0.11.0"
