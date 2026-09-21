@@ -5,7 +5,218 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.0 (2026-09-21)
+
+### Chore
+
+ - <csr-id-59f403e5b24678259c347c40af2181d7993fa055/> lock file maintenance
+ - <csr-id-c15a03673a2ee629cbc21d5216f41990935438e9/> update dependency cargo-nextest to v0.9.145
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.144 | 0.9.145 |
+ - <csr-id-7840c2dd77069d1776b41a182c3839219b0c6bff/> lock file maintenance
+ - <csr-id-52ca29e07f7d7e18d6c75b17d3cb2120720d85fd/> lock file maintenance
+ - <csr-id-115acf57109b5200725992f1cfbee2c0627661b1/> update dependency cargo-nextest to v0.9.144
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.143 | 0.9.144 |
+ - <csr-id-b789100c9a382930a13384f5dc68a97356b5f211/> update rust crate rstest to v0.27.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | rstest  | 0.26.1 | 0.27.0 |
+ - <csr-id-d63ebcc39aa6493194662c1f0ac7c3402025b26e/> update docker.io/library/rust docker tag to v1.98.1
+   | datasource | package                | from   | to     |
+   | ---------- | ---------------------- | ------ | ------ |
+   | docker     | docker.io/library/rust | 1.98.0 | 1.98.1 |
+ - <csr-id-df06ca680e830a7e2d9356899dda1938f42dc9bb/> lock file maintenance
+ - <csr-id-0b0cb4ca9d7ea8ff078f2a5c3beaf6e78516b4cf/> update dependency cargo-binstall to v1.23.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.22.0 | 1.23.0 |
+ - <csr-id-b077a07591ded468227f62830da9ef07c62d007c/> update dependency rust-lang/rust to v1.98.1
+   | datasource      | package        | from   | to     |
+   | --------------- | -------------- | ------ | ------ |
+   | github-releases | rust-lang/rust | 1.98.0 | 1.98.1 |
+ - <csr-id-d1496df1c744eb3c500ed297951e915110e1836f/> lock file maintenance
+ - <csr-id-84e63ce202299acc49484d0561e1ca5b416fbe45/> lock file maintenance
+ - <csr-id-d2bd2a8e8980ec424a4d8f289d87e861d20d39a4/> lock file maintenance
+ - <csr-id-9ca14169553353b8e8b947de25df1b11927e1f94/> update dependency cargo-binstall to v1.22.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.21.1 | 1.22.0 |
+ - <csr-id-c80fe6cbb16b0c437a57403dac7bb9e0952a84a7/> update docker.io/library/rust docker tag to v1.98.0
+   | datasource | package                | from   | to     |
+   | ---------- | ---------------------- | ------ | ------ |
+   | docker     | docker.io/library/rust | 1.97.1 | 1.98.0 |
+ - <csr-id-f656a81bddb3bde4c5f9162d8e23a5391a34b028/> update dependency rust-lang/rust to v1.98.0
+   | datasource      | package        | from   | to     |
+   | --------------- | -------------- | ------ | ------ |
+   | github-releases | rust-lang/rust | 1.97.1 | 1.98.0 |
+ - <csr-id-db3fd98ad884fd1f8711fc78609058a9a4abb499/> lock file maintenance
+ - <csr-id-f91ef8103628fe7fb2085942b9ec095346455fcf/> lock file maintenance
+ - <csr-id-ce8b00b4dc8c7912f73d910aa98fb0ae07526f81/> update dependency cargo-nextest to v0.9.143
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.140 | 0.9.143 |
+ - <csr-id-a3c0e471ca89f59c7566929f26f01911b784beac/> lock file maintenance
+ - <csr-id-07e629e7c51ff5365f10c83c156623de8ae8b6ce/> lock file maintenance
+ - <csr-id-1a7e198eac019874c813cb6b59cf2bd1cce994ee/> update dependency cargo-binstall to v1.21.1
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.21.0 | 1.21.1 |
+ - <csr-id-e88c39812684586dfdb4da48e807c68afdae76a9/> lock file maintenance
+ - <csr-id-8746dbf161e2e98ba0cf92f8af856992e7bb809e/> lock file maintenance
+ - <csr-id-a9fcdec7a7b2b2baecbe6678d9ecfceb065496d9/> update docker.io/library/rust docker tag to v1.97.1
+   | datasource | package                | from   | to     |
+   | ---------- | ---------------------- | ------ | ------ |
+   | docker     | docker.io/library/rust | 1.97.0 | 1.97.1 |
+ - <csr-id-222e9ae0295d17a9c89a034ddb855c39fcd2be5e/> update dependency rust-lang/rust to v1.97.1
+   | datasource      | package        | from   | to     |
+   | --------------- | -------------- | ------ | ------ |
+   | github-releases | rust-lang/rust | 1.97.0 | 1.97.1 |
+
+### New Features
+
+ - <csr-id-0000432090150a54f43e0db3668d0e6e902771b2/> add i18n (en, fr, de, ja, zh, ko)
+
+### Bug Fixes
+
+ - <csr-id-0624f60e6ca97f834ca8217c7c84e2d172ec6266/> update rust crate strfmt to v0.2.6
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | strfmt  | 0.2.5 | 0.2.6 |
+ - <csr-id-2a00604cafa4c4ea03869dbb5974a977c1599473/> update rust crate clap to v4.6.7
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.6 | 4.6.7 |
+ - <csr-id-181c6d98e91c78bebc4b026c20e829d49d0121cf/> update rust crate tokio-rustls to v0.26.5
+   | datasource | package      | from   | to     |
+   | ---------- | ------------ | ------ | ------ |
+   | crate      | tokio-rustls | 0.26.4 | 0.26.5 |
+ - <csr-id-f84d2b8de3d0fbcec8f6b47246e2a98411205beb/> update rust crate futures to v0.3.34
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | futures | 0.3.33 | 0.3.34 |
+ - <csr-id-8816905afdf6db269e626886f66187ba3715e670/> update rust crate clap to v4.6.6
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.5 | 4.6.6 |
+ - <csr-id-5116c5e2e6b63319fb5a14ea3b67d1424024c235/> update rust crate clap to v4.6.5
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.4 | 4.6.5 |
+ - <csr-id-1737de044d4aece8ca7a7e2da7858aeb18defbd9/> update rust crate clap to v4.6.4
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.3 | 4.6.4 |
+ - <csr-id-5c8894e3cc7919744b48883e73db075edc025098/> update rust crate tokio to v1.53.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.53.0 | 1.53.1 |
+ - <csr-id-3c4a3e919f5600961c2f571fe55d67221195a6d9/> update rust crate clap to v4.6.3
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.2 | 4.6.3 |
+ - <csr-id-26f2fc1f2dea1ea86765daa6e18a9352d8c187b5/> update rust crate serde_json to v1.0.151
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.150 | 1.0.151 |
+ - <csr-id-b44092dd3b364dac18e7fa608e19626d2ef2cb89/> update rust crate tokio to v1.53.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.52.4 | 1.53.0 |
+ - <csr-id-f084a84bddbb0efe1276d1de594b69db97a93920/> update rust crate serde to v1.0.229
+   | datasource | package | from    | to      |
+   | ---------- | ------- | ------- | ------- |
+   | crate      | serde   | 1.0.228 | 1.0.229 |
+ - <csr-id-9a1c921342d5b1ddb5ac37ee6c72cf5f5ca376f3/> update rust crate futures to v0.3.33
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | futures | 0.3.32 | 0.3.33 |
+ - <csr-id-07f4478a88c55fad1b7c0206af600c9beb5ba84a/> update rust crate async-imap to v0.11.3
+   | datasource | package    | from   | to     |
+   | ---------- | ---------- | ------ | ------ |
+   | crate      | async-imap | 0.11.2 | 0.11.3 |
+ - <csr-id-5e6196ff9d6f5de0f6dd80fad3b28c61207fe5d3/> update rust crate tokio to v1.52.4
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.52.3 | 1.52.4 |
+ - <csr-id-018799f25eba3c5cbf060e26c45e396e38a0caf6/> update rust crate regex to v1.13.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | regex   | 1.13.0 | 1.13.1 |
+ - <csr-id-765b67f74e455a98e3fe53a6c6aea3af0bdefa73/> update rust crate clap to v4.6.2
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | clap    | 4.6.1 | 4.6.2 |
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 44 commits contributed to the release.
+ - 68 days passed between releases.
+ - 44 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add i18n (en, fr, de, ja, zh, ko) (0000432)
+    - Lock file maintenance (59f403e)
+    - Update rust crate strfmt to v0.2.6 (0624f60)
+    - Update dependency cargo-nextest to v0.9.145 (c15a036)
+    - Lock file maintenance (7840c2d)
+    - Update rust crate clap to v4.6.7 (2a00604)
+    - Lock file maintenance (52ca29e)
+    - Update dependency cargo-nextest to v0.9.144 (115acf5)
+    - Update rust crate rstest to v0.27.0 (b789100)
+    - Update docker.io/library/rust docker tag to v1.98.1 (d63ebcc)
+    - Lock file maintenance (df06ca6)
+    - Update dependency cargo-binstall to v1.23.0 (0b0cb4c)
+    - Update rust crate tokio-rustls to v0.26.5 (181c6d9)
+    - Update dependency rust-lang/rust to v1.98.1 (b077a07)
+    - Lock file maintenance (d1496df)
+    - Lock file maintenance (84e63ce)
+    - Lock file maintenance (d2bd2a8)
+    - Update dependency cargo-binstall to v1.22.0 (9ca1416)
+    - Update docker.io/library/rust docker tag to v1.98.0 (c80fe6c)
+    - Update dependency rust-lang/rust to v1.98.0 (f656a81)
+    - Lock file maintenance (db3fd98)
+    - Update rust crate futures to v0.3.34 (f84d2b8)
+    - Lock file maintenance (f91ef81)
+    - Update rust crate clap to v4.6.6 (8816905)
+    - Update dependency cargo-nextest to v0.9.143 (ce8b00b)
+    - Lock file maintenance (a3c0e47)
+    - Update rust crate clap to v4.6.5 (5116c5e)
+    - Lock file maintenance (07e629e)
+    - Update dependency cargo-binstall to v1.21.1 (1a7e198)
+    - Update rust crate clap to v4.6.4 (1737de0)
+    - Update rust crate tokio to v1.53.1 (5c8894e)
+    - Update rust crate clap to v4.6.3 (3c4a3e9)
+    - Update rust crate serde_json to v1.0.151 (26f2fc1)
+    - Lock file maintenance (e88c398)
+    - Lock file maintenance (8746dbf)
+    - Update rust crate tokio to v1.53.0 (b44092d)
+    - Update rust crate serde to v1.0.229 (f084a84)
+    - Update rust crate futures to v0.3.33 (9a1c921)
+    - Update rust crate async-imap to v0.11.3 (07f4478)
+    - Update rust crate tokio to v1.52.4 (5e6196f)
+    - Update docker.io/library/rust docker tag to v1.97.1 (a9fcdec)
+    - Update dependency rust-lang/rust to v1.97.1 (222e9ae)
+    - Update rust crate regex to v1.13.1 (018799f)
+    - Update rust crate clap to v4.6.2 (765b67f)
+</details>
+
 ## v1.12.1 (2026-07-15)
+
+### Other
+
+ - <csr-id-000038803cc28a72470e0dcba61aead9deeacebb/> add user-agent for crates.io api call
 
 ### Chore
 
@@ -73,6 +284,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | ---------- | ------------- | ------- | ------- |
    | crate      | cargo-nextest | 0.9.136 | 0.9.137 |
  - <csr-id-1354b123392e0effa4c6ae5c0fa87597218de420/> lock file maintenance
+ - <csr-id-965ff4abc380da7d13124c2a03a15de2b9f8ac22/> Bump imap-tools v1.12.1
 
 ### Bug Fixes
 
@@ -113,8 +325,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 30 commits contributed to the release over the course of 50 calendar days.
- - 30 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 32 commits contributed to the release.
+ - 52 days passed between releases.
+ - 32 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -124,6 +337,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Add user-agent for crates.io api call (0000388)
+    - Bump imap-tools v1.12.1 (965ff4a)
     - Update dependency cargo-binstall to v1.21.0 (cb1e7c1)
     - Lock file maintenance (94b0e4a)
     - Update rust crate regex to v1.13.0 (608ddea)
@@ -174,22 +389,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Chore
 
- - <csr-id-00003550c0993e2a98ffab2a2760093cee098208/> add some Send+Sync
- - <csr-id-00003540cbce51aefc41aeb75b33c830e997dc4b/> clippy
- - <csr-id-00003530c17ff40ffa090319d6f4fb0cfaf378c7/> add coverage script
- - <csr-id-00003510b774f711bdf901c30760b74484f0d391/> tidy
- - <csr-id-0ce7dadd5dc7fb9f349b85589b6e2c40c9d33f3e/> lock file maintenance
- - <csr-id-0000344067bd34f1a1c4338dd10b5c0dbea12d7f/> rename renderers structs
- - <csr-id-e8483e030df8676cf9ff45cf0ce72dae822998e7/> update dependency cargo-nextest to v0.9.136
-   | datasource | package       | from    | to      |
-   | ---------- | ------------- | ------- | ------- |
-   | crate      | cargo-nextest | 0.9.135 | 0.9.136 |
- - <csr-id-ab49290684c55b5feadbcc2d1fe8572b71d1e979/> update dependency cargo-nextest to v0.9.135
-   | datasource | package       | from    | to      |
-   | ---------- | ------------- | ------- | ------- |
-   | crate      | cargo-nextest | 0.9.133 | 0.9.135 |
- - <csr-id-e106129269b489348ea531dc4d33e2186c054f44/> lock file maintenance
- - <csr-id-000033502fef1dc1d5890a13123ddecd400e42df/> fixup alias
+ - <csr-id-1623e0199c1ba534f46b7030a2c9a4820f9443fc/> Bump imap-tools v1.12.0
 
 ### Chore
 
@@ -227,15 +427,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package | from   | to     |
    | ---------- | ------- | ------ | ------ |
    | crate      | tokio   | 1.52.2 | 1.52.3 |
-
-### Style
-
- - <csr-id-00003430d4f10f7a304e8992cce3ed83f5d181a0/> lints
-
-### Test
-
- - <csr-id-00003370b8b013398a1bf612f3c0fb656794aee4/> update snapshots when no tls is enabled
- - <csr-id-0000334067c5d0961dcca4b15ce2a4c4e0acd433/> regen
 
 ### Commit Statistics
 
@@ -286,17 +477,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00003260409f54e53fa1086124b91f96945b9b5d/>
 <csr-id-da14b74aa9231983021fe12da182f62812b009cd/>
 
-### Chore
-
- - <csr-id-eee7225baae0addfb5aa5930a9a3b3d4f1ec936c/> update dependency cargo-binstall to v1.19.1
-   | datasource | package        | from   | to     |
-   | ---------- | -------------- | ------ | ------ |
-   | crate      | cargo-binstall | 1.19.0 | 1.19.1 |
-
-### Other
-
- - <csr-id-da14b74aa9231983021fe12da182f62812b009cd/> " Bump imap-tools v1.11.1
-
 ### Bug Fixes
 
  - <csr-id-0000330035788267cd93fd898162d74f7658450c/> update crypto bits
@@ -309,15 +489,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | ---------- | ------- | ------ | ------ |
    | crate      | hmac    | 0.12.1 | 0.13.0 |
 
-### Style
-
- - <csr-id-00003260409f54e53fa1086124b91f96945b9b5d/> clippy
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 6 commits contributed to the release.
+ - 1 day passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -343,15 +520,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00003190c4726740a46d359e92cf9021bffebe8f/>
 <csr-id-60bc5b34e6d287436f8cb58bfc64b3838a8683d1/>
 
-### Chore
-
- - <csr-id-00003240d2427280afdff5fc6179919ef2e8e80a/> add release alias
- - <csr-id-942354047a99d6e2c8ffbca903b1962bd729f4d3/> lock file maintenance
-
-### Other
-
- - <csr-id-60bc5b34e6d287436f8cb58bfc64b3838a8683d1/> " Bump imap-tools v1.11.0
-
 ### New Features
 
  - <csr-id-000032107c40d89c4acb61f017b3024317466e81/> add a few more auth methods
@@ -365,10 +533,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package | from   | to     |
    | ---------- | ------- | ------ | ------ |
    | crate      | tokio   | 1.52.1 | 1.52.2 |
-
-### Test
-
- - <csr-id-00003190c4726740a46d359e92cf9021bffebe8f/> use expect* instead of unwrap*
 
 ### Commit Statistics
 
@@ -406,30 +570,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00003110483c8db9f85c7e6d63fa73b4e6dddde7/>
 <csr-id-d22076f17e932793a304a507c79ba426255c8526/>
 
-### Chore
-
- - <csr-id-000031508ab175d0171554fc0e8398e6f571573c/> add correct binstall metadata
- - <csr-id-685b2ccbc1f743700028afab0152ae12860e3cfc/> update dependency cargo-binstall to v1.19.0
-   | datasource | package        | from   | to     |
-   | ---------- | -------------- | ------ | ------ |
-   | crate      | cargo-binstall | 1.18.1 | 1.19.0 |
-
-### Chore
-
- - <csr-id-d22076f17e932793a304a507c79ba426255c8526/> Bump imap-tools v1.10.3
-
-### Other
-
- - <csr-id-000031304641a29028dd736605da7b7227d0d8cc/> fixup release
- - <csr-id-0000312062788af890bded40f78caa72ca8b5071/> cross release needs release
- - <csr-id-00003110483c8db9f85c7e6d63fa73b4e6dddde7/> with release creation
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 6 commits contributed to the release over the course of 3 calendar days.
- - 4 days passed between releases.
+ - 5 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -455,17 +601,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/>
 <csr-id-000030600c377e56bc23035ac065a830226b4d4e/>
 <csr-id-4073258f40aeb7b645884730cfd4c2aee496261d/>
-
-### Other
-
- - <csr-id-00003090df3ebf6ea037ce143b92064467ea4915/> unset CARGO_HOME so it does not dirty the work directory
- - <csr-id-00003080c695797bafd8f6e6224e247d33a8b834/> use CI_JOB_TOKEN, it should work
- - <csr-id-0000307013893da5ea32afb60cb1a5aa8f23267a/> we don't do releases here
- - <csr-id-000030600c377e56bc23035ac065a830226b4d4e/> don't depend on the cross*
-
-### Chore
-
- - <csr-id-4073258f40aeb7b645884730cfd4c2aee496261d/> Bump imap-tools v1.10.2
 
 ### Commit Statistics
 
@@ -502,28 +637,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00002960201e8c2e7a73b1aa91b1f63543f9ea6d/>
 <csr-id-000029904dc9616d0e56fbc4763673b0a5c6262f/>
 
-### Chore
-
- - <csr-id-fb9fc3d376a7e1e11ade63c03423f5ad0b8cea1f/> lock file maintenance
- - <csr-id-00002950dcd0acc581ea14c062d4ad70155da3fa/> set rust-version
- - <csr-id-a80a7d850a6be0cb0076a4bf0b9294ecdfa0e7a5/> lock file maintenance
-
 ### Bug Fixes
 
  - <csr-id-0000303094f96ec23e4d9fe8a24199a014aed073/> remove SingleOrArray and use a simple custom deserializer
-
-### Other
-
- - <csr-id-00003040de6f80eae48d6710618a5691c0638c84/> use correct token
- - <csr-id-00003020854675634e299ec6061c08140402aadc/> unpin
- - <csr-id-00003010eaf229c64347102583a7f98b25916b86/> publishing should not be interrupted
- - <csr-id-0000298064a48e33c7b1e81c4d066a7735ad7d29/> a lot better
- - <csr-id-00002970e7d6586979c2d1c0ddb3be8a216b20a1/> better message
- - <csr-id-00002960201e8c2e7a73b1aa91b1f63543f9ea6d/> add publish via OIDC
-
-### Test
-
- - <csr-id-000029904dc9616d0e56fbc4763673b0a5c6262f/> don't run when not in debug
 
 ### Commit Statistics
 
@@ -562,11 +678,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00002920863dadf7db2bceb09d9ff144325bce24/>
 <csr-id-00002860ce5a52e2b6b1355025e775a1ba60afbd/>
 
-### Chore
-
- - <csr-id-000029104b52f05e8a57825ae8d9b0ac3c8f48d9/> refactor tls cfg* tests a bit
- - <csr-id-4fd43e298495fe6b67886d501288123ed5711bbb/> lock file maintenance
-
 ### New Features
 
  - <csr-id-00002890af72c73f631283fcd7ffe56856f2ea74/> migrate from sync imap to async-imap on tokio
@@ -588,14 +699,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | crate      | clap    | 4.6.0 | 4.6.1 |
  - <csr-id-0000281064f7f15f5c2b45593d9d493a434a0cdb/> force compile time check of the renderers rows length
  - <csr-id-000028008ca6723490d637ebacc5c4f2e0882cc1/> delegate formatting to std::fmt::from_fn
-
-### Other
-
- - <csr-id-00002920863dadf7db2bceb09d9ff144325bce24/> better clippy
-
-### Test
-
- - <csr-id-00002860ce5a52e2b6b1355025e775a1ba60afbd/> add unit tests for testable renderers
 
 ### Commit Statistics
 
@@ -663,25 +766,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-000025609ccc5d2638b525be2a82769282105800/>
 <csr-id-00002550eb965294cc61cb873c820620e2acfd79/>
 
-### Chore
-
- - <csr-id-754207379260f6573a5ede2bf500ec449df49009/> lock file maintenance
- - <csr-id-000026700e96439e9554d21e9375e870d525e096/> utiliser cfg_attr pour n'avoir qu'une seule option
- - <csr-id-00925453af7c272eb4f97a738726164388d3cc44/> update rust crate insta to v1.47.2
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.47.1 | 1.47.2 |
- - <csr-id-afe568bd6b2b2035a6d09bb4cedca367771b3f72/> lock file maintenance
- - <csr-id-00002410a3a85fc9f1a8017fb2d36d30087f7b18/> typos
- - <csr-id-17d9f3f37abc358bb5391477d9a764916caa3131/> update rust crate insta to v1.47.1
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.47.0 | 1.47.1 |
- - <csr-id-75d322174b3ef280aae4d389740e32f7b62356a9/> update rust crate insta to v1.47.0
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.46.3 | 1.47.0 |
-
 ### New Features
 
  - <csr-id-0000269056541cd270ca5f033b5de7f6463c3e8e/> ajouter un renderer csv
@@ -710,67 +794,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    (SELECT/STORE/CLOSE) would still execute. Now the inner methods
    receive dry_run from config.base.dry_run, which merges both sources.
 
-### Other
-
- - <csr-id-0000243076f04f38a14a08d36ba6f004bc3d1455/> fix
- - <csr-id-000024208857f63a01d7d5172a606ecc880e53f4/> fmt → nightly
-
 ### Performance
 
  - <csr-id-00002530e34ff6968c2ce611cb744b130060016f/> remove redundant terminal.clear() before ratatui re-init
    The clear() call immediately before try_init_with_options() was a
    no-op since reinitializing ratatui sets up a fresh terminal state.
 
-### Refactor
-
- - <csr-id-000025403a5aba4ba9b5f03384862f612a051c08/> remove empty else branch workaround in base_config
-   The if-else-if-else with an empty last branch existed only to satisfy
-   clippy::else_if_without_else. Rewriting with clone_from + get_or_insert_with
-   expresses the intent more clearly.
- - <csr-id-000025201be47a1a3187c2588d012e0b90150308/> name magic numbers in clean command
-   300 (minimum message count) and 1_000_000 (minimum total size in
-   bytes) are now named constants, making their intent clear.
- - <csr-id-00002510880259df2c9c9517c352b8e7a1d007db/> extract delete_uids method on Imap to remove duplication
-   The select + uid_store(\Deleted) + close sequence was duplicated in
-   clean and find_dups. It now lives as Imap::delete_uids.
- - <csr-id-000025003c6999b1080e275c79968b8062c41fa4/> deduplicate test_base() helper into test_helpers
-   The identical test_base() function was copied verbatim in 7 test
-   modules. It now lives in src/test_helpers.rs and is imported where
-   needed.
-
-### Style
-
- - <csr-id-0000273074ec8dd76d13cf1a21f095e02e435cfb/> fmt
- - <csr-id-00002570e69f8ea44aaf68c0dce498cf698c558d/> cleanup
- - <csr-id-00002400bd15ee73ff03764d6a789642398a2a7c/> lints
-
-### Test
-
- - <csr-id-000027203ead927da209cf04936ffbb1920b409e/> really fix
- - <csr-id-00002710a38f03251bac1f6fb5fa4465f688262b/> fixup time sensitive tests
- - <csr-id-0000270020cc5fc3c1b971b7454868ea1d57f2c8/> utiliser le renderer csv pour les tests
- - <csr-id-0000266020b576ca0576f8522d9ce3fb5321c8c5/> merge ok/no and expect_command*
- - <csr-id-00002650fae1bc9238e84bf452890ff723c51731/> add commands
- - <csr-id-000026408c77280101badcd63edf47f56b42d53e/> add tests for non-dry-run archive with MOVE and COPY+DELETE fallback
- - <csr-id-000026309dd443f0fc9a24ec95b24d417d98028c/> add tests for empty search result and multi-rule iteration in clean
- - <csr-id-0000262061f5a8a9efa13a76fd952f05222e2db3/> add tests for folded headers, short Message-ID, no duplicates, and 3-way dedup
- - <csr-id-00002610c1bef6aad96fde1370b2346b83fd7bf6/> add tests for Sort::from_str and DiskUsage include/exclude_re filtering
- - <csr-id-00002600355e9a8565be885dca14de7de8e74c3e/> add tests for make_filter_re with only literals or only regex
- - <csr-id-00002590fd0291a6a8db16fd638b6e9bf5447ba2/> add tests for --port and -m/--mode CLI flags
- - <csr-id-000025802f2bcdafc85be44cc9b04633659dba4e/> add tests for Mode FromStr, Serialize, Deserialize, and Default
- - <csr-id-000025609ccc5d2638b525be2a82769282105800/> cleanup
- - <csr-id-00002550eb965294cc61cb873c820620e2acfd79/> add missing tests for list, exclude_re, and destructive paths
-   - commands/list.rs: extract run() helper and add list_renders_mailboxes test
-   - imap/list.rs: add list_exclude_re_filters_mailboxes test
-   - clean.rs: add cleanup_destructive_large_old_mailbox test (non-dry-run)
-   - find_dups.rs: add process_destructive_deletes_duplicates test (non-dry-run)
-   - update insta snapshots for shifted line numbers from earlier refactors
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 41 commits contributed to the release.
+ - 14 days passed between releases.
  - 40 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -829,11 +864,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-5ec2513a91c5964a1e61a088676bafb7d7b09386/>
 <csr-id-08f403cb52e2f47fc51104c71bd38de733ee96e3/>
 
-### Chore
-
- - <csr-id-5ec2513a91c5964a1e61a088676bafb7d7b09386/> lock file maintenance
- - <csr-id-08f403cb52e2f47fc51104c71bd38de733ee96e3/> lock file maintenance
-
 ### Bug Fixes
 
  - <csr-id-00002360ba0713fc288176861ddba155f42c632f/> return a more meaningfull error in the exhaustive case
@@ -861,7 +891,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 13 commits contributed to the release.
- - 13 days passed between releases.
+ - 14 days passed between releases.
  - 12 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -899,22 +929,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0000214074a9643c092afe589811cfb449beb9b5/>
 <csr-id-00002230801c1907bbb2bd8ffeff176b96aec18e/>
 
-### Chore
-
- - <csr-id-6cd247154bb9af506101b12f7c41e4165c908646/> update rust crate tempfile to v3.27.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.26.0 | 3.27.0 |
- - <csr-id-a0f5cb71df8ae2028e41e786c82574e72fc2a860/> lock file maintenance
- - <csr-id-92c9a4b85fb6d7315a688662f433ca73842c561e/> lock file maintenance
- - <csr-id-00002160ca4d84a323511a864797a3d75e49dea6/> don't use turbofish on assignments
- - <csr-id-7372968dbf42f8384bb52c7188e34d52f4be3461/> update rust crate tempfile to v3.26.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.25.0 | 3.26.0 |
- - <csr-id-f766398b0568492f0cf2ec31f758c72abcc8b66f/> lock file maintenance
- - <csr-id-669b32174bf6a4e7e8a2d78339af1f46a8776970/> lock file maintenance
-
 ### Bug Fixes
 
  - <csr-id-00002220c2ef62b8f604cef1ba98f4f27b3f2945/> don't panic needlessly, an imap error will be raised if it happens
@@ -940,14 +954,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package | from   | to     |
    | ---------- | ------- | ------ | ------ |
    | crate      | clap    | 4.5.57 | 4.5.58 |
-
-### Style
-
- - <csr-id-0000214074a9643c092afe589811cfb449beb9b5/> fmt
-
-### Test
-
- - <csr-id-00002230801c1907bbb2bd8ffeff176b96aec18e/> add tests for commands
 
 ### Commit Statistics
 
@@ -998,30 +1004,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-aa0f49343c9819d99af9f4c5e30d27dfed19a2fd/>
 <csr-id-0000189076babb842e0fceb6e2d652d303aaccf9/>
 
-### Chore
-
- - <csr-id-025d5088a490cc9ae9cf7efb3c650ec4e1d4772c/> update rust crate tempfile to v3.25.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.24.0 | 3.25.0 |
- - <csr-id-cdef790c16cd063356dd38bf077fc7a2b7eb6e90/> lock file maintenance
- - <csr-id-f7d1266e3fac234eef0a629608cbdb32a93cb487/> update rust crate insta to v1.46.3
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.46.2 | 1.46.3 |
- - <csr-id-a407af20d3cee41e9ad12a5f9fd98cb66434178c/> lock file maintenance
- - <csr-id-d69389789e7aa40b9cde8cc4472e8d14c75a7244/> update rust crate insta to v1.46.2
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.46.1 | 1.46.2 |
- - <csr-id-afcdcfbcbb6ef27ca3cabb3fde57721978e8ccd4/> lock file maintenance
- - <csr-id-54204abcd19c14bdd8209f563b363ceadef61b69/> lock file maintenance
- - <csr-id-25db08f1d861ad2733417539f3491bc4565aad58/> update rust crate insta to v1.46.1
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.46.0 | 1.46.1 |
- - <csr-id-aa0f49343c9819d99af9f4c5e30d27dfed19a2fd/> lock file maintenance
-
 ### Bug Fixes
 
  - <csr-id-3889e63425ec793d1dda3adfa46b4d5d4318a387/> update rust crate regex to v1.12.3
@@ -1054,16 +1036,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | crate      | derive_more | 2.1.1 | 2.1.1 |
    | crate      | exn         | 0.2.1 | 0.2.1 |
 
-### Test
-
- - <csr-id-0000189076babb842e0fceb6e2d652d303aaccf9/> fix tests
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 18 commits contributed to the release over the course of 34 calendar days.
- - 34 days passed between releases.
+ - 35 days passed between releases.
  - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1100,28 +1078,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-98488715fa04344a1f1fea433b984dd129b48a87/>
 <csr-id-000018605e94ee60885a4f1b0c64333736e6fe47/>
 
-### Chore
-
- - <csr-id-5fbcadda9869538e56aa1c2ace0013f091c7866d/> lock file maintenance
- - <csr-id-98488715fa04344a1f1fea433b984dd129b48a87/> update rust crate insta to v1.46.0
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.45.1 | 1.46.0 |
-
 ### New Features
 
  - <csr-id-00001870d16b9cbb2a84f45d9d5205057045c67f/> move from eyre to exn for better errors
-
-### Style
-
- - <csr-id-000018605e94ee60885a4f1b0c64333736e6fe47/> rename lint
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 5 commits contributed to the release.
- - 3 days passed between releases.
+ - 4 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1158,41 +1124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-8cd1bb84bab91784bd1df38aa59c9457e63e9ff0/>
 <csr-id-344a77d99bb670fd7d1b307bd93c112e6354ce11/>
 <csr-id-2fa69f3b2b74fde8a8bd8bd9662bc13d629a67a0/>
-
-### Chore
-
- - <csr-id-592e571cb6ef432ab17998dcc7adac6117191d81/> update rust crate insta to v1.45.1
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.44.3 | 1.45.1 |
- - <csr-id-a6635f40cdd01ccf7b68bf4344a9967ee7c059ad/> update rust crate tempfile to v3.24.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.23.0 | 3.24.0 |
- - <csr-id-a576bbaaeb17ea69bda5b080b7401ff176e7369d/> lock file maintenance
- - <csr-id-65cf3dde105b783c1cbf392647d32f9aea8b6793/> lock file maintenance
- - <csr-id-540f7474029a9c9b09e0d5de7602b0773913d383/> lock file maintenance
- - <csr-id-993c83eb6c284d5528c78bcadcc0c5e4aa089c35/> lock file maintenance
- - <csr-id-7a005d4cb69eaef31543efa74ab8afb6ad560f01/> update rust crate insta to v1.44.3
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.44.2 | 1.44.3 |
- - <csr-id-97a26adb5223c5b571b52e6ef2dff2f06e119a5d/> update rust crate insta to v1.44.2
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.44.1 | 1.44.2 |
- - <csr-id-db011e80c8ca787c95b20d5fb6c265cc1a765d74/> lock file maintenance
- - <csr-id-5c545371fa5310bee12c55ea67fc1d464d6ae90f/> update rust crate insta to v1.44.1
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.43.2 | 1.44.1 |
- - <csr-id-ed6e1259eee99f75c9dadc7d1d0c3b79ddb0de23/> lock file maintenance
- - <csr-id-9d065bc3e7ebf5e25fe50a3bdea87db693c75f48/> lock file maintenance
- - <csr-id-60ce5af7c76593f4f7a81f1d8c1060aadaef3a15/> lock file maintenance
- - <csr-id-cd62621313b5f0d2d22caed9dacbb73a47f8f2f5/> lock file maintenance
- - <csr-id-8cd1bb84bab91784bd1df38aa59c9457e63e9ff0/> lock file maintenance
- - <csr-id-344a77d99bb670fd7d1b307bd93c112e6354ce11/> lock file maintenance
- - <csr-id-2fa69f3b2b74fde8a8bd8bd9662bc13d629a67a0/> lock file maintenance
 
 ### Bug Fixes
 
@@ -1259,6 +1190,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 32 commits contributed to the release.
+ - 86 days passed between releases.
  - 31 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1308,11 +1240,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-cc78cb2238449a23d80e556ffcec3d9d96ac0b81/>
 <csr-id-84c22964727ed4dd818b3804ea67c847fc907a06/>
 
-### Chore
-
- - <csr-id-cc78cb2238449a23d80e556ffcec3d9d96ac0b81/> lock file maintenance
- - <csr-id-84c22964727ed4dd818b3804ea67c847fc907a06/> lock file maintenance
-
 ### Bug Fixes
 
  - <csr-id-0000150073bee007fc38ef2f69d63946633af27c/> create the archive mbx when it is a simple NoSelect folder
@@ -1322,7 +1249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 10 days passed between releases.
+ - 11 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1343,14 +1270,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-81e9ab2f0a2617982ccffc958503c276e4f1b1e4/>
 <csr-id-928b2c36ae221c16b16076f4d15e2815b454efad/>
-
-### Chore
-
- - <csr-id-81e9ab2f0a2617982ccffc958503c276e4f1b1e4/> update rust crate tempfile to v3.23.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.22.0 | 3.23.0 |
- - <csr-id-928b2c36ae221c16b16076f4d15e2815b454efad/> lock file maintenance
 
 ### Bug Fixes
 
@@ -1380,7 +1299,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 8 commits contributed to the release.
- - 7 days passed between releases.
+ - 8 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1404,10 +1323,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.7.1 (2025-09-20)
 
 <csr-id-16631a116dc25494df73dbb808e59c38740f3b13/>
-
-### Chore
-
- - <csr-id-16631a116dc25494df73dbb808e59c38740f3b13/> lock file maintenance
 
 ### Bug Fixes
 
@@ -1441,7 +1356,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 8 commits contributed to the release.
- - 7 days passed between releases.
+ - 8 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1465,13 +1380,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.7.0 (2025-09-12)
 
 <csr-id-60464dd1d7a5919c9f75b3e2740b292d421c4e1a/>
-
-### Chore
-
- - <csr-id-60464dd1d7a5919c9f75b3e2740b292d421c4e1a/> update rust crate tempfile to v3.22.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.21.0 | 3.22.0 |
 
 ### New Features
 
@@ -1503,14 +1411,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-43a8096756660aa001193477b579250b6c6c2fdc/>
 <csr-id-066d7a780284a2d0ebd18fbc1343a9adfb8cd7a1/>
 
-### Chore
-
- - <csr-id-43a8096756660aa001193477b579250b6c6c2fdc/> lock file maintenance
- - <csr-id-066d7a780284a2d0ebd18fbc1343a9adfb8cd7a1/> update rust crate insta to v1.43.2
-   | datasource | package | from   | to     |
-   | ---------- | ------- | ------ | ------ |
-   | crate      | insta   | 1.43.1 | 1.43.2 |
-
 ### Bug Fixes
 
  - <csr-id-bc3398124b79069761022a4a5cc5406b3245e470/> update rust crate chrono to v0.4.42
@@ -1523,7 +1423,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 5 days passed between releases.
+ - 6 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1546,15 +1446,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-ecc3cb5213043626609e447f978a2b542f7aab16/>
 <csr-id-00001140da2c96458e8fc615ff8305bbb11dd82e/>
 <csr-id-00001150c4edbb89701be58395bccf8296d3986c/>
-
-### Chore
-
- - <csr-id-9ff6ff5365313777a61bee7bde5653524e5f60bc/> lock file maintenance
- - <csr-id-ecc3cb5213043626609e447f978a2b542f7aab16/> update rust crate tempfile to v3.21.0
-   | datasource | package  | from   | to     |
-   | ---------- | -------- | ------ | ------ |
-   | crate      | tempfile | 3.20.0 | 3.21.0 |
- - <csr-id-00001140da2c96458e8fc615ff8305bbb11dd82e/> add regex logging when tracing
 
 ### Bug Fixes
 
@@ -1581,16 +1472,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | crate      | insta   | 1.43.1 | 1.43.1 |
  - <csr-id-00001130921ac6cb739cf83568f466baebe5c969/> the imap crate is not optional
 
-### Test
-
- - <csr-id-00001150c4edbb89701be58395bccf8296d3986c/> fix tests
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 12 commits contributed to the release over the course of 17 calendar days.
- - 18 days passed between releases.
+ - 19 days passed between releases.
  - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1618,10 +1505,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.6.3 (2025-08-15)
 
 <csr-id-00001110d007118fe17b4e31859842d52ab3393d/>
-
-### Chore
-
- - <csr-id-00001110d007118fe17b4e31859842d52ab3393d/> change how we depend on ratatui
 
 ### Bug Fixes
 
@@ -1656,10 +1539,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.6.2 (2025-08-15)
 
 <csr-id-00001050acaba101d9e86a2ee7de8fb57881f157/>
-
-### Chore
-
- - <csr-id-00001050acaba101d9e86a2ee7de8fb57881f157/> update lock file
 
 ### Bug Fixes
 
@@ -1697,6 +1576,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 3 commits contributed to the release.
+ - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1715,10 +1595,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.6.0 (2025-07-29)
 
 <csr-id-00000990adacbe0f266bd62eaa94ffc497dda1fc/>
-
-### Chore
-
- - <csr-id-00000990adacbe0f266bd62eaa94ffc497dda1fc/> update lock file
 
 ### New Features
 
@@ -1757,12 +1633,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-0000095cb5dcc1e4924576e69a456a51f3bbba26/> repair all other commands
  - <csr-id-00000945e170cc7288581aad74ed288b70afff93/> rework subcommands
 
-### Style
-
- - <csr-id-00000933ceddd6506b398e4e3aa9e5b9fe85f466/> cleanup
- - <csr-id-0000092f419a98d38c917ad480390da365aa4bad/> lint
- - <csr-id-000009146c5e1f2fe4f7997e7adc855c1af6ec78/> ignore a warning
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -1793,11 +1663,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00000851eda9e06d87dfcfceb80f76d3a00dbbd7/>
 <csr-id-0000083225da1f66fa4b61057fd0340bd00abcf5/>
 
-### Chore
-
- - <csr-id-00000851eda9e06d87dfcfceb80f76d3a00dbbd7/> update lock file
- - <csr-id-0000083225da1f66fa4b61057fd0340bd00abcf5/> remove dupplicate feature
-
 ### New Features
 
  - <csr-id-0000088cab95089c8cfc124eb89f89bb9a1389ff/> create and delete mailboxes
@@ -1814,7 +1679,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 8 commits contributed to the release over the course of 20 calendar days.
- - 44 days passed between releases.
+ - 45 days passed between releases.
  - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1839,10 +1704,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-0000079a08f72310ae5e5a9fb2564d5da4d99864/>
 
-### Chore
-
- - <csr-id-0000079a08f72310ae5e5a9fb2564d5da4d99864/> update lock file
-
 ### Bug Fixes
 
  - <csr-id-00000810f27f023da994b7d84c555955a8ff9046/> some new lints
@@ -1853,6 +1714,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
+ - 95 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1876,13 +1738,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00000681ad95657f45eed59efa3bd3294fe88c6c/>
 <csr-id-00000674d74f7c1962a176a6f4035c7b4101335f/>
 
-### Chore
-
- - <csr-id-0000077ccb87ef520c2d9eb9dddc407a3ba4438a/> update lock file
- - <csr-id-000006918cf32438b7d0ee6e1e96121f20b53abd/> update tempfile to 3.17.1
- - <csr-id-00000681ad95657f45eed59efa3bd3294fe88c6c/> slim release builds a bit
- - <csr-id-00000674d74f7c1962a176a6f4035c7b4101335f/> tomlfmt
-
 ### Bug Fixes
 
  - <csr-id-0000076e1d6190ed85b0fb6259f6433142ac9469/> update imap to 3.0.0-alpha.15
@@ -1898,7 +1753,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 12 commits contributed to the release.
- - 48 days passed between releases.
+ - 49 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1933,12 +1788,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-00000568f9b87b56eefd1fd812984d3239ab0c87/>
 <csr-id-0000055b39a85bac66d46e599b302a9695669e58/>
 
-### Chore
-
- - <csr-id-0000064e2baeb8ed0020b2884fa7b71811adb3f2/> update lock file
- - <csr-id-00000596b042f8942f5ec57d21b9ccfe02f424dd/> update tempfile to 3.15.0
- - <csr-id-00000582ba77add2f190346a4491ec1ffe1297a6/> add license
-
 ### Bug Fixes
 
  - <csr-id-0000063b9576e8c514e1941f2ba636d37769355c/> update serde to 1.0.217
@@ -1946,25 +1795,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-0000061cc4d385f1fee15b9c8617f8f85f6fe035/> update chrono to 0.4.39
  - <csr-id-00000601637abd9c5654de75dc159d8e7bd45e5b/> update anyhow to 1.0.95
 
-### Other
-
- - <csr-id-00000573e3039b6f3cbc20948b42016b3032f9af/> add ci
-
-### Style
-
- - <csr-id-0000054b537566710c303f1b167327b9f6b67702/> clippy
-
-### Test
-
- - <csr-id-00000568f9b87b56eefd1fd812984d3239ab0c87/> more config tests
- - <csr-id-0000055b39a85bac66d46e599b302a9695669e58/> fix tests after anyhow
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 13 commits contributed to the release over the course of 38 calendar days.
- - 38 days passed between releases.
+ - 39 days passed between releases.
  - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -1993,10 +1829,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.4.1 (2024-12-07)
 
 <csr-id-00000526a5079c10eb082a33198b9507b1944762/>
-
-### Chore
-
- - <csr-id-00000526a5079c10eb082a33198b9507b1944762/> update lock file
 
 ### Bug Fixes
 
@@ -2046,7 +1878,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release over the course of 2 calendar days.
- - 2 days passed between releases.
+ - 3 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -2070,7 +1902,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
- - <csr-id-0000040548864c38e7f0fe58774e6dfaa9c7c5b3/> update dependencies
  - <csr-id-0000040c8ebcaecadcdd9b48ed1d4004690653e2/> update dependencies
 
 ### Commit Statistics
@@ -2078,7 +1909,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 13 days passed between releases.
+ - 14 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -2099,21 +1930,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0000033d0bcb5d10fa76d5639bef9f37108ced1b/>
 <csr-id-00000384015332735dca79ad30079b0a4a5605ed/>
 
-### Chore
-
- - <csr-id-0000039166f9224084d324170e72dead219bb382/> v1.3.1
- - <csr-id-0000033d0bcb5d10fa76d5639bef9f37108ced1b/> this is expected
-
 ### Bug Fixes
 
  - <csr-id-00000377ca784d3e8be66767e8747ac75d6f5195/> remove the lib, this is not a library
  - <csr-id-00000364a62be810db697f78de3ba84be71e6976/> bubble up our errors to main
  - <csr-id-00000352e920de24acb28ef12456f177b44bf265/> impl source for OurError
  - <csr-id-0000034a1618d365969f3f2454e8188176c76b5e/> refactor internal errors
-
-### Test
-
- - <csr-id-00000384015332735dca79ad30079b0a4a5605ed/> add some tests
 
 ### Commit Statistics
 
@@ -2144,10 +1966,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-00000328d25b5194a636f7257a5179a6d404b0c6/>
 
-### Chore
-
- - <csr-id-00000328d25b5194a636f7257a5179a6d404b0c6/> v1.3.0
-
 ### New Features
 
  - <csr-id-00000318d6061a10b5445b0465cfe4154f159075/> make rustls/openssl features
@@ -2177,11 +1995,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0000030e2e0f3d18ad449885d828cb32b455235f/>
 <csr-id-00000292d6cf4a51f44df4a490f262ea0af35479/>
 
-### Chore
-
- - <csr-id-0000030e2e0f3d18ad449885d828cb32b455235f/> v1.2.0
- - <csr-id-00000292d6cf4a51f44df4a490f262ea0af35479/> update lock file
-
 ### New Features
 
  - <csr-id-00000279c151fce8d34a9ca50727e92d5bf986e3/> use latest imap version+switch to rustls
@@ -2195,7 +2008,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 2 days passed between releases.
+ - 3 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -2219,22 +2032,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-0000021d4d1c41beba5cb395a15067a7f9ac804e/>
 <csr-id-000001999305c2a32214fb55cdd28402701bd768/>
 
-### Chore
-
- - <csr-id-0000026923ba236ad9c7396f24fe2655971a7187/> v1.1.2
- - <csr-id-000002580e3e43e86528d48230aada890c18a913/> update lock file
- - <csr-id-0000021d4d1c41beba5cb395a15067a7f9ac804e/> shuffle some types/includes around
-
 ### Bug Fixes
 
  - <csr-id-00000240ff5d84e2e727682ca9caa422c6ffa0b7/> add a couple more aliases for find-dups
  - <csr-id-000002395b75258111096b523e4a32893677ad4e/> refactor a bit of code here too
  - <csr-id-000002283660546a9b52a7ce41dea28cfa1d0be3/> try and give a similar message when dry-run
  - <csr-id-0000020cd56633d3e2b30e0cd76bd50e3f49bfa6/> always use uid_* functions
-
-### Refactor
-
- - <csr-id-000001999305c2a32214fb55cdd28402701bd768/> add an alias OurResult for Result<x, OurError>
 
 ### Commit Statistics
 
@@ -2269,11 +2072,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-000001665c76fcb6cb652ee69f7dd1f17f33ace6/>
 <csr-id-00000142ef7b70894811e79fdce929d15dad12ba/>
 
-### Chore
-
- - <csr-id-0000018e1249ac1ff1b4d76cb77a3967a96cece1/> v1.1.1
- - <csr-id-000001724dfb80f660c8c2fb277b8768c2ea4ac2/> update lock file
-
 ### Documentation
 
  - <csr-id-0000013a1d35d3bc4b27524b798f3b7dd0038539/> fix short argument name
@@ -2282,19 +2080,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - <csr-id-0000015a9aa6ada766dc1f2cf441aac4e5174245/> replace unwrap's with ? or ok_or()? so we don't panic
 
-### Other
-
- - <csr-id-000001665c76fcb6cb652ee69f7dd1f17f33ace6/> explain why those two unwrap are ok
-
-### Refactor
-
- - <csr-id-00000142ef7b70894811e79fdce929d15dad12ba/> rename to OurError so it does not clash with others
-
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
  - 6 commits contributed to the release.
+ - 1 day passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -2316,10 +2107,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## v1.1.0 (2024-11-04)
 
 <csr-id-0000012f37424b28d1f828504f5245ac818466ff/>
-
-### Chore
-
- - <csr-id-0000012f37424b28d1f828504f5245ac818466ff/> v1.1.0
 
 ### New Features
 
