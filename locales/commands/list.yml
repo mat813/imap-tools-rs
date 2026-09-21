@@ -1,0 +1,57 @@
+_version: 2
+
+# Texts of the `list` command (src/commands/list.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.list.about:
+  en: List mailboxes as per filters
+  fr: Lister les boîtes aux lettres selon les filtres
+  de: Postfächer gemäß den Filtern auflisten
+  ja: フィルターに従ってメールボックスを一覧表示する
+  zh: 按过滤器列出邮箱
+  ko: 필터에 따라 메일박스 나열
+
+cli.list.long_about:
+  en: |-
+    This command allows listing mailboxes as per filters.
+
+    It can be used to debug filters before running commands that have a destructive
+    effect on the mailboxes.
+  fr: |-
+    Cette commande permet de lister les boîtes aux lettres selon les filtres.
+
+    Elle peut servir à déboguer les filtres avant d'exécuter des commandes ayant
+    un effet destructeur sur les boîtes aux lettres.
+  de: |-
+    Mit diesem Befehl lassen sich Postfächer gemäß den Filtern auflisten.
+
+    Er kann verwendet werden, um Filter zu testen, bevor Befehle ausgeführt werden,
+    die die Postfächer destruktiv verändern.
+  ja: |-
+    このコマンドはフィルターに従ってメールボックスを一覧表示します。
+
+    メールボックスに破壊的な影響を与えるコマンドを実行する前に、フィルターのデバッグに使用できます。
+  zh: |-
+    此命令用于按过滤器列出邮箱。
+
+    可在运行会对邮箱造成破坏性影响的命令之前，用它来调试过滤器。
+  ko: |-
+    이 명령은 필터에 따라 메일박스를 나열합니다.
+
+    메일박스에 파괴적인 영향을 주는 명령을 실행하기 전에 필터를 디버그하는 데 사용할 수 있습니다.
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.header.mailbox_extra:
+  en: Mailbox extra
+  fr: Infos complémentaires
+  de: Zusatzinfo
+  ja: 追加情報
+  zh: 附加信息
+  ko: 추가 정보

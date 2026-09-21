@@ -4,52 +4,51 @@ use chrono::{Duration, Utc};
 use clap::Args;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
+use rust_i18n::t;
 use size::Size;
 
 use crate::libs::{
     args,
     config::Config,
     imap::{Imap, ids_list_to_collapsed_sequence},
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum CleanError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Cleaning up mailbox {mailbox}")]
+    #[display("{}", t!("error.clean.cleanup", mailbox = mailbox))]
     Cleanup { mailbox: String },
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     ImapConnect,
-    #[display("Listing mailboxes")]
+    #[display("{}", t!("error.shared.imap_list"))]
     ImapList,
-    #[display("Mailbox {mailbox} does not have an extra parameter")]
+    #[display("{}", t!("error.shared.missing_extra", mailbox = mailbox))]
     MissingExtra { mailbox: String },
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Examining mailbox {mailbox}")]
+    #[display("{}", t!("error.shared.imap_examine", mailbox = mailbox))]
     ImapExamine { mailbox: String },
-    #[display("Fetching message size and date in {mailbox}")]
+    #[display("{}", t!("error.clean.imap_uid_fetch", mailbox = mailbox))]
     ImapUidFetch { mailbox: String },
-    #[display("Could not find the first message where there should be one")]
+    #[display("{}", t!("error.clean.no_first_date"))]
     NoFirstDate,
-    #[display("Searching old messages in {mailbox}")]
+    #[display("{}", t!("error.clean.imap_uid_search", mailbox = mailbox))]
     ImapUidSearch { mailbox: String },
-    #[display("Deleting messages by UID in {mailbox}")]
+    #[display("{}", t!("error.clean.imap_delete_uid", mailbox = mailbox))]
     ImapDeleteUid { mailbox: String },
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
 }
 impl std::error::Error for CleanError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Delete old messages",
-    long_about = "This command allows to remove old message from mailboxes.
-
-It can be configured to keep more messages if they don't take too much space."
+    about = t!("cli.clean.about"),
+    long_about = t!("cli.clean.long_about")
 )]
 pub struct Clean {
     #[clap(flatten)]
@@ -67,7 +66,8 @@ const MIN_TOTAL_SIZE_BYTES: i64 = 1_000_000;
 static RENDERER_LEN: usize = 8;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] =
     &[":<42", ":>5", ":>10", ":>4", ":>11", ":>11", ":>4", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &[
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &[
     "Mailbox",
     "Msgs",
     "Size",
@@ -77,6 +77,28 @@ static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &[
     "Days",
     "Sequence",
 ];
+
+fn table_spec(dry_run: bool) -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        if dry_run {
+            t!("render.title.cleaner_dry_run")
+        } else {
+            t!("render.title.cleaner")
+        },
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [
+            t!("render.header.mailbox"),
+            t!("render.header.msgs"),
+            t!("render.header.size"),
+            t!("render.header.del"),
+            t!("render.header.first_date"),
+            t!("render.header.cutoff_date"),
+            t!("render.header.days"),
+            t!("render.header.sequence"),
+        ],
+    )
+}
 
 impl Clean {
     #[cfg_attr(
@@ -92,17 +114,8 @@ impl Clean {
             .await
             .or_raise(|| CleanError::ImapConnect)?;
 
-        let mut renderer = new_renderer(
-            config.base.renderer,
-            if config.base.dry_run {
-                "Mailbox Cleaner DRY-RUN"
-            } else {
-                "Mailbox Cleaner"
-            },
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| CleanError::NewRenderer)?;
+        let mut renderer = new_renderer(config.base.renderer, table_spec(config.base.dry_run))
+            .or_raise(|| CleanError::NewRenderer)?;
 
         for (mailbox, result) in imap.list().await.or_raise(|| CleanError::ImapList)? {
             match result.extra {
@@ -260,13 +273,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
         let _ = imap.close().await;
@@ -298,13 +305,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
         let _ = imap.close().await;
@@ -341,13 +342,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
         let _ = imap.close().await;
@@ -397,13 +392,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &extra, true).await;
         let _ = imap.close().await;
         server.join().await;
@@ -453,13 +442,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), true).await;
         let _ = imap.close().await;
@@ -519,13 +502,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Cleaner",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result =
             Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
         let _ = imap.close().await;

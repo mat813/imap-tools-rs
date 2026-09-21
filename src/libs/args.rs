@@ -1,57 +1,60 @@
 use std::path::PathBuf;
 
 use clap::Args;
+use rust_i18n::t;
 
 use crate::libs::{auth::AuthMethod, mode::Mode, render::RendererArg};
 
 #[derive(Args, Debug, Clone, Default)]
 pub struct Generic {
     /// Path to the configuration file.
-    #[arg(short = 'c', long, default_value = ".imap-tools.toml")]
+    #[arg(short = 'c', long, default_value = ".imap-tools.toml", help = t!("cli.args.config"))]
     pub config: Option<PathBuf>,
 
     /// The server to connect to.
-    #[arg(short = 's', long)]
+    #[arg(short = 's', long, help = t!("cli.args.server"))]
     pub server: Option<String>,
 
     /// The port to connect to (default: 143).
-    #[arg(long)]
+    #[arg(long, help = t!("cli.args.port"))]
     pub port: Option<u16>,
 
     /// The username to use for the connection.
-    #[arg(short = 'u', long)]
+    #[arg(short = 'u', long, help = t!("cli.args.username"))]
     pub username: Option<String>,
 
     /// The password to use for the connection.
-    #[arg(short = 'p', long)]
+    #[arg(short = 'p', long, help = t!("cli.args.password"))]
     pub password: Option<String>,
 
     /// The command to use to get the password.
-    #[arg(short = 'P', long)]
+    #[arg(short = 'P', long, help = t!("cli.args.password_command"))]
     pub password_command: Option<String>,
 
     #[cfg_attr(feature = "__tls", doc = "Select the TLS mode")]
     #[cfg_attr(
         not(feature = "__tls"),
-        doc = "TLS is disabled, recompile with either feature rustls or openssl."
+        doc = "TLS is disabled, recompile with either feature rustls or native-tls."
     )]
+    #[cfg_attr(feature = "__tls", arg(help = t!("cli.args.mode")))]
+    #[cfg_attr(not(feature = "__tls"), arg(help = t!("cli.args.mode_disabled")))]
     #[arg(short = 'm', long, value_enum)]
     pub mode: Option<Mode>,
 
     /// Which renderer to use.
-    #[arg(long, env = "RENDERER", value_enum)]
+    #[arg(long, env = "RENDERER", value_enum, help = t!("cli.args.renderer"))]
     pub renderer: Option<RendererArg>,
 
-    /// Do not actually do any changes to the server.
-    #[arg(short = 'n', long)]
+    /// Do not actually make any changes to the server.
+    #[arg(short = 'n', long, help = t!("cli.args.dry_run"))]
     pub dry_run: bool,
 
     /// Authentication method (login or xoauth2).
-    #[arg(long, value_enum)]
+    #[arg(long, value_enum, help = t!("cli.args.auth"))]
     pub auth: Option<AuthMethod>,
 
     /// Command whose stdout is the `OAuth2` access token (required when `--auth xoauth2`).
-    #[arg(long)]
+    #[arg(long, help = t!("cli.args.oauth2_command"))]
     pub oauth2_command: Option<String>,
 }
 

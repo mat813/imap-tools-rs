@@ -1,0 +1,222 @@
+_version: 2
+
+# Texts used by several modules, or by none of the modules below (the command line
+# itself, the startup errors). A text used by a single module lives in the file of that
+# module: commands/<command>.yml or libs/<library>.yml.
+#
+# Every file needs `_version: 2` on its first line, and a key must not be defined in
+# two files. `libs::i18n::tests` checks both, and where each key lives.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.root.about:
+  en: A collection of tools to manipulate IMAP mailboxes
+  fr: Un ensemble d'outils pour manipuler des boîtes aux lettres IMAP
+  de: Eine Sammlung von Werkzeugen zur Verwaltung von IMAP-Postfächern
+  ja: IMAP メールボックスを操作するためのツール集
+  zh: 用于管理 IMAP 邮箱的工具集
+  ko: IMAP 메일박스를 다루는 도구 모음
+
+cli.root.long_about:
+  en: |-
+    These commands will help you curate your IMAP mailboxes.
+
+    You can remove duplicate emails, clean old emails, or archive them.
+  fr: |-
+    Ces commandes vous aident à entretenir vos boîtes aux lettres IMAP.
+
+    Vous pouvez supprimer les courriels en double, nettoyer les anciens courriels ou les archiver.
+  de: |-
+    Mit diesen Befehlen pflegen Sie Ihre IMAP-Postfächer.
+
+    Sie können doppelte E-Mails entfernen, alte E-Mails bereinigen oder archivieren.
+  ja: |-
+    これらのコマンドは、IMAP メールボックスの整理に役立ちます。
+
+    重複したメールの削除、古いメールの整理、アーカイブができます。
+  zh: |-
+    这些命令可帮助您整理 IMAP 邮箱。
+
+    您可以删除重复邮件、清理旧邮件或将其归档。
+  ko: |-
+    이 명령들은 IMAP 메일박스를 정리하는 데 도움이 됩니다.
+
+    중복된 이메일을 삭제하거나, 오래된 이메일을 정리하거나, 보관할 수 있습니다.
+
+cli.imap.about:
+  en: Low-level IMAP operations
+  fr: Opérations IMAP de bas niveau
+  de: Low-Level-IMAP-Operationen
+  ja: 低レベルの IMAP 操作
+  zh: 底层 IMAP 操作
+  ko: 저수준 IMAP 작업
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.title.mailbox_list:
+  en: Mailbox List
+  fr: Liste des boîtes aux lettres
+  de: Postfachliste
+  ja: メールボックス一覧
+  zh: 邮箱列表
+  ko: 메일박스 목록
+
+render.header.mailbox:
+  en: Mailbox
+  fr: Boîte aux lettres
+  de: Postfach
+  ja: メールボックス
+  zh: 邮箱
+  ko: 메일박스
+
+render.header.msgs:
+  en: Msgs
+  fr: Msgs
+  de: Nachr.
+  ja: 件数
+  zh: 邮件数
+  ko: 메시지
+
+render.header.size:
+  en: Size
+  fr: Taille
+  de: Größe
+  ja: サイズ
+  zh: 大小
+  ko: 크기
+
+render.header.cutoff_date:
+  en: Cutoff date
+  fr: Date limite
+  de: Stichtag
+  ja: 基準日
+  zh: 截止日期
+  ko: 기준일
+
+render.header.sequence:
+  en: Sequence
+  fr: Séquence
+  de: Sequenz
+  ja: シーケンス
+  zh: 序列
+  ko: 시퀀스
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.shared.config:
+  en: Loading configuration
+  fr: Chargement de la configuration
+  de: Laden der Konfiguration
+  ja: 設定の読み込み
+  zh: 加载配置
+  ko: 설정 불러오기
+
+error.shared.connect:
+  en: Connecting to IMAP server
+  fr: Connexion au serveur IMAP
+  de: Verbinden mit dem IMAP-Server
+  ja: IMAP サーバーへの接続
+  zh: 连接到 IMAP 服务器
+  ko: IMAP 서버에 연결
+
+error.shared.imap_close:
+  en: Closing IMAP session
+  fr: Fermeture de la session IMAP
+  de: Schließen der IMAP-Sitzung
+  ja: IMAP セッションの終了
+  zh: 关闭 IMAP 会话
+  ko: IMAP 세션 종료
+
+error.shared.imap_examine:
+  en: Examining mailbox %{mailbox}
+  fr: Examen de la boîte aux lettres %{mailbox}
+  de: Untersuchen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の検査
+  zh: 检查邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 검사
+
+error.shared.imap_list:
+  en: Listing mailboxes
+  fr: Récupération de la liste des boîtes aux lettres
+  de: Auflisten der Postfächer
+  ja: メールボックスの一覧取得
+  zh: 列出邮箱
+  ko: 메일박스 목록 조회
+
+error.shared.imap_no_uid_plus:
+  en: The server does not support the UIDPLUS capability, and all our operations need UIDs for safety
+  fr: Le serveur ne prend pas en charge la capacité UIDPLUS, et toutes nos opérations ont besoin d'UID par sécurité
+  de: Der Server unterstützt die Fähigkeit UIDPLUS nicht, und alle unsere Operationen benötigen aus Sicherheitsgründen UIDs
+  ja: サーバーが UIDPLUS 機能に対応しておらず、安全のため、すべての操作に UID が必要です
+  zh: 服务器不支持 UIDPLUS 能力，而出于安全考虑，我们的所有操作都需要 UID
+  ko: 서버가 UIDPLUS 기능을 지원하지 않으며, 안전을 위해 모든 작업에 UID가 필요합니다
+
+error.shared.missing_extra:
+  en: Mailbox %{mailbox} does not have an extra parameter
+  fr: La boîte aux lettres %{mailbox} n'a pas de paramètre « extra »
+  de: Das Postfach %{mailbox} hat keinen „extra“-Parameter
+  ja: メールボックス %{mailbox} に extra パラメーターがありません
+  zh: 邮箱 %{mailbox} 没有 extra 参数
+  ko: 메일박스 %{mailbox}에 extra 매개변수가 없습니다
+
+error.shared.new_renderer:
+  en: Creating renderer
+  fr: Création du moteur de rendu
+  de: Erstellen des Renderers
+  ja: レンダラーの作成
+  zh: 创建渲染器
+  ko: 렌더러 생성
+
+error.shared.renderer_add_row:
+  en: Adding renderer row
+  fr: Ajout d'une ligne à la sortie
+  de: Hinzufügen einer Zeile zur Ausgabe
+  ja: 出力への行の追加
+  zh: 添加输出行
+  ko: 출력에 행 추가
+
+error.shared.run_list:
+  en: Running list command
+  fr: Exécution de la commande list
+  de: Ausführen des Befehls list
+  ja: list コマンドの実行
+  zh: 运行 list 命令
+  ko: list 명령 실행
+
+error.main_command.command:
+  en: Running %{command} command
+  fr: Exécution de la commande %{command}
+  de: Ausführen des Befehls %{command}
+  ja: "%{command} コマンドの実行"
+  zh: 运行 %{command} 命令
+  ko: "%{command} 명령 실행"
+
+error.main.run:
+  en: Running CLI
+  fr: Exécution de la CLI
+  de: Ausführen der CLI
+  ja: CLI の実行
+  zh: 运行 CLI
+  ko: CLI 실행
+
+error.main.tracing:
+  en: opening log file %{file}
+  fr: ouverture du fichier de journal %{file}
+  de: Öffnen der Protokolldatei %{file}
+  ja: ログファイル %{file} のオープン
+  zh: 打开日志文件 %{file}
+  ko: 로그 파일 %{file} 열기
+
+error.run.run_error:
+  en: running command
+  fr: exécution de la commande
+  de: Ausführen des Befehls
+  ja: コマンドの実行
+  zh: 运行命令
+  ko: 명령 실행

@@ -1,0 +1,76 @@
+_version: 2
+
+# Texts of the TLS connection mode (src/libs/mode.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.mode.auto_tls:
+  en: Automatically detect what connection mode should be used. This will use TLS if the port is 993, and otherwise STARTTLS if available. If no TLS communication mechanism is available, the connection will fail
+  fr: Détecte automatiquement le mode de connexion à utiliser. TLS est utilisé si le port est 993, sinon STARTTLS s'il est disponible. Si aucun mécanisme de communication TLS n'est disponible, la connexion échoue
+  de: Erkennt automatisch, welcher Verbindungsmodus verwendet werden soll. Bei Port 993 wird TLS verwendet, andernfalls STARTTLS, falls verfügbar. Steht kein TLS-Mechanismus zur Verfügung, schlägt die Verbindung fehl
+  ja: 使用する接続モードを自動的に検出します。ポートが 993 の場合は TLS を使用し、それ以外の場合は利用可能であれば STARTTLS を使用します。TLS による通信手段が利用できない場合、接続は失敗します
+  zh: 自动检测应使用的连接模式。如果端口是 993，则使用 TLS，否则在可用时使用 STARTTLS。如果没有可用的 TLS 通信机制，连接将失败
+  ko: 사용할 연결 모드를 자동으로 감지합니다. 포트가 993이면 TLS를 사용하고, 그렇지 않으면 가능한 경우 STARTTLS를 사용합니다. 사용할 수 있는 TLS 통신 방식이 없으면 연결이 실패합니다
+
+cli.mode.auto:
+  en: Automatically detect what connection mode should be used. This will use TLS if the port is 993, and otherwise STARTTLS if available. It will fallback to a plaintext connection if no TLS option can be used
+  fr: Détecte automatiquement le mode de connexion à utiliser. TLS est utilisé si le port est 993, sinon STARTTLS s'il est disponible. Si aucune option TLS n'est utilisable, une connexion en clair est utilisée
+  de: Erkennt automatisch, welcher Verbindungsmodus verwendet werden soll. Bei Port 993 wird TLS verwendet, andernfalls STARTTLS, falls verfügbar. Ist keine TLS-Option nutzbar, wird auf eine unverschlüsselte Verbindung zurückgegriffen
+  ja: 使用する接続モードを自動的に検出します。ポートが 993 の場合は TLS を使用し、それ以外の場合は利用可能であれば STARTTLS を使用します。TLS のオプションが使用できない場合は、平文接続にフォールバックします
+  zh: 自动检测应使用的连接模式。如果端口是 993，则使用 TLS，否则在可用时使用 STARTTLS。如果无法使用任何 TLS 选项，则回退到明文连接
+  ko: 사용할 연결 모드를 자동으로 감지합니다. 포트가 993이면 TLS를 사용하고, 그렇지 않으면 가능한 경우 STARTTLS를 사용합니다. 사용할 수 있는 TLS 옵션이 없으면 평문 연결로 대체합니다
+
+cli.mode.tls_disabled:
+  en: TLS is disabled, plaintext will be used
+  fr: TLS est désactivé, une connexion en clair sera utilisée
+  de: TLS ist deaktiviert, es wird eine unverschlüsselte Verbindung verwendet
+  ja: TLS は無効です。平文接続が使用されます
+  zh: TLS 已禁用，将使用明文连接
+  ko: TLS가 비활성화되어 평문 연결이 사용됩니다
+
+cli.mode.plaintext:
+  en: A plain unencrypted TCP connection
+  fr: Une connexion TCP simple, non chiffrée
+  de: Eine einfache, unverschlüsselte TCP-Verbindung
+  ja: 暗号化されていない通常の TCP 接続
+  zh: 未加密的普通 TCP 连接
+  ko: 암호화되지 않은 일반 TCP 연결
+
+cli.mode.tls:
+  en: An encrypted TLS connection
+  fr: Une connexion TLS chiffrée
+  de: Eine verschlüsselte TLS-Verbindung
+  ja: 暗号化された TLS 接続
+  zh: 加密的 TLS 连接
+  ko: 암호화된 TLS 연결
+
+cli.mode.start_tls:
+  en: An eventually-encrypted (i.e., STARTTLS) connection
+  fr: Une connexion éventuellement chiffrée (c.-à-d. STARTTLS)
+  de: Eine gegebenenfalls verschlüsselte Verbindung (d. h. STARTTLS)
+  ja: 場合によって暗号化される接続 (つまり STARTTLS)
+  zh: 可能加密的连接（即 STARTTLS）
+  ko: 경우에 따라 암호화되는 연결 (즉, STARTTLS)
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.mode.invalid_mode:
+  en: "Invalid connection mode, expects: auto_tls, auto, plaintext"
+  fr: "Mode de connexion invalide, valeurs attendues : auto_tls, auto, plaintext"
+  de: "Ungültiger Verbindungsmodus, erwartet: auto_tls, auto, plaintext"
+  ja: "接続モードが無効です。指定できる値: auto_tls, auto, plaintext"
+  zh: 无效的连接模式，可选值：auto_tls, auto, plaintext
+  ko: "잘못된 연결 모드입니다. 사용 가능한 값: auto_tls, auto, plaintext"
+
+error.mode.invalid_mode_tls:
+  en: "Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls"
+  fr: "Mode de connexion invalide, valeurs attendues : auto_tls, auto, plaintext, tls, start_tls"
+  de: "Ungültiger Verbindungsmodus, erwartet: auto_tls, auto, plaintext, tls, start_tls"
+  ja: "接続モードが無効です。指定できる値: auto_tls, auto, plaintext, tls, start_tls"
+  zh: 无效的连接模式，可选值：auto_tls, auto, plaintext, tls, start_tls
+  ko: "잘못된 연결 모드입니다. 사용 가능한 값: auto_tls, auto, plaintext, tls, start_tls"

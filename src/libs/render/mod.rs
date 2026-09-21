@@ -8,26 +8,32 @@ mod terminal;
 mod traits;
 
 use exn::{Exn, Result, ResultExt as _, bail};
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 
-pub use crate::libs::render::traits::Renderer;
 use crate::libs::render::traits::RendererError;
 #[cfg(any(feature = "ratatui", feature = "cursive"))]
 use crate::libs::render::traits::RendererUsable as _;
+pub use crate::libs::render::traits::{Renderer, TableSpec};
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display, clap::ValueEnum)]
 pub enum RendererArg {
     /// CSV output
+    #[value(help = t!("cli.renderer.csv"))]
     Csv,
     /// Table-ish output
+    #[value(help = t!("cli.renderer.terminal"))]
     Terminal,
     #[cfg(feature = "ratatui")]
-    /// Ratatui-TUI output
+    /// Ratatui TUI output
+    #[value(help = t!("cli.renderer.ratatui"))]
     Ratatui,
-    /// Json output
+    /// JSON output
+    #[value(help = t!("cli.renderer.json"))]
     Json,
     #[cfg(feature = "cursive")]
     /// Interactive TUI output (cursive)
+    #[value(help = t!("cli.renderer.cursive"))]
     Cursive,
 }
 
@@ -55,7 +61,7 @@ impl Default for RendererArg {
 
 #[derive(Clone, Debug, derive_more::Display)]
 pub enum RendererArgError {
-    #[display("Unknown renderer {renderer:?}")]
+    #[display("{}", t!("error.renderer_arg.unknown", renderer = renderer : {:?}))]
     Unknown { renderer: String },
 }
 
@@ -85,33 +91,29 @@ impl std::str::FromStr for RendererArg {
 
 #[cfg_attr(
     feature = "tracing",
-    tracing::instrument(level = "trace", skip(title, format, headers), err(level = "info"))
+    tracing::instrument(level = "trace", skip(spec), err(level = "info"))
 )]
 pub fn new_renderer<const N: usize>(
     renderer: Option<RendererArg>,
-    title: &'static str,
-    format: &'static [&'static str; N],
-    headers: &'static [&'static str; N],
+    spec: TableSpec<N>,
 ) -> Result<Box<dyn Renderer<N> + Send>, RendererError> {
     match renderer.unwrap_or_default() {
         RendererArg::Csv => Ok(Box::new(
-            csv::CsvRenderer::new(title, format, headers).or_raise(|| RendererError::Csv)?,
+            csv::CsvRenderer::new(spec).or_raise(|| RendererError::Csv)?,
         )),
         #[cfg(feature = "ratatui")]
         RendererArg::Ratatui => Ok(Box::new(
-            terminal::TerminalRenderer::new(title, format, headers)
-                .or_raise(|| RendererError::Terminal)?,
+            terminal::TerminalRenderer::new(spec).or_raise(|| RendererError::Terminal)?,
         )),
         RendererArg::Json => Ok(Box::new(
-            json::JsonRenderer::new(title, format, headers).or_raise(|| RendererError::Json)?,
+            json::JsonRenderer::new(spec).or_raise(|| RendererError::Json)?,
         )),
         RendererArg::Terminal => Ok(Box::new(
-            print::PrintRenderer::new(title, format, headers).or_raise(|| RendererError::Print)?,
+            print::PrintRenderer::new(spec).or_raise(|| RendererError::Print)?,
         )),
         #[cfg(feature = "cursive")]
         RendererArg::Cursive => Ok(Box::new(
-            cursive::CursiveRenderer::new(title, format, headers)
-                .or_raise(|| RendererError::Cursive)?,
+            cursive::CursiveRenderer::new(spec).or_raise(|| RendererError::Cursive)?,
         )),
     }
 }

@@ -1,0 +1,142 @@
+_version: 2
+
+# Texts of the configuration: file, command line and filters (src/libs/base_config.rs, config.rs, filter.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.shared.parse_file:
+  en: Parsing config file %{file}
+  fr: Analyse du fichier de configuration %{file}
+  de: Auswerten der Konfigurationsdatei %{file}
+  ja: 設定ファイル %{file} の解析
+  zh: 解析配置文件 %{file}
+  ko: 설정 파일 %{file} 파싱
+
+error.base_config.command_empty:
+  en: "%{command_type} command is empty"
+  fr: La commande %{command_type} est vide
+  de: Der %{command_type}-Befehl ist leer
+  ja: "%{command_type} コマンドが空です"
+  zh: "%{command_type} 命令为空"
+  ko: "%{command_type} 명령이 비어 있습니다"
+
+error.base_config.command_exec:
+  en: Executing %{command_type} command
+  fr: Exécution de la commande %{command_type}
+  de: Ausführen des %{command_type}-Befehls
+  ja: "%{command_type} コマンドの実行"
+  zh: 执行 %{command_type} 命令
+  ko: "%{command_type} 명령 실행"
+
+error.base_config.command_fail:
+  en: |-
+    Running %{command_type} command %{command} (exit %{status})
+    %{stdout}
+    %{stderr}
+  fr: |-
+    Exécution de la commande %{command_type} %{command} (sortie %{status})
+    %{stdout}
+    %{stderr}
+  de: |-
+    Ausführen des %{command_type}-Befehls %{command} (Beendigung %{status})
+    %{stdout}
+    %{stderr}
+  ja: |-
+    %{command_type} コマンド %{command} の実行 (終了 %{status})
+    %{stdout}
+    %{stderr}
+  zh: |-
+    运行 %{command_type} 命令 %{command}（退出 %{status}）
+    %{stdout}
+    %{stderr}
+  ko: |-
+    %{command_type} 명령 %{command} 실행 (종료 %{status})
+    %{stdout}
+    %{stderr}
+
+error.base_config.no_password:
+  en: The password or password command must be set
+  fr: Le mot de passe ou la commande de mot de passe doit être défini
+  de: Das Passwort oder der Passwortbefehl muss angegeben werden
+  ja: パスワードまたはパスワードコマンドを指定する必要があります
+  zh: 必须设置密码或密码命令
+  ko: 비밀번호 또는 비밀번호 명령을 설정해야 합니다
+
+error.base_config.no_server:
+  en: The server must be set
+  fr: Le serveur doit être défini
+  de: Der Server muss angegeben werden
+  ja: サーバーを指定する必要があります
+  zh: 必须设置服务器
+  ko: 서버를 설정해야 합니다
+
+error.base_config.no_username:
+  en: The username must be set
+  fr: Le nom d'utilisateur doit être défini
+  de: Der Benutzername muss angegeben werden
+  ja: ユーザー名を指定する必要があります
+  zh: 必须设置用户名
+  ko: 사용자 이름을 설정해야 합니다
+
+error.base_config.oauth2_no_command:
+  en: oauth2-command must be set when auth = "xoauth2"
+  fr: oauth2-command doit être défini lorsque auth = "xoauth2"
+  de: oauth2-command muss gesetzt sein, wenn auth = "xoauth2" ist
+  ja: auth = "xoauth2" の場合、oauth2-command を設定する必要があります
+  zh: 当 auth = "xoauth2" 时，必须设置 oauth2-command
+  ko: auth = "xoauth2"일 때는 oauth2-command를 설정해야 합니다
+
+error.base_config.oauth2_password:
+  en: password and password-command must not be set when auth = "xoauth2" (use oauth2-command instead)
+  fr: password et password-command ne doivent pas être définis lorsque auth = "xoauth2" (utilisez plutôt oauth2-command)
+  de: password und password-command dürfen nicht gesetzt sein, wenn auth = "xoauth2" ist (verwenden Sie stattdessen oauth2-command)
+  ja: auth = "xoauth2" の場合、password と password-command は設定できません (代わりに oauth2-command を使用してください)
+  zh: 当 auth = "xoauth2" 时，不能设置 password 和 password-command（请改用 oauth2-command）
+  ko: auth = "xoauth2"일 때는 password와 password-command를 설정하면 안 됩니다 (대신 oauth2-command를 사용하세요)
+
+error.base_config.parsing_command:
+  en: Parsing %{command_type} command %{command}
+  fr: Analyse de la commande %{command_type} %{command}
+  de: Auswerten des %{command_type}-Befehls %{command}
+  ja: "%{command_type} コマンド %{command} の解析"
+  zh: 解析 %{command_type} 命令 %{command}
+  ko: "%{command_type} 명령 %{command} 파싱"
+
+error.base_config.password_command_output:
+  en: "%{command_type} command output is not valid UTF-8"
+  fr: La sortie de la commande %{command_type} n'est pas de l'UTF-8 valide
+  de: Die Ausgabe des %{command_type}-Befehls ist kein gültiges UTF-8
+  ja: "%{command_type} コマンドの出力は有効な UTF-8 ではありません"
+  zh: "%{command_type} 命令的输出不是有效的 UTF-8"
+  ko: "%{command_type} 명령의 출력이 올바른 UTF-8이 아닙니다"
+
+error.config.apply_args:
+  en: Applying CLI args to configuration
+  fr: Application des arguments de la ligne de commande à la configuration
+  de: Anwenden der Kommandozeilenargumente auf die Konfiguration
+  ja: コマンドライン引数の設定への適用
+  zh: 将命令行参数应用到配置
+  ko: 명령줄 인수를 설정에 적용
+
+error.filter.bad_regex:
+  en: Compiling regexp %{re}
+  fr: Compilation de l'expression régulière %{re}
+  de: Kompilieren des regulären Ausdrucks %{re}
+  ja: 正規表現 %{re} のコンパイル
+  zh: 编译正则表达式 %{re}
+  ko: 정규식 %{re} 컴파일
+
+# ---------------------------------------------------------------------------
+# Command output
+# ---------------------------------------------------------------------------
+
+output.empty:
+  en: (empty)
+  fr: (vide)
+  de: (leer)
+  ja: (空)
+  zh: (空)
+  ko: (비어 있음)

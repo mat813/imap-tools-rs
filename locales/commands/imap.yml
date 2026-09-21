@@ -1,0 +1,373 @@
+_version: 2
+
+# Texts of the `imap` subcommands: create, delete, disk-usage and list (src/commands/imap/).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.imap.list.about:
+  en: List mailboxes
+  fr: Lister les boîtes aux lettres
+  de: Postfächer auflisten
+  ja: メールボックスを一覧表示する
+  zh: 列出邮箱
+  ko: 메일박스 나열
+
+cli.imap.list.long_about:
+  en: This command allows listing mailboxes.
+  fr: Cette commande permet de lister les boîtes aux lettres.
+  de: Mit diesem Befehl lassen sich Postfächer auflisten.
+  ja: このコマンドはメールボックスを一覧表示します。
+  zh: 此命令用于列出邮箱。
+  ko: 이 명령은 메일박스를 나열합니다.
+
+cli.imap.create.about:
+  en: Create mailbox
+  fr: Créer une boîte aux lettres
+  de: Postfach erstellen
+  ja: メールボックスを作成する
+  zh: 创建邮箱
+  ko: 메일박스 생성
+
+cli.imap.create.long_about:
+  en: This command creates a mailbox.
+  fr: Cette commande crée une boîte aux lettres.
+  de: Dieser Befehl erstellt ein Postfach.
+  ja: このコマンドはメールボックスを作成します。
+  zh: 此命令用于创建邮箱。
+  ko: 이 명령은 메일박스를 생성합니다.
+
+cli.imap.create.mailbox:
+  en: The mailbox to create
+  fr: La boîte aux lettres à créer
+  de: Das zu erstellende Postfach
+  ja: 作成するメールボックス
+  zh: 要创建的邮箱
+  ko: 생성할 메일박스
+
+cli.imap.delete.about:
+  en: Delete mailbox
+  fr: Supprimer une boîte aux lettres
+  de: Postfach löschen
+  ja: メールボックスを削除する
+  zh: 删除邮箱
+  ko: 메일박스 삭제
+
+cli.imap.delete.long_about:
+  en: This command deletes a mailbox.
+  fr: Cette commande supprime une boîte aux lettres.
+  de: Dieser Befehl löscht ein Postfach.
+  ja: このコマンドはメールボックスを削除します。
+  zh: 此命令用于删除邮箱。
+  ko: 이 명령은 메일박스를 삭제합니다.
+
+cli.imap.delete.mailbox:
+  en: The mailbox to delete
+  fr: La boîte aux lettres à supprimer
+  de: Das zu löschende Postfach
+  ja: 削除するメールボックス
+  zh: 要删除的邮箱
+  ko: 삭제할 메일박스
+
+cli.imap.disk_usage.about:
+  en: Show mailbox disk usage
+  fr: Afficher l'espace disque utilisé par les boîtes aux lettres
+  de: Speicherplatzbelegung der Postfächer anzeigen
+  ja: メールボックスのディスク使用量を表示する
+  zh: 显示邮箱的磁盘使用情况
+  ko: 메일박스의 디스크 사용량 표시
+
+cli.imap.disk_usage.long_about:
+  en: This command shows the disk usage of each mailbox.
+  fr: Cette commande affiche l'espace disque utilisé par chaque boîte aux lettres.
+  de: Dieser Befehl zeigt die Speicherplatzbelegung jedes Postfachs an.
+  ja: このコマンドは各メールボックスのディスク使用量を表示します。
+  zh: 此命令显示每个邮箱的磁盘使用情况。
+  ko: 이 명령은 각 메일박스의 디스크 사용량을 표시합니다.
+
+cli.imap.disk_usage.sort:
+  en: Sort results
+  fr: Trier les résultats
+  de: Ergebnisse sortieren
+  ja: 結果を並べ替える
+  zh: 对结果排序
+  ko: 결과 정렬
+
+cli.imap.disk_usage.progress:
+  en: Show progress bar
+  fr: Afficher la barre de progression
+  de: Fortschrittsanzeige einblenden
+  ja: プログレスバーを表示する
+  zh: 显示进度条
+  ko: 진행률 표시줄 표시
+
+cli.sort.name:
+  en: Sort by mailbox name, ascending
+  fr: Trier par nom de boîte aux lettres, croissant
+  de: Nach Postfachname aufsteigend sortieren
+  ja: メールボックス名の昇順で並べ替え
+  zh: 按邮箱名称升序排序
+  ko: 메일박스 이름 오름차순 정렬
+
+cli.sort.name_desc:
+  en: Sort by mailbox name, descending
+  fr: Trier par nom de boîte aux lettres, décroissant
+  de: Nach Postfachname absteigend sortieren
+  ja: メールボックス名の降順で並べ替え
+  zh: 按邮箱名称降序排序
+  ko: 메일박스 이름 내림차순 정렬
+
+cli.sort.size:
+  en: Sort by mailbox size, ascending
+  fr: Trier par taille de boîte aux lettres, croissant
+  de: Nach Postfachgröße aufsteigend sortieren
+  ja: メールボックスのサイズの昇順で並べ替え
+  zh: 按邮箱大小升序排序
+  ko: 메일박스 크기 오름차순 정렬
+
+cli.sort.size_desc:
+  en: Sort by mailbox size, descending
+  fr: Trier par taille de boîte aux lettres, décroissant
+  de: Nach Postfachgröße absteigend sortieren
+  ja: メールボックスのサイズの降順で並べ替え
+  zh: 按邮箱大小降序排序
+  ko: 메일박스 크기 내림차순 정렬
+
+# Arguments of the mailbox listing commands (`list`, `imap list`, `imap disk-usage`).
+cli.filter.include_re:
+  en: Only include folder paths matching this regex
+  fr: Inclure uniquement les chemins de dossiers correspondant à cette expression régulière
+  de: Nur Ordnerpfade einbeziehen, die diesem regulären Ausdruck entsprechen
+  ja: この正規表現に一致するフォルダーパスのみを含める
+  zh: 仅包含匹配此正则表达式的文件夹路径
+  ko: 이 정규식과 일치하는 폴더 경로만 포함
+
+cli.filter.exclude_re:
+  en: Exclude folder paths matching this regex
+  fr: Exclure les chemins de dossiers correspondant à cette expression régulière
+  de: Ordnerpfade ausschließen, die diesem regulären Ausdruck entsprechen
+  ja: この正規表現に一致するフォルダーパスを除外する
+  zh: 排除匹配此正则表达式的文件夹路径
+  ko: 이 정규식과 일치하는 폴더 경로 제외
+
+cli.filter.no_select:
+  en: 'Include `NoSelect` "folders"'
+  fr: 'Inclure les « dossiers » `NoSelect`'
+  de: '`NoSelect`-„Ordner“ einbeziehen'
+  ja: '`NoSelect` の「フォルダー」を含める'
+  zh: '包含 `NoSelect`“文件夹”'
+  ko: '`NoSelect` "폴더" 포함'
+
+cli.filter.pattern:
+  en: IMAP pattern
+  fr: Motif IMAP
+  de: IMAP-Muster
+  ja: IMAP パターン
+  zh: IMAP 模式
+  ko: IMAP 패턴
+
+cli.filter.reference:
+  en: IMAP reference list
+  fr: Liste de références IMAP
+  de: IMAP-Referenzliste
+  ja: IMAP 参照リスト
+  zh: IMAP 引用列表
+  ko: IMAP 참조 목록
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.title.mailbox_size:
+  en: Mailbox Size
+  fr: Taille des boîtes aux lettres
+  de: Postfachgröße
+  ja: メールボックスのサイズ
+  zh: 邮箱大小
+  ko: 메일박스 크기
+
+render.header.attributes:
+  en: Attributes
+  fr: Attributs
+  de: Attribute
+  ja: 属性
+  zh: 属性
+  ko: 속성
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.shared.imap_list_reference_pattern:
+  en: Listing mailboxes with reference %{reference} and pattern %{pattern}
+  fr: Récupération des boîtes aux lettres avec la référence %{reference} et le motif %{pattern}
+  de: Auflisten der Postfächer mit Referenz %{reference} und Muster %{pattern}
+  ja: 参照 %{reference} とパターン %{pattern} によるメールボックスの一覧取得
+  zh: 使用引用 %{reference} 和模式 %{pattern} 列出邮箱
+  ko: 참조 %{reference} 및 패턴 %{pattern}(으)로 메일박스 목록 조회
+
+error.shared.write_output:
+  en: Writing command output
+  fr: Écriture de la sortie de la commande
+  de: Schreiben der Befehlsausgabe
+  ja: コマンド出力の書き込み
+  zh: 写入命令输出
+  ko: 명령 출력 쓰기
+
+error.imap_create.imap_create:
+  en: Creating mailbox %{mailbox}
+  fr: Création de la boîte aux lettres %{mailbox}
+  de: Erstellen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の作成
+  zh: 创建邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 생성
+
+error.imap_create.run:
+  en: Running create command
+  fr: Exécution de la commande create
+  de: Ausführen des Befehls create
+  ja: create コマンドの実行
+  zh: 运行 create 命令
+  ko: create 명령 실행
+
+error.imap_delete.imap_delete:
+  en: Deleting mailbox %{mailbox}
+  fr: Suppression de la boîte aux lettres %{mailbox}
+  de: Löschen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の削除
+  zh: 删除邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 삭제
+
+error.imap_delete.run:
+  en: Running delete command
+  fr: Exécution de la commande delete
+  de: Ausführen des Befehls delete
+  ja: delete コマンドの実行
+  zh: 运行 delete 命令
+  ko: delete 명령 실행
+
+error.imap_disk_usage.imap_list_stream:
+  en: Streaming LIST results
+  fr: Lecture en flux des résultats de LIST
+  de: Streamen der LIST-Ergebnisse
+  ja: LIST 結果のストリーミング
+  zh: 以流方式读取 LIST 结果
+  ko: LIST 결과 스트리밍
+
+error.imap_disk_usage.imap_uid_fetch:
+  en: Fetching message sizes by UID
+  fr: Récupération de la taille des messages par UID
+  de: Abrufen der Nachrichtengrößen per UID
+  ja: UID によるメッセージサイズの取得
+  zh: 按 UID 获取邮件大小
+  ko: UID로 메시지 크기 가져오기
+
+error.imap_disk_usage.imap_uid_fetch_stream:
+  en: Streaming UID FETCH results
+  fr: Lecture en flux des résultats de UID FETCH
+  de: Streamen der UID-FETCH-Ergebnisse
+  ja: UID FETCH 結果のストリーミング
+  zh: 以流方式读取 UID FETCH 结果
+  ko: UID FETCH 결과 스트리밍
+
+error.imap_disk_usage.parse_u64:
+  en: Parsing message length %{len}
+  fr: Analyse de la longueur de message %{len}
+  de: Auswerten der Nachrichtenlänge %{len}
+  ja: メッセージ長 %{len} の解析
+  zh: 解析邮件长度 %{len}
+  ko: 메시지 길이 %{len} 파싱
+
+error.imap_disk_usage.progress_style:
+  en: Building progress bar style
+  fr: Construction du style de la barre de progression
+  de: Erstellen des Stils der Fortschrittsanzeige
+  ja: プログレスバーのスタイルの構築
+  zh: 构建进度条样式
+  ko: 진행률 표시줄 스타일 구성
+
+error.imap_disk_usage.run:
+  en: Running disk-usage command
+  fr: Exécution de la commande disk-usage
+  de: Ausführen des Befehls disk-usage
+  ja: disk-usage コマンドの実行
+  zh: 运行 disk-usage 命令
+  ko: disk-usage 명령 실행
+
+error.imap_list.imap_list_collect:
+  en: Collecting LIST stream results
+  fr: Collecte des résultats du flux LIST
+  de: Sammeln der LIST-Stream-Ergebnisse
+  ja: LIST ストリームの結果の収集
+  zh: 收集 LIST 流结果
+  ko: LIST 스트림 결과 수집
+
+error.imap_commands.create:
+  en: Running imap create subcommand
+  fr: Exécution de la sous-commande imap create
+  de: Ausführen des Unterbefehls imap create
+  ja: imap create サブコマンドの実行
+  zh: 运行 imap create 子命令
+  ko: imap create 하위 명령 실행
+
+error.imap_commands.delete:
+  en: Running imap delete subcommand
+  fr: Exécution de la sous-commande imap delete
+  de: Ausführen des Unterbefehls imap delete
+  ja: imap delete サブコマンドの実行
+  zh: 运行 imap delete 子命令
+  ko: imap delete 하위 명령 실행
+
+error.imap_commands.disk_usage:
+  en: Running imap disk-usage subcommand
+  fr: Exécution de la sous-commande imap disk-usage
+  de: Ausführen des Unterbefehls imap disk-usage
+  ja: imap disk-usage サブコマンドの実行
+  zh: 运行 imap disk-usage 子命令
+  ko: imap disk-usage 하위 명령 실행
+
+error.imap_commands.list:
+  en: Running imap list subcommand
+  fr: Exécution de la sous-commande imap list
+  de: Ausführen des Unterbefehls imap list
+  ja: imap list サブコマンドの実行
+  zh: 运行 imap list 子命令
+  ko: imap list 하위 명령 실행
+
+# ---------------------------------------------------------------------------
+# Command output
+# ---------------------------------------------------------------------------
+
+output.imap_create.created:
+  en: The mailbox %{mailbox} has been created
+  fr: La boîte aux lettres %{mailbox} a été créée
+  de: Das Postfach %{mailbox} wurde erstellt
+  ja: メールボックス %{mailbox} を作成しました
+  zh: 已创建邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox}을(를) 생성했습니다
+
+output.imap_create.already_exists:
+  en: "Cannot create %{mailbox}, it already exists: %{reason}"
+  fr: "Impossible de créer %{mailbox}, elle existe déjà : %{reason}"
+  de: "%{mailbox} kann nicht erstellt werden, es existiert bereits: %{reason}"
+  ja: "%{mailbox} を作成できません。すでに存在します: %{reason}"
+  zh: "无法创建 %{mailbox}，它已存在：%{reason}"
+  ko: "%{mailbox}을(를) 생성할 수 없습니다. 이미 존재합니다: %{reason}"
+
+output.imap_delete.removed:
+  en: The mailbox %{mailbox} has been removed
+  fr: La boîte aux lettres %{mailbox} a été supprimée
+  de: Das Postfach %{mailbox} wurde entfernt
+  ja: メールボックス %{mailbox} を削除しました
+  zh: 已删除邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox}을(를) 삭제했습니다
+
+output.imap_delete.not_found:
+  en: "Cannot remove %{mailbox}, it does not exist: %{reason}"
+  fr: "Impossible de supprimer %{mailbox}, elle n'existe pas : %{reason}"
+  de: "%{mailbox} kann nicht entfernt werden, es existiert nicht: %{reason}"
+  ja: "%{mailbox} を削除できません。存在しません: %{reason}"
+  zh: "无法删除 %{mailbox}，它不存在：%{reason}"
+  ko: "%{mailbox}을(를) 삭제할 수 없습니다. 존재하지 않습니다: %{reason}"

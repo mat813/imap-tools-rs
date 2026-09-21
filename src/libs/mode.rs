@@ -1,13 +1,14 @@
 use std::str::FromStr;
 
 use exn::bail;
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, derive_more::Display)]
 pub enum ModeError {
-    #[display("Invalid connection mode, expects: auto_tls, auto, plaintext, tls, start_tls")]
+    #[display("{}", t!("error.mode.invalid_mode_tls"))]
     InvalidModeTls,
-    #[display("Invalid connection mode, expects: auto_tls, auto, plaintext")]
+    #[display("{}", t!("error.mode.invalid_mode"))]
     InvalidMode,
 }
 impl std::error::Error for ModeError {}
@@ -25,6 +26,8 @@ pub enum Mode {
         not(feature = "__tls"),
         doc = "TLS is disabled, plaintext will be used"
     )]
+    #[cfg_attr(feature = "__tls", value(help = t!("cli.mode.auto_tls")))]
+    #[cfg_attr(not(feature = "__tls"), value(help = t!("cli.mode.tls_disabled")))]
     AutoTls,
     #[cfg_attr(
         feature = "__tls",
@@ -36,14 +39,19 @@ pub enum Mode {
         not(feature = "__tls"),
         doc = "TLS is disabled, plaintext will be used"
     )]
+    #[cfg_attr(feature = "__tls", value(help = t!("cli.mode.auto")))]
+    #[cfg_attr(not(feature = "__tls"), value(help = t!("cli.mode.tls_disabled")))]
     Auto,
     /// A plain unencrypted TCP connection
+    #[value(help = t!("cli.mode.plaintext"))]
     Plaintext,
     /// An encrypted TLS connection
     #[cfg(feature = "__tls")]
+    #[value(help = t!("cli.mode.tls"))]
     Tls,
     /// An eventually-encrypted (i.e., STARTTLS) connection
     #[cfg(feature = "__tls")]
+    #[value(help = t!("cli.mode.start_tls"))]
     StartTls,
 }
 

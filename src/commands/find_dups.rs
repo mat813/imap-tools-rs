@@ -5,52 +5,48 @@ use clap::Args;
 use exn::{OptionExt as _, Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use regex::Regex;
+use rust_i18n::t;
 
 use crate::libs::{
     args,
     config::Config,
     imap::{Imap, ids_list_to_collapsed_sequence},
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum DuError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Listing mailboxes")]
+    #[display("{}", t!("error.shared.imap_list"))]
     ImapList,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Processing mailbox {mailbox}")]
+    #[display("{}", t!("error.find_dups.process", mailbox = mailbox))]
     Process { mailbox: String },
-    #[display("Examining mailbox {mailbox}")]
+    #[display("{}", t!("error.shared.imap_examine", mailbox = mailbox))]
     ImapExamine { mailbox: String },
-    #[display("Fetching message headers by UID in {mailbox}")]
+    #[display("{}", t!("error.find_dups.imap_uid_fetch", mailbox = mailbox))]
     ImapUidFetch { mailbox: String },
-    #[display("Streaming UID FETCH results for {mailbox}")]
+    #[display("{}", t!("error.find_dups.imap_uid_fetch_stream", mailbox = mailbox))]
     ImapUidFetchStream { mailbox: String },
-    #[display(
-        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
-    )]
+    #[display("{}", t!("error.shared.imap_no_uid_plus"))]
     NoUidPlus,
-    #[display("Deleting duplicate messages in {mailbox}")]
+    #[display("{}", t!("error.find_dups.delete_uids", mailbox = mailbox))]
     DeleteUids { mailbox: String },
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
 }
 impl std::error::Error for DuError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Remove duplicate emails",
-    long_about = "This will cleanup your mailboxes of duplicate emails.
-
-It will search each mailbox and if a message with the same message id is found,
-it will delete the duplicates."
+    about = t!("cli.find_dups.about"),
+    long_about = t!("cli.find_dups.long_about")
 )]
 pub struct FindDups {
     #[clap(flatten)]
@@ -74,7 +70,25 @@ static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|
 
 static RENDERER_LEN: usize = 3;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", "", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &["Mailbox", "Dups", "Sequence"];
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Dups", "Sequence"];
+
+fn table_spec(dry_run: bool) -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        if dry_run {
+            t!("render.title.deduplication_dry_run")
+        } else {
+            t!("render.title.deduplication")
+        },
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [
+            t!("render.header.mailbox"),
+            t!("render.header.dups"),
+            t!("render.header.sequence"),
+        ],
+    )
+}
 
 impl FindDups {
     #[cfg_attr(
@@ -86,17 +100,8 @@ impl FindDups {
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut renderer = new_renderer(
-            config.base.renderer,
-            if config.base.dry_run {
-                "Mailbox Deduplication DRY-RUN"
-            } else {
-                "Mailbox Deduplication"
-            },
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| DuError::NewRenderer)?;
+        let mut renderer = new_renderer(config.base.renderer, table_spec(config.base.dry_run))
+            .or_raise(|| DuError::NewRenderer)?;
 
         let mut imap = Imap::connect(&config).await.or_raise(|| DuError::Connect)?;
 
@@ -305,13 +310,7 @@ mod tests {
         let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Deduplication",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -351,13 +350,7 @@ mod tests {
         let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Deduplication",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -380,13 +373,7 @@ mod tests {
         let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Deduplication",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -418,13 +405,7 @@ mod tests {
         let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Deduplication",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", true).await;
         let _ = imap.close().await;
         server.join().await;
@@ -468,13 +449,7 @@ mod tests {
         let mut imap: Imap<serde_value::Value> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Deduplication",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = FindDups::process(&mut imap, &mut renderer, "INBOX", false).await;
         let _ = imap.close().await;
         server.join().await;

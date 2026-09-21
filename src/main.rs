@@ -2,18 +2,21 @@
 #![allow(clippy::missing_docs_in_private_items, reason = "TODO: docs")]
 
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 mod commands;
 mod libs;
 mod run;
 #[cfg(test)]
 mod test_helpers;
 
+rust_i18n::i18n!("locales", fallback = "en");
+
 #[derive(Debug, derive_more::Display)]
 enum MainError {
-    #[display("opening log file {file:?}")]
+    #[display("{}", t!("error.main.tracing", file = file : {:?}))]
     #[cfg(feature = "tracing")]
     Tracing { file: String },
-    #[display("Running CLI")]
+    #[display("{}", t!("error.main.run"))]
     Run,
 }
 
@@ -25,6 +28,8 @@ impl std::error::Error for MainError {}
     tracing::instrument(level = "trace", err(level = "info"))
 )]
 async fn main() -> Result<(), MainError> {
+    libs::i18n::init();
+
     #[cfg(feature = "tracing")]
     {
         use tracing_subscriber::{

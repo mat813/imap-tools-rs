@@ -103,6 +103,7 @@ mod internal {
 
     use exn::{Result, ResultExt as _};
     use regex::{Regex, escape};
+    use rust_i18n::t;
     use serde::{Deserialize, Deserializer, Serialize, de};
 
     use super::Filter as RealFilter;
@@ -155,7 +156,7 @@ mod internal {
 
     #[derive(Debug, derive_more::Display)]
     pub enum FilterError {
-        #[display("Compiling regexp {re:?}")]
+        #[display("{}", t!("error.filter.bad_regex", re = re : {:?}))]
         BadRegex { re: String },
     }
     impl std::error::Error for FilterError {}

@@ -4,45 +4,49 @@ use exn::{Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
+use rust_i18n::t;
 use size::Size;
 
 use crate::libs::{
     args,
     base_config::BaseConfig,
     imap::Imap,
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum ImapDuCommandError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Running disk-usage command")]
+    #[display("{}", t!("error.imap_disk_usage.run"))]
     Run,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     Close,
-    #[display("Listing mailboxes with reference {reference:?} and pattern {pattern:?}")]
+    #[display(
+        "{}",
+        t!("error.shared.imap_list_reference_pattern", reference = reference : {:?}, pattern = pattern : {:?})
+    )]
     ImapList {
         reference: Option<String>,
         pattern: Option<String>,
     },
-    #[display("Streaming LIST results")]
+    #[display("{}", t!("error.imap_disk_usage.imap_list_stream"))]
     ImapListStream,
-    #[display("Parsing message length {len}")]
+    #[display("{}", t!("error.imap_disk_usage.parse_u64", len = len))]
     ParseU64 { len: usize },
-    #[display("Building progress bar style")]
+    #[display("{}", t!("error.imap_disk_usage.progress_style"))]
     ProgressStyle,
-    #[display("Examining mailbox {mailbox}")]
+    #[display("{}", t!("error.shared.imap_examine", mailbox = mailbox))]
     ImapExamine { mailbox: String },
-    #[display("Fetching message sizes by UID")]
+    #[display("{}", t!("error.imap_disk_usage.imap_uid_fetch"))]
     ImapUidFetch,
-    #[display("Streaming UID FETCH results")]
+    #[display("{}", t!("error.imap_disk_usage.imap_uid_fetch_stream"))]
     ImapUidFetchStream,
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
 }
 impl std::error::Error for ImapDuCommandError {}
@@ -51,51 +55,66 @@ impl std::error::Error for ImapDuCommandError {}
 pub enum Sort {
     /// Sort by mailbox name, ascending
     #[default]
+    #[value(help = t!("cli.sort.name"))]
     Name,
     /// Sort by mailbox name, descending
+    #[value(help = t!("cli.sort.name_desc"))]
     NameDesc,
     /// Sort by mailbox size, ascending
+    #[value(help = t!("cli.sort.size"))]
     Size,
     /// Sort by mailbox size, descending
+    #[value(help = t!("cli.sort.size_desc"))]
     SizeDesc,
 }
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "List mailboxes",
-    long_about = "This command allows to list mailboxes."
+    about = t!("cli.imap.disk_usage.about"),
+    long_about = t!("cli.imap.disk_usage.long_about")
 )]
 pub struct DiskUsage {
     #[clap(flatten)]
     config: args::Generic,
 
-    /// Only include folder paths matching this re
-    #[arg(long)]
+    /// Only include folder paths matching this regex
+    #[arg(long, help = t!("cli.filter.include_re"))]
     pub include_re: Vec<Regex>,
 
-    /// Exclude folder paths matching this re
-    #[arg(long)]
+    /// Exclude folder paths matching this regex
+    #[arg(long, help = t!("cli.filter.exclude_re"))]
     pub exclude_re: Vec<Regex>,
 
-    /// sort results
-    #[arg(long, default_value = "name", value_enum)]
+    /// Sort results
+    #[arg(long, default_value = "name", value_enum, help = t!("cli.imap.disk_usage.sort"))]
     pub sort: Sort,
 
     /// Show progress bar
-    #[arg(long)]
+    #[arg(long, help = t!("cli.imap.disk_usage.progress"))]
     pub progress: bool,
 
-    /// Imap pattern
-    #[clap(default_value = Some("*"))]
+    /// IMAP pattern
+    #[clap(default_value = Some("*"), help = t!("cli.filter.pattern"))]
     pattern: Option<String>,
 
-    /// Imap reference list
+    /// IMAP reference list
+    #[arg(help = t!("cli.filter.reference"))]
     reference: Option<String>,
 }
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
+
+fn table_spec() -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        t!("render.title.mailbox_size"),
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [t!("render.header.mailbox"), t!("render.header.size")],
+    )
+}
 
 impl DiskUsage {
     #[cfg_attr(
@@ -111,13 +130,8 @@ impl DiskUsage {
             .await
             .or_raise(|| ImapDuCommandError::Connect)?;
 
-        let mut renderer = new_renderer(
-            config.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| ImapDuCommandError::NewRenderer)?;
+        let mut renderer = new_renderer(config.renderer, table_spec())
+            .or_raise(|| ImapDuCommandError::NewRenderer)?;
 
         self.run(&mut imap, &mut renderer)
             .await
@@ -301,13 +315,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_du();
         cmd.include_re = vec![regex::Regex::new("^INBOX$").expect("valid regex")];
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -339,13 +347,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_du();
         cmd.exclude_re = vec![regex::Regex::new("^Sent$").expect("valid regex")];
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -374,13 +376,7 @@ mod tests {
             .await
             .expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -414,13 +410,7 @@ mod tests {
             .await
             .expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -485,13 +475,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_du();
         cmd.sort = sort;
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -523,13 +507,7 @@ mod tests {
             .await
             .expect("connect");
         let cmd = default_du();
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Size",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;

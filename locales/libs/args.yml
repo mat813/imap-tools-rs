@@ -1,0 +1,104 @@
+_version: 2
+
+# Texts of the arguments shared by all the commands (src/libs/args.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.args.config:
+  en: Path to the configuration file
+  fr: Chemin du fichier de configuration
+  de: Pfad zur Konfigurationsdatei
+  ja: 設定ファイルのパス
+  zh: 配置文件的路径
+  ko: 설정 파일 경로
+
+cli.args.server:
+  en: The server to connect to
+  fr: Le serveur auquel se connecter
+  de: Der Server, mit dem die Verbindung hergestellt wird
+  ja: 接続先のサーバー
+  zh: 要连接的服务器
+  ko: 연결할 서버
+
+cli.args.port:
+  en: "The port to connect to (default: 143)"
+  fr: "Le port auquel se connecter (par défaut : 143)"
+  de: "Der Port, zu dem die Verbindung hergestellt wird (Standard: 143)"
+  ja: "接続先のポート (デフォルト: 143)"
+  zh: "要连接的端口（默认：143）"
+  ko: "연결할 포트 (기본값: 143)"
+
+cli.args.username:
+  en: The username to use for the connection
+  fr: Le nom d'utilisateur à utiliser pour la connexion
+  de: Der für die Verbindung zu verwendende Benutzername
+  ja: 接続に使用するユーザー名
+  zh: 用于连接的用户名
+  ko: 연결에 사용할 사용자 이름
+
+cli.args.password:
+  en: The password to use for the connection
+  fr: Le mot de passe à utiliser pour la connexion
+  de: Das für die Verbindung zu verwendende Passwort
+  ja: 接続に使用するパスワード
+  zh: 用于连接的密码
+  ko: 연결에 사용할 비밀번호
+
+cli.args.password_command:
+  en: The command to use to get the password
+  fr: La commande à utiliser pour obtenir le mot de passe
+  de: Der Befehl, mit dem das Passwort abgerufen wird
+  ja: パスワードを取得するために使用するコマンド
+  zh: 用于获取密码的命令
+  ko: 비밀번호를 가져오는 데 사용할 명령
+
+cli.args.mode:
+  en: Select the TLS mode
+  fr: Choisir le mode TLS
+  de: TLS-Modus auswählen
+  ja: TLS モードを選択する
+  zh: 选择 TLS 模式
+  ko: TLS 모드 선택
+
+cli.args.mode_disabled:
+  en: TLS is disabled, recompile with either feature rustls or native-tls
+  fr: TLS est désactivé, recompilez avec la fonctionnalité rustls ou native-tls
+  de: TLS ist deaktiviert, kompilieren Sie mit dem Feature rustls oder native-tls neu
+  ja: TLS は無効です。rustls または native-tls のいずれかの機能を有効にして再コンパイルしてください
+  zh: TLS 已禁用，请启用 rustls 或 native-tls 功能后重新编译
+  ko: TLS가 비활성화되어 있습니다. rustls 또는 native-tls 기능을 활성화하여 다시 컴파일하세요
+
+cli.args.renderer:
+  en: Which renderer to use
+  fr: Format de sortie à utiliser
+  de: Zu verwendendes Ausgabeformat
+  ja: 使用する出力形式
+  zh: 要使用的输出格式
+  ko: 사용할 출력 형식
+
+cli.args.dry_run:
+  en: Do not actually make any changes to the server
+  fr: Ne réellement rien modifier sur le serveur
+  de: Keine tatsächlichen Änderungen auf dem Server vornehmen
+  ja: サーバーに実際の変更を加えない
+  zh: 不对服务器做任何实际更改
+  ko: 서버에 실제 변경을 가하지 않음
+
+cli.args.auth:
+  en: Authentication method (login or xoauth2)
+  fr: Méthode d'authentification (login ou xoauth2)
+  de: Authentifizierungsmethode (login oder xoauth2)
+  ja: 認証方式 (login または xoauth2)
+  zh: 认证方式（login 或 xoauth2）
+  ko: 인증 방식 (login 또는 xoauth2)
+
+cli.args.oauth2_command:
+  en: Command whose stdout is the `OAuth2` access token (required when `--auth xoauth2`)
+  fr: Commande dont la sortie standard est le jeton d'accès `OAuth2` (requise avec `--auth xoauth2`)
+  de: Befehl, dessen Standardausgabe das `OAuth2`-Zugriffstoken ist (erforderlich bei `--auth xoauth2`)
+  ja: 標準出力が `OAuth2` アクセストークンとなるコマンド (`--auth xoauth2` の場合は必須)
+  zh: 其标准输出为 `OAuth2` 访问令牌的命令（使用 `--auth xoauth2` 时必需）
+  ko: 표준 출력이 `OAuth2` 액세스 토큰인 명령 (`--auth xoauth2` 사용 시 필수)

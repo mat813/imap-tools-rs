@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use exn::{Result, ResultExt as _};
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
@@ -16,21 +16,12 @@ impl RendererUsable for CsvRenderer {}
 impl<const N: usize> Renderer<N> for CsvRenderer {
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(
-            level = "trace",
-            skip(_title, _format, headers),
-            ret,
-            err(level = "info")
-        )
+        tracing::instrument(level = "trace", skip(spec), ret, err(level = "info"))
     )]
-    fn new(
-        _title: &'static str,
-        _format: &'static [&'static str; N],
-        headers: &'static [&'static str; N],
-    ) -> Result<Self, RendererError> {
+    fn new(spec: TableSpec<N>) -> Result<Self, RendererError> {
         let mut writer = csv::Writer::from_writer(Vec::new());
         writer
-            .write_record(headers)
+            .write_record(spec.keys)
             .or_raise(|| RendererError::CsvWriteHeaders)?;
         Ok(Self { writer })
     }
@@ -89,7 +80,20 @@ mod tests {
         tracing::instrument(level = "trace", skip(headers))
     )]
     fn make(headers: &'static [&'static str; 2]) -> impl Renderer<2> {
-        CsvRenderer::new("T", &["", ""], headers).expect("new renderer")
+        make_spec(TableSpec::untranslated("T", &["", ""], headers))
+    }
+
+    fn make_spec(spec: TableSpec<2>) -> impl Renderer<2> {
+        CsvRenderer::new(spec).expect("new renderer")
+    }
+
+    #[test]
+    fn csv_uses_keys_not_labels() {
+        let mut r = make_spec(TableSpec::new("T".into(), &["", ""], &["Name", "Value"], [
+            "Nom".into(),
+            "Valeur".into(),
+        ]));
+        assert_snapshot!(r.output(), @"Name,Value");
     }
 
     #[test]

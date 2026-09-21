@@ -1,35 +1,37 @@
 use clap::Args;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, derive_more::Display)]
 pub enum ImapDeleteCommandError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Running delete command")]
+    #[display("{}", t!("error.imap_delete.run"))]
     Run,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Writing command output")]
+    #[display("{}", t!("error.shared.write_output"))]
     Write,
-    #[display("Deleting mailbox {mailbox}")]
+    #[display("{}", t!("error.imap_delete.imap_delete", mailbox = mailbox))]
     ImapDelete { mailbox: String },
 }
 impl std::error::Error for ImapDeleteCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Delete mailbox",
-    long_about = "This command deletes a mailbox."
+    about = t!("cli.imap.delete.about"),
+    long_about = t!("cli.imap.delete.long_about")
 )]
 pub struct Delete {
     #[clap(flatten)]
     config: args::Generic,
 
     /// The mailbox to delete
+    #[arg(help = t!("cli.imap.delete.mailbox"))]
     mailbox: String,
 }
 
@@ -70,14 +72,23 @@ impl Delete {
         let mailbox = &self.mailbox;
 
         match imap.session.delete(mailbox).await {
-            Ok(()) => writeln!(out, "The mailbox {mailbox} has been removed")
-                .or_raise(|| ImapDeleteCommandError::Write)?,
+            Ok(()) => writeln!(
+                out,
+                "{}",
+                t!("output.imap_delete.removed", mailbox = mailbox)
+            )
+            .or_raise(|| ImapDeleteCommandError::Write)?,
             Err(async_imap::error::Error::No(reason))
                 if reason.contains("Mailbox doesn't exist") =>
             {
                 writeln!(
                     out,
-                    "Cannot remove {mailbox:?}, it does not exist: {reason}"
+                    "{}",
+                    t!(
+                        "output.imap_delete.not_found",
+                        mailbox = mailbox : {:?},
+                        reason = reason
+                    )
                 )
                 .or_raise(|| ImapDeleteCommandError::Write)?;
             },

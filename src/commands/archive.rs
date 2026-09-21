@@ -5,70 +5,67 @@ use chrono::{DateTime, Duration, FixedOffset, Utc};
 use clap::Args;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 
 use crate::libs::{
     args,
     config::Config,
     imap::{Imap, ids_list_to_collapsed_sequence},
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum ArchiveError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     ImapConnect,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Checking IMAP capability {cap}")]
+    #[display("{}", t!("error.archive.imap_capability", cap = cap))]
     ImapCapability { cap: String },
-    #[display("Creating archive mailbox {mailbox}")]
+    #[display("{}", t!("error.archive.imap_create", mailbox = mailbox))]
     ImapCreate { mailbox: String },
-    #[display("Listing mailboxes")]
+    #[display("{}", t!("error.shared.imap_list"))]
     ImapList,
-    #[display("Listing mailboxes matching pattern {pattern:?}")]
+    #[display("{}", t!("error.archive.imap_list_pattern", pattern = pattern : {:?}))]
     ImapListPattern { pattern: String },
-    #[display("Examining mailbox {mailbox}")]
+    #[display("{}", t!("error.shared.imap_examine", mailbox = mailbox))]
     ImapExamine { mailbox: String },
-    #[display("Selecting mailbox {mailbox}")]
+    #[display("{}", t!("error.archive.imap_select", mailbox = mailbox))]
     ImapSelect { mailbox: String },
-    #[display("Searching UIDs before cutoff {cutoff_str}")]
+    #[display("{}", t!("error.archive.imap_uid_search", cutoff_str = cutoff_str))]
     ImapUidSearch { cutoff_str: String },
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
-    #[display("Archiving mailbox {mailbox}")]
+    #[display("{}", t!("error.archive.archive", mailbox = mailbox))]
     Archive { mailbox: String },
-    #[display("Mailbox {mailbox} does not have an extra parameter")]
+    #[display("{}", t!("error.shared.missing_extra", mailbox = mailbox))]
     MissingExtra { mailbox: String },
-    #[display("Moving messages to {mailbox:?}")]
+    #[display("{}", t!("error.archive.imap_move", mailbox = mailbox : {:?}))]
     ImapMove { mailbox: String },
-    #[display("Copying messages to {mailbox:?}")]
+    #[display("{}", t!("error.archive.imap_copy", mailbox = mailbox : {:?}))]
     ImapCopy { mailbox: String },
-    #[display("Storing message flags")]
+    #[display("{}", t!("error.archive.imap_store"))]
     ImapStore,
-    #[display("Fetching messages by UID")]
+    #[display("{}", t!("error.archive.imap_uid_fetch"))]
     ImapUidFetch,
-    #[display("server did not return INTERNALDATE for UID {uid:?}")]
+    #[display("{}", t!("error.archive.imap_no_internal_date", uid = uid : {:?}))]
     ImapNoInternalDate { uid: Option<u32> },
-    #[display(
-        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
-    )]
+    #[display("{}", t!("error.shared.imap_no_uid_plus"))]
     ImapNoUidPlus,
-    #[display("Computing archive destinations")]
+    #[display("{}", t!("error.archive.compute_destinations"))]
     ComputeDestinations,
 }
 impl std::error::Error for ArchiveError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Move old emails to \"archive\" folders",
-    long_about = "This commands allows to archive old emails.
-
-The destination mailbox can be configured, as well as the retention."
+    about = t!("cli.archive.about"),
+    long_about = t!("cli.archive.long_about")
 )]
 pub struct Archive {
     #[clap(flatten)]
@@ -83,7 +80,8 @@ struct MyExtra {
 
 static RENDERER_LEN: usize = 6;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ":>5", ":<25", ":>5", ":>11", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &[
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &[
     "Mailbox",
     "Msgs",
     "Archive mbx",
@@ -91,6 +89,26 @@ static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &[
     "Cutoff date",
     "Sequence",
 ];
+
+fn table_spec(dry_run: bool) -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        if dry_run {
+            t!("render.title.archiving_dry_run")
+        } else {
+            t!("render.title.archiving")
+        },
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [
+            t!("render.header.mailbox"),
+            t!("render.header.msgs"),
+            t!("render.header.archive_mbx"),
+            t!("render.header.arc"),
+            t!("render.header.cutoff_date"),
+            t!("render.header.sequence"),
+        ],
+    )
+}
 
 impl Archive {
     #[cfg_attr(
@@ -102,17 +120,8 @@ impl Archive {
         #[cfg(feature = "tracing")]
         tracing::trace!(?config);
 
-        let mut renderer = new_renderer(
-            config.base.renderer,
-            if config.base.dry_run {
-                "Mailbox Archiving DRY-RUN"
-            } else {
-                "Mailbox Archiving"
-            },
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| ArchiveError::NewRenderer)?;
+        let mut renderer = new_renderer(config.base.renderer, table_spec(config.base.dry_run))
+            .or_raise(|| ArchiveError::NewRenderer)?;
 
         let mut imap = Imap::connect(&config)
             .await
@@ -417,13 +426,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Archiving",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -488,13 +491,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Archiving",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -550,13 +547,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Archiving",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, false).await;
         let _ = imap.close().await;
         server.join().await;
@@ -593,13 +584,7 @@ mod tests {
             format: "Archives/%Y/%m/%%MBX".to_owned(),
             days: 30,
         };
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox Archiving",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
         let result = Archive::archive(&mut imap, &mut renderer, "INBOX", &extra, true).await;
         let _ = imap.close().await;
         server.join().await;

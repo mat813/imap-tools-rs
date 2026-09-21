@@ -1,0 +1,216 @@
+_version: 2
+
+# Texts of the IMAP client (src/libs/imap.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.imap.add_certs:
+  en: Adding root certificates to TLS root store
+  fr: Ajout des certificats racine au magasin racine TLS
+  de: Hinzufügen der Stammzertifikate zum TLS-Stammzertifikatspeicher
+  ja: ルート証明書の TLS ルートストアへの追加
+  zh: 将根证书添加到 TLS 根证书存储
+  ko: TLS 루트 저장소에 루트 인증서 추가
+
+error.imap.connect:
+  en: Connecting to %{server} on port %{port}
+  fr: Connexion à %{server} sur le port %{port}
+  de: Verbinden mit %{server} auf Port %{port}
+  ja: "%{server} のポート %{port} への接続"
+  zh: 连接到 %{server} 的端口 %{port}
+  ko: "%{server}의 포트 %{port}에 연결"
+
+error.imap.greeting:
+  en: Reading server greeting
+  fr: Lecture du message d'accueil du serveur
+  de: Lesen der Serverbegrüßung
+  ja: サーバーのグリーティングの読み取り
+  zh: 读取服务器问候语
+  ko: 서버 인사말 읽기
+
+error.imap.greeting_starttls:
+  en: Reading server greeting before STARTTLS
+  fr: Lecture du message d'accueil du serveur avant STARTTLS
+  de: Lesen der Serverbegrüßung vor STARTTLS
+  ja: STARTTLS 前のサーバーのグリーティングの読み取り
+  zh: 在 STARTTLS 之前读取服务器问候语
+  ko: STARTTLS 이전의 서버 인사말 읽기
+
+error.imap.imap_capabilities:
+  en: Querying IMAP capabilities
+  fr: Interrogation des capacités IMAP
+  de: Abfragen der IMAP-Fähigkeiten
+  ja: IMAP 機能の問い合わせ
+  zh: 查询 IMAP 能力
+  ko: IMAP 기능 조회
+
+error.imap.imap_close:
+  en: Closing mailbox
+  fr: Fermeture de la boîte aux lettres
+  de: Schließen des Postfachs
+  ja: メールボックスを閉じる処理
+  zh: 关闭邮箱
+  ko: 메일박스 닫기
+
+error.imap.imap_list:
+  en: Listing mailboxes with filter %{filter}
+  fr: Récupération des boîtes aux lettres avec le filtre %{filter}
+  de: Auflisten der Postfächer mit Filter %{filter}
+  ja: フィルター %{filter} によるメールボックスの一覧取得
+  zh: 使用过滤器 %{filter} 列出邮箱
+  ko: 필터 %{filter}(으)로 메일박스 목록 조회
+
+error.imap.imap_list_empty:
+  en: This filter did not return anything %{filter}
+  fr: Ce filtre n'a rien renvoyé %{filter}
+  de: Dieser Filter hat nichts zurückgegeben %{filter}
+  ja: このフィルターでは何も返されませんでした %{filter}
+  zh: 此过滤器没有返回任何内容 %{filter}
+  ko: 이 필터는 아무것도 반환하지 않았습니다 %{filter}
+
+error.imap.imap_select:
+  en: Selecting mailbox %{mailbox}
+  fr: Sélection de la boîte aux lettres %{mailbox}
+  de: Auswählen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の選択
+  zh: 选择邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 선택
+
+error.imap.load_native_certs:
+  en: "Loading native root certificates: %{errors}"
+  fr: "Chargement des certificats racine natifs : %{errors}"
+  de: "Laden der nativen Stammzertifikate: %{errors}"
+  ja: "ネイティブのルート証明書の読み込み: %{errors}"
+  zh: 加载本机根证书：%{errors}
+  ko: "네이티브 루트 인증서 불러오기: %{errors}"
+
+error.imap.loading_native_certs:
+  en: Loading native root certificates
+  fr: Chargement des certificats racine natifs
+  de: Laden der nativen Stammzertifikate
+  ja: ネイティブのルート証明書の読み込み
+  zh: 加载本机根证书
+  ko: 네이티브 루트 인증서 불러오기
+
+error.imap.login:
+  en: Authenticating via IMAP %{method}
+  fr: Authentification via IMAP %{method}
+  de: Authentifizierung über IMAP %{method}
+  ja: IMAP %{method} による認証
+  zh: 通过 IMAP %{method} 进行认证
+  ko: IMAP %{method}(으)로 인증
+
+error.imap.logout:
+  en: Sending LOGOUT command
+  fr: Envoi de la commande LOGOUT
+  de: Senden des LOGOUT-Befehls
+  ja: LOGOUT コマンドの送信
+  zh: 发送 LOGOUT 命令
+  ko: LOGOUT 명령 전송
+
+error.imap.native_tls_connector:
+  en: Creating native TLS connector
+  fr: Création du connecteur TLS natif
+  de: Erstellen des nativen TLS-Connectors
+  ja: ネイティブ TLS コネクターの作成
+  zh: 创建原生 TLS 连接器
+  ko: 네이티브 TLS 커넥터 생성
+
+error.imap.no_server:
+  en: missing server
+  fr: serveur manquant
+  de: Server fehlt
+  ja: サーバーが指定されていません
+  zh: 缺少服务器
+  ko: 서버가 없습니다
+
+error.imap.no_username:
+  en: Missing username
+  fr: Nom d'utilisateur manquant
+  de: Benutzername fehlt
+  ja: ユーザー名が指定されていません
+  zh: 缺少用户名
+  ko: 사용자 이름이 없습니다
+
+error.imap.oauth2_token:
+  en: Generating OAuth2 token
+  fr: Génération du jeton OAuth2
+  de: Erzeugen des OAuth2-Tokens
+  ja: OAuth2 トークンの生成
+  zh: 生成 OAuth2 令牌
+  ko: OAuth2 토큰 생성
+
+error.imap.password:
+  en: Retrieving password
+  fr: Récupération du mot de passe
+  de: Abrufen des Passworts
+  ja: パスワードの取得
+  zh: 获取密码
+  ko: 비밀번호 가져오기
+
+error.imap.rustls_invalid_server:
+  en: "invalid server name: %{server}"
+  fr: "nom de serveur invalide : %{server}"
+  de: "Ungültiger Servername: %{server}"
+  ja: "無効なサーバー名: %{server}"
+  zh: 无效的服务器名称：%{server}
+  ko: "잘못된 서버 이름: %{server}"
+
+error.imap.scram_session:
+  en: Initializing %{method} SCRAM session
+  fr: Initialisation de la session SCRAM %{method}
+  de: Initialisieren der SCRAM-Sitzung %{method}
+  ja: "%{method} SCRAM セッションの初期化"
+  zh: 初始化 %{method} SCRAM 会话
+  ko: "%{method} SCRAM 세션 초기화"
+
+error.imap.start_tls:
+  en: Sending STARTTLS command
+  fr: Envoi de la commande STARTTLS
+  de: Senden des STARTTLS-Befehls
+  ja: STARTTLS コマンドの送信
+  zh: 发送 STARTTLS 命令
+  ko: STARTTLS 명령 전송
+
+error.imap.stream:
+  en: Streaming FETCH results
+  fr: Lecture en flux des résultats de FETCH
+  de: Streamen der FETCH-Ergebnisse
+  ja: FETCH 結果のストリーミング
+  zh: 以流方式读取 FETCH 结果
+  ko: FETCH 결과 스트리밍
+
+error.imap.tls_handshake:
+  en: Performing TLS handshake with %{server}
+  fr: Réalisation de la poignée de main TLS avec %{server}
+  de: Durchführen des TLS-Handshakes mit %{server}
+  ja: "%{server} との TLS ハンドシェイクの実行"
+  zh: 与 %{server} 进行 TLS 握手
+  ko: "%{server}와(과) TLS 핸드셰이크 수행"
+
+error.imap.tls_setup:
+  en: Setting up TLS connection
+  fr: Mise en place de la connexion TLS
+  de: Einrichten der TLS-Verbindung
+  ja: TLS 接続のセットアップ
+  zh: 设置 TLS 连接
+  ko: TLS 연결 설정
+
+error.imap.uid_store:
+  en: Storing message flags by UID
+  fr: Enregistrement des indicateurs des messages par UID
+  de: Speichern der Nachrichten-Flags per UID
+  ja: UID によるメッセージフラグの保存
+  zh: 按 UID 保存邮件标志
+  ko: UID로 메시지 플래그 저장
+
+error.imap.wrap_tls:
+  en: Wrapping connection with TLS
+  fr: Encapsulation de la connexion dans TLS
+  de: Einbetten der Verbindung in TLS
+  ja: 接続の TLS によるラップ
+  zh: 用 TLS 封装连接
+  ko: TLS로 연결 감싸기

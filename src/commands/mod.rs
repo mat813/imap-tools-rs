@@ -1,5 +1,6 @@
 use clap::Subcommand;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 mod archive;
 mod clean;
 mod find_dups;
@@ -20,13 +21,13 @@ pub enum MainCommands {
     #[command(aliases = &["ls"])]
     List(list::List),
 
-    #[command(subcommand)]
+    #[command(subcommand, about = t!("cli.imap.about"))]
     Imap(imap::ImapCommands),
 }
 
 #[derive(Debug, derive_more::Display)]
 pub enum MainCommandError {
-    #[display("Running {command} command")]
+    #[display("{}", t!("error.main_command.command", command = command))]
     Command { command: &'static str },
 }
 

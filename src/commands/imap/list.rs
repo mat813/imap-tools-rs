@@ -3,70 +3,85 @@ use clap::Args;
 use exn::{Result, ResultExt as _};
 use futures::TryStreamExt as _;
 use regex::Regex;
+use rust_i18n::t;
 
 use crate::libs::{
     args,
     base_config::BaseConfig,
     imap::Imap,
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum ImapListCommandError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Running list command")]
+    #[display("{}", t!("error.shared.run_list"))]
     Run,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Listing mailboxes with reference {reference:?} and pattern {pattern:?}")]
+    #[display(
+        "{}",
+        t!("error.shared.imap_list_reference_pattern", reference = reference : {:?}, pattern = pattern : {:?})
+    )]
     ImapList {
         reference: Option<String>,
         pattern: Option<String>,
     },
-    #[display("Collecting LIST stream results")]
+    #[display("{}", t!("error.imap_list.imap_list_collect"))]
     ImapListCollect,
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
 }
 impl std::error::Error for ImapListCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "List mailboxes",
-    long_about = "This command allows to list mailboxes."
+    about = t!("cli.imap.list.about"),
+    long_about = t!("cli.imap.list.long_about")
 )]
 pub struct List {
     #[clap(flatten)]
     config: args::Generic,
 
-    /// Only include folder paths matching this re
-    #[arg(long)]
+    /// Only include folder paths matching this regex
+    #[arg(long, help = t!("cli.filter.include_re"))]
     pub include_re: Vec<Regex>,
 
-    /// Exclude folder paths matching this re
-    #[arg(long)]
+    /// Exclude folder paths matching this regex
+    #[arg(long, help = t!("cli.filter.exclude_re"))]
     pub exclude_re: Vec<Regex>,
 
     /// Include `NoSelect` "folders"
-    #[arg(long)]
+    #[arg(long, help = t!("cli.filter.no_select"))]
     pub no_select: bool,
 
-    /// Imap pattern
-    #[clap(default_value = Some("*"))]
+    /// IMAP pattern
+    #[clap(default_value = Some("*"), help = t!("cli.filter.pattern"))]
     pattern: Option<String>,
 
-    /// Imap reference list
+    /// IMAP reference list
+    #[arg(help = t!("cli.filter.reference"))]
     reference: Option<String>,
 }
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
+
+fn table_spec() -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        t!("render.title.mailbox_list"),
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [t!("render.header.mailbox"), t!("render.header.attributes")],
+    )
+}
 
 impl List {
     #[cfg_attr(
@@ -82,13 +97,8 @@ impl List {
             .await
             .or_raise(|| ImapListCommandError::Connect)?;
 
-        let mut renderer = new_renderer(
-            config.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| ImapListCommandError::NewRenderer)?;
+        let mut renderer = new_renderer(config.renderer, table_spec())
+            .or_raise(|| ImapListCommandError::NewRenderer)?;
 
         self.run(&mut imap, &mut renderer)
             .await
@@ -196,13 +206,7 @@ mod tests {
             .await
             .expect("connect");
         let cmd = default_list();
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -227,13 +231,7 @@ mod tests {
             .await
             .expect("connect");
         let cmd = default_list();
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -257,13 +255,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_list();
         cmd.no_select = true;
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -289,13 +281,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_list();
         cmd.include_re = vec![Regex::new("^INBOX$").expect("valid regex")];
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;
@@ -321,13 +307,7 @@ mod tests {
             .expect("connect");
         let mut cmd = default_list();
         cmd.exclude_re = vec![Regex::new("^Spam").expect("valid regex")];
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = cmd.run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;

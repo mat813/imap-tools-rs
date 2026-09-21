@@ -3,13 +3,13 @@ use std::fmt::Display;
 use exn::Result;
 use serde_json::Value;
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct JsonRenderer {
-    headers: &'static [&'static str],
+    keys: &'static [&'static str],
     json: Vec<Value>,
 }
 
@@ -18,20 +18,11 @@ impl RendererUsable for JsonRenderer {}
 impl<const N: usize> Renderer<N> for JsonRenderer {
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(
-            level = "trace",
-            skip(_title, _format, headers),
-            ret,
-            err(level = "info")
-        )
+        tracing::instrument(level = "trace", skip(spec), ret, err(level = "info"))
     )]
-    fn new(
-        _title: &'static str,
-        _format: &'static [&'static str; N],
-        headers: &'static [&'static str; N],
-    ) -> Result<Self, RendererError> {
+    fn new(spec: TableSpec<N>) -> Result<Self, RendererError> {
         Ok(Self {
-            headers,
+            keys: spec.keys,
             json: vec![],
         })
     }
@@ -45,10 +36,10 @@ impl<const N: usize> Renderer<N> for JsonRenderer {
         tracing::trace!(row = ?row.iter().map(std::string::ToString::to_string).collect::<Vec<_>>());
 
         self.json.push(Value::Object(
-            self.headers
+            self.keys
                 .iter()
                 .zip(row)
-                .map(|(h, v)| (h.to_string(), Value::String(v.to_string())))
+                .map(|(k, v)| ((*k).to_owned(), Value::String(v.to_string())))
                 .collect(),
         ));
 
@@ -92,7 +83,21 @@ mod tests {
         tracing::instrument(level = "trace", skip(headers))
     )]
     fn make(headers: &'static [&'static str; 2]) -> impl Renderer<2> {
-        JsonRenderer::new("T", &["", ""], headers).expect("new renderer")
+        make_spec(TableSpec::untranslated("T", &["", ""], headers))
+    }
+
+    fn make_spec(spec: TableSpec<2>) -> impl Renderer<2> {
+        JsonRenderer::new(spec).expect("new renderer")
+    }
+
+    #[test]
+    fn json_uses_keys_not_labels() {
+        let mut r = make_spec(TableSpec::new("T".into(), &["", ""], &["Name", "Value"], [
+            "Nom".into(),
+            "Valeur".into(),
+        ]));
+        r.add_row(&row!["foo", "bar"]).expect("add_row");
+        assert_snapshot!(r.output(), @r#"[{"Name":"foo","Value":"bar"}]"#);
     }
 
     #[test]

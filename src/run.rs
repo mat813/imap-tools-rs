@@ -1,5 +1,6 @@
 use clap::Parser;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 
 use crate::commands::MainCommands;
 
@@ -7,10 +8,8 @@ use crate::commands::MainCommands;
 #[command(
     name = "imap-tools",
     version,
-    about = "A collection of tools to manipulate IMAP mailboxes",
-    long_about = "These commands will help you curate your IMAP mailboxes.
-
-You can remove duplicate emails, clean old emails, or archive them."
+    about = t!("cli.root.about"),
+    long_about = t!("cli.root.long_about")
 )]
 struct MainArgs {
     #[command(subcommand)]
@@ -18,7 +17,7 @@ struct MainArgs {
 }
 
 #[derive(Debug, derive_more::Display)]
-#[display("running command")]
+#[display("{}", t!("error.run.run_error"))]
 pub struct RunError;
 
 impl std::error::Error for RunError {}

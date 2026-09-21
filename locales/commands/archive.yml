@@ -1,0 +1,178 @@
+_version: 2
+
+# Texts of the `archive` command (src/commands/archive.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.archive.about:
+  en: Move old emails to "archive" folders
+  fr: Déplacer les anciens courriels vers des dossiers « archive »
+  de: Alte E-Mails in „Archiv“-Ordner verschieben
+  ja: 古いメールを「アーカイブ」フォルダーに移動する
+  zh: 将旧邮件移动到“归档”文件夹
+  ko: 오래된 이메일을 "아카이브" 폴더로 이동
+
+cli.archive.long_about:
+  en: |-
+    This command allows archiving old emails.
+
+    The destination mailbox can be configured, as well as the retention.
+  fr: |-
+    Cette commande permet d'archiver les anciens courriels.
+
+    La boîte aux lettres de destination peut être configurée, ainsi que la durée de conservation.
+  de: |-
+    Mit diesem Befehl lassen sich alte E-Mails archivieren.
+
+    Das Zielpostfach sowie die Aufbewahrungsdauer sind konfigurierbar.
+  ja: |-
+    このコマンドは古いメールをアーカイブします。
+
+    保存先のメールボックスや保持期間は設定で変更できます。
+  zh: |-
+    此命令用于归档旧邮件。
+
+    可以配置目标邮箱以及保留期限。
+  ko: |-
+    이 명령은 오래된 이메일을 보관합니다.
+
+    대상 메일박스와 보존 기간을 설정할 수 있습니다.
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.title.archiving:
+  en: Mailbox Archiving
+  fr: Archivage des boîtes aux lettres
+  de: Postfach-Archivierung
+  ja: メールボックスのアーカイブ
+  zh: 邮箱归档
+  ko: 메일박스 아카이브
+
+render.title.archiving_dry_run:
+  en: Mailbox Archiving DRY-RUN
+  fr: Archivage des boîtes aux lettres (SIMULATION)
+  de: Postfach-Archivierung (TESTLAUF)
+  ja: メールボックスのアーカイブ (ドライラン)
+  zh: 邮箱归档（试运行）
+  ko: 메일박스 아카이브 (드라이런)
+
+render.header.arc:
+  en: Arc
+  fr: Arch.
+  de: Arch.
+  ja: 保管
+  zh: 归档
+  ko: 보관
+
+render.header.archive_mbx:
+  en: Archive mbx
+  fr: Boîte d'archive
+  de: Archiv-Postfach
+  ja: アーカイブ先
+  zh: 归档邮箱
+  ko: 아카이브 메일박스
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.archive.archive:
+  en: Archiving mailbox %{mailbox}
+  fr: Archivage de la boîte aux lettres %{mailbox}
+  de: Archivieren des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} のアーカイブ
+  zh: 归档邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 아카이브
+
+error.archive.compute_destinations:
+  en: Computing archive destinations
+  fr: Calcul des destinations d'archivage
+  de: Berechnen der Archivziele
+  ja: アーカイブ先の算出
+  zh: 计算归档目标
+  ko: 아카이브 대상 계산
+
+error.archive.imap_capability:
+  en: Checking IMAP capability %{cap}
+  fr: Vérification de la capacité IMAP %{cap}
+  de: Prüfen der IMAP-Fähigkeit %{cap}
+  ja: IMAP 機能 %{cap} の確認
+  zh: 检查 IMAP 能力 %{cap}
+  ko: IMAP 기능 %{cap} 확인
+
+error.archive.imap_copy:
+  en: Copying messages to %{mailbox}
+  fr: Copie des messages vers %{mailbox}
+  de: Kopieren der Nachrichten nach %{mailbox}
+  ja: メッセージの %{mailbox} へのコピー
+  zh: 将邮件复制到 %{mailbox}
+  ko: 메시지를 %{mailbox}(으)로 복사
+
+error.archive.imap_create:
+  en: Creating archive mailbox %{mailbox}
+  fr: Création de la boîte aux lettres d'archive %{mailbox}
+  de: Erstellen des Archiv-Postfachs %{mailbox}
+  ja: アーカイブ用メールボックス %{mailbox} の作成
+  zh: 创建归档邮箱 %{mailbox}
+  ko: 아카이브 메일박스 %{mailbox} 생성
+
+error.archive.imap_list_pattern:
+  en: Listing mailboxes matching pattern %{pattern}
+  fr: Récupération des boîtes aux lettres correspondant au motif %{pattern}
+  de: Auflisten der Postfächer, die dem Muster %{pattern} entsprechen
+  ja: パターン %{pattern} に一致するメールボックスの一覧取得
+  zh: 列出与模式 %{pattern} 匹配的邮箱
+  ko: 패턴 %{pattern}에 일치하는 메일박스 목록 조회
+
+error.archive.imap_move:
+  en: Moving messages to %{mailbox}
+  fr: Déplacement des messages vers %{mailbox}
+  de: Verschieben der Nachrichten nach %{mailbox}
+  ja: メッセージの %{mailbox} への移動
+  zh: 将邮件移动到 %{mailbox}
+  ko: 메시지를 %{mailbox}(으)로 이동
+
+error.archive.imap_no_internal_date:
+  en: server did not return INTERNALDATE for UID %{uid}
+  fr: le serveur n'a pas renvoyé INTERNALDATE pour l'UID %{uid}
+  de: Der Server hat kein INTERNALDATE für UID %{uid} zurückgegeben
+  ja: サーバーが UID %{uid} の INTERNALDATE を返しませんでした
+  zh: 服务器未返回 UID %{uid} 的 INTERNALDATE
+  ko: 서버가 UID %{uid}의 INTERNALDATE를 반환하지 않았습니다
+
+error.archive.imap_select:
+  en: Selecting mailbox %{mailbox}
+  fr: Sélection de la boîte aux lettres %{mailbox}
+  de: Auswählen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の選択
+  zh: 选择邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 선택
+
+error.archive.imap_store:
+  en: Storing message flags
+  fr: Enregistrement des indicateurs des messages
+  de: Speichern der Nachrichten-Flags
+  ja: メッセージのフラグの保存
+  zh: 保存邮件标志
+  ko: 메시지 플래그 저장
+
+error.archive.imap_uid_fetch:
+  en: Fetching messages by UID
+  fr: Récupération des messages par UID
+  de: Abrufen der Nachrichten per UID
+  ja: UID によるメッセージの取得
+  zh: 按 UID 获取邮件
+  ko: UID로 메시지 가져오기
+
+error.archive.imap_uid_search:
+  en: Searching UIDs before cutoff %{cutoff_str}
+  fr: Recherche des UID antérieurs à la date limite %{cutoff_str}
+  de: Suchen von UIDs vor dem Stichtag %{cutoff_str}
+  ja: 基準日 %{cutoff_str} より前の UID の検索
+  zh: 搜索截止日期 %{cutoff_str} 之前的 UID
+  ko: 기준일 %{cutoff_str} 이전의 UID 검색

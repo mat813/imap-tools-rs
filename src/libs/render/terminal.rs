@@ -9,10 +9,11 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
     style::{Modifier, Style},
+    text::Line,
     widgets::{Block, Borders, Cell, Row, Table},
 };
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct TerminalRenderer<'a> {
@@ -20,7 +21,7 @@ pub struct TerminalRenderer<'a> {
     table_rows: Vec<Row<'a>>,
     column_widths: Vec<u16>,
     headers: Row<'a>,
-    title: &'static str,
+    title: String,
 }
 
 impl RendererUsable for TerminalRenderer<'_> {
@@ -33,18 +34,9 @@ impl RendererUsable for TerminalRenderer<'_> {
 impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(
-            level = "trace",
-            skip(title, _format, headers),
-            ret,
-            err(level = "info")
-        )
+        tracing::instrument(level = "trace", skip(spec), ret, err(level = "info"))
     )]
-    fn new(
-        title: &'static str,
-        _format: &'static [&'static str; N],
-        headers: &'static [&'static str; N],
-    ) -> Result<Self, RendererError> {
+    fn new(spec: TableSpec<N>) -> Result<Self, RendererError> {
         let mut terminal = ratatui::try_init_with_options(TerminalOptions {
             viewport: Viewport::Inline(0),
         })
@@ -53,13 +45,17 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
         Ok(Self {
             terminal,
             table_rows: vec![],
-            column_widths: vec![],
-            title,
-            headers: headers
+            // A column is at least as wide as its header
+            column_widths: spec
+                .labels
                 .iter()
-                .map(|h| {
-                    Cell::new((*h).to_owned()).style(Style::default().add_modifier(Modifier::BOLD))
-                })
+                .map(|label| u16::try_from(Line::from(label.as_str()).width()).unwrap_or(u16::MAX))
+                .collect(),
+            title: spec.title,
+            headers: spec
+                .labels
+                .into_iter()
+                .map(|label| Cell::new(label).style(Style::default().add_modifier(Modifier::BOLD)))
                 .collect(),
         })
     }
@@ -82,12 +78,6 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
             Cell::new(content).style(style)
         }));
         self.table_rows.push(new_row);
-
-        if self.column_widths.is_empty() {
-            let column_count = row.len();
-
-            self.column_widths = vec![0u16; column_count];
-        }
 
         #[expect(clippy::indexing_slicing, reason = "it's ok")]
         for (idx, cell) in str_row.iter().enumerate() {
@@ -112,9 +102,11 @@ impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
 
         self.terminal
             .draw(|frame| {
-                let table = Table::new(rows, widths)
-                    .header(headers)
-                    .block(Block::default().title(self.title).borders(Borders::ALL));
+                let table = Table::new(rows, widths).header(headers).block(
+                    Block::default()
+                        .title(self.title.as_str())
+                        .borders(Borders::ALL),
+                );
                 frame.render_widget(table, frame.area());
             })
             .or_raise(|| RendererError::TerminalDraw)?;

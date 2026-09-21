@@ -1,35 +1,37 @@
 use clap::Args;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 
 use crate::libs::{args, base_config::BaseConfig, imap::Imap};
 
 #[derive(Debug, derive_more::Display)]
 pub enum ImapCreateCommandError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     Close,
-    #[display("Running create command")]
+    #[display("{}", t!("error.imap_create.run"))]
     Run,
-    #[display("Writing command output")]
+    #[display("{}", t!("error.shared.write_output"))]
     WriteOutput,
-    #[display("Creating mailbox {mailbox}")]
+    #[display("{}", t!("error.imap_create.imap_create", mailbox = mailbox))]
     ImapCreate { mailbox: String },
 }
 impl std::error::Error for ImapCreateCommandError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "Create mailbox",
-    long_about = "This command creates a mailbox."
+    about = t!("cli.imap.create.about"),
+    long_about = t!("cli.imap.create.long_about")
 )]
 pub struct Create {
     #[clap(flatten)]
     config: args::Generic,
 
     /// The mailbox to create
+    #[arg(help = t!("cli.imap.create.mailbox"))]
     mailbox: String,
 }
 
@@ -68,13 +70,25 @@ impl Create {
         let mailbox = &self.mailbox;
 
         match imap.session.create(mailbox).await {
-            Ok(()) => writeln!(out, "The mailbox {mailbox} has been created")
-                .or_raise(|| ImapCreateCommandError::WriteOutput)?,
+            Ok(()) => writeln!(
+                out,
+                "{}",
+                t!("output.imap_create.created", mailbox = mailbox)
+            )
+            .or_raise(|| ImapCreateCommandError::WriteOutput)?,
             Err(async_imap::error::Error::No(reason))
                 if reason.contains("Mailbox already exist") =>
             {
-                writeln!(out, "Cannot create {mailbox:?}, it already exist: {reason}")
-                    .or_raise(|| ImapCreateCommandError::WriteOutput)?;
+                writeln!(
+                    out,
+                    "{}",
+                    t!(
+                        "output.imap_create.already_exists",
+                        mailbox = mailbox : {:?},
+                        reason = reason
+                    )
+                )
+                .or_raise(|| ImapCreateCommandError::WriteOutput)?;
             },
             Err(e) => {
                 return Err(e).or_raise(|| ImapCreateCommandError::ImapCreate {

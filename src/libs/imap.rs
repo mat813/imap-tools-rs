@@ -1,5 +1,5 @@
 #[cfg(all(feature = "native-tls", feature = "rustls"))]
-compile_error!("features `openssl` and `rustls` are mutually exclusive — enable only one");
+compile_error!("features `native-tls` and `rustls` are mutually exclusive — enable only one");
 
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
@@ -9,6 +9,7 @@ use std::{
 use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
+use rust_i18n::t;
 use serde::Serialize;
 use tokio::net::TcpStream;
 
@@ -31,74 +32,72 @@ pub type ImapStream = Box<dyn AsyncStream>;
 #[derive(Debug, derive_more::Display)]
 /// Error type for IMAP operations.
 pub enum ImapError {
-    #[display("Sending LOGOUT command")]
+    #[display("{}", t!("error.imap.logout"))]
     Logout,
-    #[display("missing server")]
+    #[display("{}", t!("error.imap.no_server"))]
     NoServer,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     ConnectBase,
-    #[display("Connecting to {server} on port {port}")]
+    #[display("{}", t!("error.imap.connect", server = server, port = port))]
     Connect { server: String, port: u16 },
-    #[display("Setting up TLS connection")]
+    #[display("{}", t!("error.imap.tls_setup"))]
     TlsSetup,
-    #[display("Reading server greeting")]
+    #[display("{}", t!("error.imap.greeting"))]
     Greeting,
-    #[display("Missing username")]
+    #[display("{}", t!("error.imap.no_username"))]
     NoUsername,
-    #[display("Retrieving password")]
+    #[display("{}", t!("error.imap.password"))]
     Password,
-    #[display("Authenticating via IMAP {method}")]
+    #[display("{}", t!("error.imap.login", method = method))]
     Login { method: &'static str },
-    #[display("Initializing {method} SCRAM session")]
+    #[display("{}", t!("error.imap.scram_session", method = method))]
     ScramSession { method: &'static str },
-    #[display("Generating OAuth2 token")]
+    #[display("{}", t!("error.imap.oauth2_token"))]
     OAuth2Token,
-    #[display(
-        "The server does not support the UIDPLUS capability, and all our operations need UIDs for safety"
-    )]
+    #[display("{}", t!("error.shared.imap_no_uid_plus"))]
     UidPlus,
-    #[display("Querying IMAP capabilities")]
+    #[display("{}", t!("error.imap.imap_capabilities"))]
     ImapCapabilities,
-    #[display("Selecting mailbox {mailbox:?}")]
+    #[display("{}", t!("error.imap.imap_select", mailbox = mailbox : {:?}))]
     ImapSelect { mailbox: String },
-    #[display("Storing message flags by UID")]
+    #[display("{}", t!("error.imap.uid_store"))]
     UidStore,
-    #[display("Streaming FETCH results")]
+    #[display("{}", t!("error.imap.stream"))]
     Stream,
-    #[display("Closing mailbox")]
+    #[display("{}", t!("error.imap.imap_close"))]
     ImapClose,
-    #[display("Listing mailboxes with filter {filter}")]
+    #[display("{}", t!("error.imap.imap_list", filter = filter))]
     ImapList { filter: String },
-    #[display("This filter did not return anything {filter}")]
+    #[display("{}", t!("error.imap.imap_list_empty", filter = filter))]
     ImapListEmpty { filter: String },
-    #[display("Reading server greeting before STARTTLS")]
+    #[display("{}", t!("error.imap.greeting_starttls"))]
     #[cfg(feature = "__tls")]
     GreetingStarttls,
-    #[display("Wrapping connection with TLS")]
+    #[display("{}", t!("error.imap.wrap_tls"))]
     #[cfg(feature = "__tls")]
     WrapTls,
-    #[display("Sending STARTTLS command")]
+    #[display("{}", t!("error.imap.start_tls"))]
     #[cfg(feature = "__tls")]
     StartTls,
-    #[display("Creating native TLS connector")]
+    #[display("{}", t!("error.imap.native_tls_connector"))]
     #[cfg(feature = "native-tls")]
     NativeTlsConnector,
-    #[display("Performing TLS handshake with {server}")]
+    #[display("{}", t!("error.imap.tls_handshake", server = server))]
     #[cfg(feature = "__tls")]
     TlsHandshake { server: String },
-    #[display("Loading native root certificates: {errors:?}")]
+    #[display("{}", t!("error.imap.load_native_certs", errors = errors : {:?}))]
     #[cfg(feature = "rustls")]
     LoadNativeCerts {
         errors: Vec<rustls_native_certs::Error>,
     },
-    #[display("Loading native root certificates")]
+    #[display("{}", t!("error.imap.loading_native_certs"))]
     #[cfg(feature = "rustls")]
     LoadingNativeCerts,
-    #[display("Adding root certificates to TLS root store")]
+    #[display("{}", t!("error.imap.add_certs"))]
     #[cfg(feature = "rustls")]
     AddCerts,
     #[cfg(feature = "rustls")]
-    #[display("invalid server name: {server:?}")]
+    #[display("{}", t!("error.imap.rustls_invalid_server", server = server : {:?}))]
     RustlsInvalidServer { server: String },
 }
 // #[display()]

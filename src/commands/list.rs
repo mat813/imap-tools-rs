@@ -1,39 +1,37 @@
 use clap::Args;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 
 use crate::libs::{
     args,
     config::Config,
     imap::Imap,
-    render::{Renderer, new_renderer},
+    render::{Renderer, TableSpec, new_renderer},
 };
 
 #[derive(Debug, derive_more::Display)]
 pub enum ListError {
-    #[display("Loading configuration")]
+    #[display("{}", t!("error.shared.config"))]
     Config,
-    #[display("Connecting to IMAP server")]
+    #[display("{}", t!("error.shared.connect"))]
     Connect,
-    #[display("Creating renderer")]
+    #[display("{}", t!("error.shared.new_renderer"))]
     NewRenderer,
-    #[display("Closing IMAP session")]
+    #[display("{}", t!("error.shared.imap_close"))]
     ImapClose,
-    #[display("Listing mailboxes")]
+    #[display("{}", t!("error.shared.imap_list"))]
     ImapList,
-    #[display("Running list command")]
+    #[display("{}", t!("error.shared.run_list"))]
     Run,
-    #[display("Adding renderer row")]
+    #[display("{}", t!("error.shared.renderer_add_row"))]
     RendererAddRow,
 }
 impl std::error::Error for ListError {}
 
 #[derive(Args, Debug, Clone)]
 #[command(
-    about = "List mailboxes as per filters",
-    long_about = "This command allows to list mailboxes as per filters.
-
-It can be used to debug filters before running commands that have a destructive
-effect on the mailboxes."
+    about = t!("cli.list.about"),
+    long_about = t!("cli.list.long_about")
 )]
 pub struct List {
     #[clap(flatten)]
@@ -44,7 +42,20 @@ type MyExtra = serde_value::Value;
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-static RENDERER_HEADERS: &[&str; RENDERER_LEN] = &["Mailbox", "Mailbox extra"];
+/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Mailbox extra"];
+
+fn table_spec() -> TableSpec<RENDERER_LEN> {
+    TableSpec::new(
+        t!("render.title.mailbox_list"),
+        RENDERER_FORMAT,
+        RENDERER_KEYS,
+        [
+            t!("render.header.mailbox"),
+            t!("render.header.mailbox_extra"),
+        ],
+    )
+}
 
 impl List {
     #[cfg_attr(
@@ -60,13 +71,8 @@ impl List {
             .await
             .or_raise(|| ListError::Connect)?;
 
-        let mut renderer = new_renderer(
-            config.base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .or_raise(|| ListError::NewRenderer)?;
+        let mut renderer =
+            new_renderer(config.base.renderer, table_spec()).or_raise(|| ListError::NewRenderer)?;
 
         Self::run(&mut imap, &mut renderer)
             .await
@@ -116,13 +122,7 @@ mod tests {
         let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
             .await
             .expect("connect");
-        let mut renderer = new_renderer(
-            base.renderer,
-            "Mailbox List",
-            RENDERER_FORMAT,
-            RENDERER_HEADERS,
-        )
-        .expect("renderer");
+        let mut renderer = new_renderer(base.renderer, table_spec()).expect("renderer");
         let result = List::run(&mut imap, &mut renderer).await;
         let _ = imap.close().await;
         server.join().await;

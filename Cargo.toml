@@ -10,6 +10,11 @@ keywords = ["IMAP"]
 homepage = "https://gitlab.com/mat813/imap-tools-rs"
 repository = "https://gitlab.com/mat813/imap-tools-rs"
 
+[package.metadata.i18n]
+available-locales = ["en", "fr", "de", "ja", "zh", "ko"]
+default-locale = "en"
+load-path = "locales"
+
 [package.metadata.binstall]
 pkg-url = "{ repo }/-/releases/v{ version }/downloads/{ name }-v{ version }-{ target }{ archive-suffix }"
 pkg-fmt = "zip"
@@ -60,6 +65,9 @@ hmac = "=0.13.0"
 md-5 = "=0.11.0"
 rsasl = { version = "=2.3.1", default-features = false, features = ["std", "provider", "config_builder", "scram-sha-1", "scram-sha-2"] }
 better-cursive-table = "=0.3.0"
+rust-i18n = "=4.2.2"
+sys-locale = "=0.3.2"
+unicode-width = "=0.2.2"
 
 [dev-dependencies]
 insta = "=1.48.0"

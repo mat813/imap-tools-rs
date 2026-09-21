@@ -1,0 +1,109 @@
+_version: 2
+
+# Texts of the `find-dups` command (src/commands/find_dups.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.find_dups.about:
+  en: Remove duplicate emails
+  fr: Supprimer les courriels en double
+  de: Doppelte E-Mails entfernen
+  ja: 重複したメールを削除する
+  zh: 删除重复邮件
+  ko: 중복된 이메일 삭제
+
+cli.find_dups.long_about:
+  en: |-
+    This will clean up your mailboxes of duplicate emails.
+
+    It will search each mailbox and if a message with the same message ID is found,
+    it will delete the duplicates.
+  fr: |-
+    Cette commande nettoie vos boîtes aux lettres des courriels en double.
+
+    Elle parcourt chaque boîte aux lettres et, si un message avec le même identifiant
+    de message est trouvé, elle supprime les doublons.
+  de: |-
+    Dieser Befehl bereinigt Ihre Postfächer von doppelten E-Mails.
+
+    Er durchsucht jedes Postfach und löscht die Duplikate, wenn eine Nachricht
+    mit derselben Message-ID gefunden wird.
+  ja: |-
+    このコマンドはメールボックスから重複したメールを整理します。
+
+    各メールボックスを検索し、同じメッセージ ID のメッセージが見つかった場合は、重複分を削除します。
+  zh: |-
+    此命令用于清理邮箱中的重复邮件。
+
+    它会搜索每个邮箱，如果发现具有相同邮件 ID 的邮件，就会删除重复项。
+  ko: |-
+    이 명령은 메일박스에서 중복된 이메일을 정리합니다.
+
+    각 메일박스를 검색하여 동일한 메시지 ID를 가진 메시지가 발견되면 중복된 메시지를 삭제합니다.
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.title.deduplication:
+  en: Mailbox Deduplication
+  fr: Déduplication des boîtes aux lettres
+  de: Postfach-Deduplizierung
+  ja: メールボックスの重複排除
+  zh: 邮箱去重
+  ko: 메일박스 중복 제거
+
+render.title.deduplication_dry_run:
+  en: Mailbox Deduplication DRY-RUN
+  fr: Déduplication des boîtes aux lettres (SIMULATION)
+  de: Postfach-Deduplizierung (TESTLAUF)
+  ja: メールボックスの重複排除 (ドライラン)
+  zh: 邮箱去重（试运行）
+  ko: 메일박스 중복 제거 (드라이런)
+
+render.header.dups:
+  en: Dups
+  fr: Doubl.
+  de: Dupl.
+  ja: 重複
+  zh: 重复
+  ko: 중복
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.find_dups.delete_uids:
+  en: Deleting duplicate messages in %{mailbox}
+  fr: Suppression des messages en double dans %{mailbox}
+  de: Löschen doppelter Nachrichten in %{mailbox}
+  ja: "%{mailbox} 内の重複メッセージの削除"
+  zh: 删除 %{mailbox} 中的重复邮件
+  ko: "%{mailbox}의 중복 메시지 삭제"
+
+error.find_dups.imap_uid_fetch:
+  en: Fetching message headers by UID in %{mailbox}
+  fr: Récupération des en-têtes des messages par UID dans %{mailbox}
+  de: Abrufen der Nachrichtenkopfzeilen per UID in %{mailbox}
+  ja: "%{mailbox} 内のメッセージヘッダーの UID による取得"
+  zh: 按 UID 获取 %{mailbox} 中的邮件头
+  ko: "%{mailbox}에서 UID로 메시지 헤더 가져오기"
+
+error.find_dups.imap_uid_fetch_stream:
+  en: Streaming UID FETCH results for %{mailbox}
+  fr: Lecture en flux des résultats de UID FETCH pour %{mailbox}
+  de: Streamen der UID-FETCH-Ergebnisse für %{mailbox}
+  ja: "%{mailbox} の UID FETCH 結果のストリーミング"
+  zh: 以流方式读取 %{mailbox} 的 UID FETCH 结果
+  ko: "%{mailbox}의 UID FETCH 결과 스트리밍"
+
+error.find_dups.process:
+  en: Processing mailbox %{mailbox}
+  fr: Traitement de la boîte aux lettres %{mailbox}
+  de: Verarbeiten des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の処理
+  zh: 处理邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 처리

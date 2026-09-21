@@ -1,6 +1,7 @@
 use std::{fmt::Debug, path::PathBuf};
 
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 
 use crate::libs::{
@@ -11,10 +12,10 @@ use crate::libs::{
 
 #[derive(Debug, derive_more::Display)]
 pub enum ConfigError {
-    #[cfg_attr(not(test), display("Parsing config file {file:?}"))]
+    #[cfg_attr(not(test), display("{}", t!("error.shared.parse_file", file = file : {:?})))]
     #[cfg_attr(test, display("Parsing config file"))]
     Parsing { file: PathBuf },
-    #[display("Applying CLI args to configuration")]
+    #[display("{}", t!("error.config.apply_args"))]
     ApplyArgs,
 }
 
@@ -192,8 +193,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Applying CLI args to configuration, at src/libs/config.rs:79:14
-            `-- The server must be set, at src/libs/base_config.rs:156:13,
+            Applying CLI args to configuration, at src/libs/config.rs:80:14
+            `-- The server must be set, at src/libs/base_config.rs:161:13,
         )
         ");
     }
@@ -210,8 +211,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Applying CLI args to configuration, at src/libs/config.rs:79:14
-            `-- The username must be set, at src/libs/base_config.rs:160:13,
+            Applying CLI args to configuration, at src/libs/config.rs:80:14
+            `-- The username must be set, at src/libs/base_config.rs:165:13,
         )
         ");
     }
@@ -253,8 +254,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:205:50
-            `-- missing closing quote, at src/libs/base_config.rs:205:50,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:210:50
+            `-- missing closing quote, at src/libs/base_config.rs:210:50,
         )
         "#);
     }
@@ -276,8 +277,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:215:68
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:215:68,
+            Executing password command, at src/libs/base_config.rs:220:68
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:220:68,
         )
         ");
     }
@@ -299,7 +300,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:212:26,
+            password command is empty, at src/libs/base_config.rs:217:26,
         )
         ");
     }
@@ -337,8 +338,8 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            Applying CLI args to configuration, at src/libs/config.rs:79:14
-            `-- The password or password command must be set, at src/libs/base_config.rs:174:17,
+            Applying CLI args to configuration, at src/libs/config.rs:80:14
+            `-- The password or password command must be set, at src/libs/base_config.rs:179:17,
         )
         ");
     }
@@ -360,8 +361,8 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!(config, @"
         Err(
-            Parsing config file, at src/libs/config.rs:69:18
-            `-- TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:69:18,
+            Parsing config file, at src/libs/config.rs:70:18
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/config.rs:70:18,
         )
         ");
     }

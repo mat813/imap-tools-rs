@@ -1,5 +1,6 @@
 use clap::Subcommand;
 use exn::{Result, ResultExt as _};
+use rust_i18n::t;
 mod create;
 mod delete;
 mod disk_usage;
@@ -22,13 +23,13 @@ pub enum ImapCommands {
 
 #[derive(Debug, derive_more::Display)]
 pub enum ImapCommandsError {
-    #[display("Running imap list subcommand")]
+    #[display("{}", t!("error.imap_commands.list"))]
     List,
-    #[display("Running imap create subcommand")]
+    #[display("{}", t!("error.imap_commands.create"))]
     Create,
-    #[display("Running imap delete subcommand")]
+    #[display("{}", t!("error.imap_commands.delete"))]
     Delete,
-    #[display("Running imap disk-usage subcommand")]
+    #[display("{}", t!("error.imap_commands.disk_usage"))]
     DiskUsage,
 }
 impl std::error::Error for ImapCommandsError {}

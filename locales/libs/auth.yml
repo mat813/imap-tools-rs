@@ -1,0 +1,92 @@
+_version: 2
+
+# Texts of the authentication methods (src/libs/auth/).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.auth.login:
+  en: Standard IMAP LOGIN command (default)
+  fr: Commande IMAP LOGIN standard (par défaut)
+  de: Standard-IMAP-Befehl LOGIN (Standard)
+  ja: 標準の IMAP LOGIN コマンド (デフォルト)
+  zh: 标准 IMAP LOGIN 命令（默认）
+  ko: 표준 IMAP LOGIN 명령 (기본값)
+
+cli.auth.plain:
+  en: SASL PLAIN — credentials in cleartext (RFC 4616). Requires TLS
+  fr: SASL PLAIN — identifiants en clair (RFC 4616). Nécessite TLS
+  de: SASL PLAIN — Zugangsdaten im Klartext (RFC 4616). Erfordert TLS
+  ja: SASL PLAIN — 認証情報を平文で送信 (RFC 4616)。TLS が必要
+  zh: SASL PLAIN — 以明文传输凭据 (RFC 4616)。需要 TLS
+  ko: SASL PLAIN — 자격 증명을 평문으로 전송 (RFC 4616). TLS 필요
+
+cli.auth.cram_md5:
+  en: SASL CRAM-MD5 — HMAC-MD5 challenge/response (RFC 2195)
+  fr: SASL CRAM-MD5 — défi/réponse HMAC-MD5 (RFC 2195)
+  de: SASL CRAM-MD5 — HMAC-MD5-Challenge-Response (RFC 2195)
+  ja: SASL CRAM-MD5 — HMAC-MD5 チャレンジレスポンス (RFC 2195)
+  zh: SASL CRAM-MD5 — HMAC-MD5 质询/响应 (RFC 2195)
+  ko: SASL CRAM-MD5 — HMAC-MD5 챌린지/응답 (RFC 2195)
+
+cli.auth.scram_sha_1:
+  en: SASL SCRAM-SHA-1 — salted challenge/response (RFC 5802)
+  fr: SASL SCRAM-SHA-1 — défi/réponse avec sel (RFC 5802)
+  de: SASL SCRAM-SHA-1 — Salted-Challenge-Response (RFC 5802)
+  ja: SASL SCRAM-SHA-1 — ソルト付きチャレンジレスポンス (RFC 5802)
+  zh: SASL SCRAM-SHA-1 — 加盐的质询/响应 (RFC 5802)
+  ko: SASL SCRAM-SHA-1 — 솔트 적용 챌린지/응답 (RFC 5802)
+
+cli.auth.scram_sha_256:
+  en: SASL SCRAM-SHA-256 — salted challenge/response, stronger hash (RFC 7677)
+  fr: SASL SCRAM-SHA-256 — défi/réponse avec sel, hachage plus robuste (RFC 7677)
+  de: SASL SCRAM-SHA-256 — Salted-Challenge-Response mit stärkerem Hash (RFC 7677)
+  ja: SASL SCRAM-SHA-256 — ソルト付きチャレンジレスポンス、より強力なハッシュ (RFC 7677)
+  zh: SASL SCRAM-SHA-256 — 加盐的质询/响应，哈希更强 (RFC 7677)
+  ko: SASL SCRAM-SHA-256 — 솔트 적용 챌린지/응답, 더 강력한 해시 (RFC 7677)
+
+cli.auth.xoauth2:
+  en: SASL XOAUTH2 — bearer-token authentication (Gmail, Office 365)
+  fr: SASL XOAUTH2 — authentification par jeton porteur (Gmail, Office 365)
+  de: SASL XOAUTH2 — Bearer-Token-Authentifizierung (Gmail, Office 365)
+  ja: SASL XOAUTH2 — ベアラートークン認証 (Gmail、Office 365)
+  zh: SASL XOAUTH2 — 持有者令牌认证 (Gmail、Office 365)
+  ko: SASL XOAUTH2 — 베어러 토큰 인증 (Gmail, Office 365)
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.auth.invalid_method:
+  en: "Invalid auth method, expects: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+  fr: "Méthode d'authentification invalide, valeurs attendues : login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+  de: "Ungültige Authentifizierungsmethode, erwartet: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+  ja: "認証方式が無効です。指定できる値: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+  zh: 无效的认证方式，可选值：login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2
+  ko: "잘못된 인증 방식입니다. 사용 가능한 값: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
+
+error.auth.scram_config:
+  en: Building SCRAM client configuration
+  fr: Construction de la configuration du client SCRAM
+  de: Erstellen der SCRAM-Client-Konfiguration
+  ja: SCRAM クライアント設定の構築
+  zh: 构建 SCRAM 客户端配置
+  ko: SCRAM 클라이언트 설정 구성
+
+error.auth.scram_invalid_mech:
+  en: Selecting SCRAM authentication mechanism
+  fr: Sélection du mécanisme d'authentification SCRAM
+  de: Auswählen des SCRAM-Authentifizierungsmechanismus
+  ja: SCRAM 認証メカニズムの選択
+  zh: 选择 SCRAM 认证机制
+  ko: SCRAM 인증 메커니즘 선택
+
+error.auth.scram_session_init:
+  en: Initializing SCRAM session
+  fr: Initialisation de la session SCRAM
+  de: Initialisieren der SCRAM-Sitzung
+  ja: SCRAM セッションの初期化
+  zh: 初始化 SCRAM 会话
+  ko: SCRAM 세션 초기화

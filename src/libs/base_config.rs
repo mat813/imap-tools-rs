@@ -5,6 +5,7 @@ use std::{
 };
 
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 use shell_words::split;
 
@@ -20,31 +21,35 @@ pub enum CommandType {
 
 #[derive(Debug, derive_more::Display)]
 pub enum BaseConfigError {
-    #[cfg_attr(not(test), display("Parsing config file {file:?}"))]
+    #[cfg_attr(not(test), display("{}", t!("error.shared.parse_file", file = file : {:?})))]
     #[cfg_attr(test, display("Parsing config file"))]
     ParseFile { file: PathBuf },
-    #[display("The server must be set")]
+    #[display("{}", t!("error.base_config.no_server"))]
     NoServer,
-    #[display("The username must be set")]
+    #[display("{}", t!("error.base_config.no_username"))]
     NoUsername,
-    #[display("The password or password command must be set")]
+    #[display("{}", t!("error.base_config.no_password"))]
     NoPassword,
-    #[display(
-        "password and password-command must not be set when auth = \"xoauth2\" (use oauth2-command instead)"
-    )]
+    #[display("{}", t!("error.base_config.oauth2_password"))]
     Oauth2Password,
-    #[display("oauth2-command must be set when auth = \"xoauth2\"")]
+    #[display("{}", t!("error.base_config.oauth2_no_command"))]
     Oauth2NoCommand,
-    #[display("Parsing {command_type} command {command}")]
+    #[display(
+        "{}",
+        t!("error.base_config.parsing_command", command_type = command_type, command = command)
+    )]
     ParsingCommand {
         command_type: CommandType,
         command: String,
     },
-    #[display("{command_type} command is empty")]
+    #[display("{}", t!("error.base_config.command_empty", command_type = command_type))]
     CommandEmpty { command_type: CommandType },
-    #[display("Executing {command_type} command")]
+    #[display("{}", t!("error.base_config.command_exec", command_type = command_type))]
     CommandExec { command_type: CommandType },
-    #[display("Running {command_type} command {command:?} (exit {status})\n{stdout}\n{stderr}")]
+    #[display(
+        "{}",
+        t!("error.base_config.command_fail", command_type = command_type, command = command : {:?}, status = status, stdout = stdout, stderr = stderr)
+    )]
     CommandFail {
         command_type: CommandType,
         command: String,
@@ -52,7 +57,7 @@ pub enum BaseConfigError {
         stdout: String,
         stderr: String,
     },
-    #[display("{command_type} command output is not valid UTF-8")]
+    #[display("{}", t!("error.base_config.password_command_output", command_type = command_type))]
     PasswordCommandOutput { command_type: CommandType },
 }
 impl std::error::Error for BaseConfigError {}
@@ -309,7 +314,7 @@ fn indent_output(prefix: &str, bytes: &[u8]) -> String {
     let indent = " ".repeat(prefix.len());
     let mut lines = s.lines();
     lines.next().map_or_else(
-        || format!("{prefix}(empty)"),
+        || format!("{prefix}{}", t!("output.empty")),
         |first| {
             let rest = lines.fold(String::new(), |mut output, l| {
                 let _ = write!(output, "\n{indent}{l}");
@@ -422,7 +427,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:156:13,
+            The server must be set, at src/libs/base_config.rs:161:13,
         )
         ");
     }
@@ -439,7 +444,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:160:13,
+            The username must be set, at src/libs/base_config.rs:165:13,
         )
         ");
     }
@@ -480,8 +485,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:205:50
-            `-- missing closing quote, at src/libs/base_config.rs:205:50,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:210:50
+            `-- missing closing quote, at src/libs/base_config.rs:210:50,
         )
         "#);
     }
@@ -503,8 +508,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:215:68
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:215:68,
+            Executing password command, at src/libs/base_config.rs:220:68
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:220:68,
         )
         ");
     }
@@ -526,7 +531,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:212:26,
+            password command is empty, at src/libs/base_config.rs:217:26,
         )
         ");
     }
@@ -563,7 +568,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:174:17,
+            The password or password command must be set, at src/libs/base_config.rs:179:17,
         )
         ");
     }
@@ -587,8 +592,8 @@ mod tests {
             config,
             @"
         Err(
-            Parsing config file, at src/libs/base_config.rs:110:18
-            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:110:18,
+            Parsing config file, at src/libs/base_config.rs:115:18
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:115:18,
         )
         "
         );

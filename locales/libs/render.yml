@@ -1,0 +1,180 @@
+_version: 2
+
+# Texts of the table renderers (src/libs/render/).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.renderer.csv:
+  en: CSV output
+  fr: Sortie CSV
+  de: CSV-Ausgabe
+  ja: CSV 出力
+  zh: CSV 输出
+  ko: CSV 출력
+
+cli.renderer.terminal:
+  en: Table-ish output
+  fr: Sortie en forme de tableau
+  de: Tabellenähnliche Ausgabe
+  ja: 表形式の出力
+  zh: 表格式输出
+  ko: 표 형식 출력
+
+cli.renderer.ratatui:
+  en: Ratatui TUI output
+  fr: Sortie TUI Ratatui
+  de: Ratatui-TUI-Ausgabe
+  ja: Ratatui TUI 出力
+  zh: Ratatui TUI 输出
+  ko: Ratatui TUI 출력
+
+cli.renderer.json:
+  en: JSON output
+  fr: Sortie JSON
+  de: JSON-Ausgabe
+  ja: JSON 出力
+  zh: JSON 输出
+  ko: JSON 출력
+
+cli.renderer.cursive:
+  en: Interactive TUI output (cursive)
+  fr: Sortie TUI interactive (cursive)
+  de: Interaktive TUI-Ausgabe (cursive)
+  ja: インタラクティブな TUI 出力 (cursive)
+  zh: 交互式 TUI 输出（cursive）
+  ko: 대화형 TUI 출력 (cursive)
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.renderer_arg.unknown:
+  en: Unknown renderer %{renderer}
+  fr: Format de sortie inconnu %{renderer}
+  de: Unbekanntes Ausgabeformat %{renderer}
+  ja: 不明な出力形式 %{renderer}
+  zh: 未知的输出格式 %{renderer}
+  ko: 알 수 없는 출력 형식 %{renderer}
+
+error.renderer.csv:
+  en: Writing CSV output
+  fr: Écriture de la sortie CSV
+  de: Schreiben der CSV-Ausgabe
+  ja: CSV 出力の書き込み
+  zh: 写入 CSV 输出
+  ko: CSV 출력 쓰기
+
+error.renderer.csv_write_headers:
+  en: Writing CSV headers
+  fr: Écriture de l'en-tête CSV
+  de: Schreiben der CSV-Kopfzeile
+  ja: CSV ヘッダーの書き込み
+  zh: 写入 CSV 表头
+  ko: CSV 헤더 쓰기
+
+error.renderer.csv_write_record:
+  en: Writing CSV record
+  fr: Écriture d'un enregistrement CSV
+  de: Schreiben eines CSV-Datensatzes
+  ja: CSV レコードの書き込み
+  zh: 写入 CSV 记录
+  ko: CSV 레코드 쓰기
+
+error.renderer.cursive:
+  en: Running cursive renderer
+  fr: Exécution du moteur de rendu cursive
+  de: Ausführen des cursive-Renderers
+  ja: cursive レンダラーの実行
+  zh: 运行 cursive 渲染器
+  ko: cursive 렌더러 실행
+
+error.renderer.cursive_backend_init:
+  en: Initializing cursive backend
+  fr: Initialisation du backend cursive
+  de: Initialisieren des cursive-Backends
+  ja: cursive バックエンドの初期化
+  zh: 初始化 cursive 后端
+  ko: cursive 백엔드 초기화
+
+error.renderer.cursive_interrupted:
+  en: rendering interrupted by user
+  fr: rendu interrompu par l'utilisateur
+  de: Ausgabe vom Benutzer abgebrochen
+  ja: ユーザーによって出力が中断されました
+  zh: 渲染被用户中断
+  ko: 사용자가 렌더링을 중단했습니다
+
+error.renderer.cursive_require_terminal:
+  en: renderer requires a terminal
+  fr: le moteur de rendu nécessite un terminal
+  de: Der Renderer benötigt ein Terminal
+  ja: レンダラーにはターミナルが必要です
+  zh: 渲染器需要终端
+  ko: 렌더러에는 터미널이 필요합니다
+
+error.renderer.json:
+  en: Serializing output to JSON
+  fr: Sérialisation de la sortie en JSON
+  de: Serialisieren der Ausgabe als JSON
+  ja: 出力の JSON へのシリアライズ
+  zh: 将输出序列化为 JSON
+  ko: 출력을 JSON으로 직렬화
+
+error.renderer.print:
+  en: Printing output
+  fr: Affichage de la sortie
+  de: Anzeigen der Ausgabe
+  ja: 出力の表示
+  zh: 打印输出
+  ko: 출력 표시
+
+error.renderer.strfmt:
+  en: formatting %{format} for %{display}
+  fr: mise en forme de %{format} pour %{display}
+  de: Formatieren von %{format} für %{display}
+  ja: "%{display} に対する %{format} の書式設定"
+  zh: 为 %{display} 设置 %{format} 格式
+  ko: "%{display}에 대한 %{format} 서식 지정"
+
+error.renderer.terminal:
+  en: Running ratatui renderer
+  fr: Exécution du moteur de rendu ratatui
+  de: Ausführen des ratatui-Renderers
+  ja: ratatui レンダラーの実行
+  zh: 运行 ratatui 渲染器
+  ko: ratatui 렌더러 실행
+
+error.renderer.terminal_clear:
+  en: Clearing terminal
+  fr: Effacement du terminal
+  de: Leeren des Terminals
+  ja: ターミナルのクリア
+  zh: 清除终端
+  ko: 터미널 지우기
+
+error.renderer.terminal_draw:
+  en: Drawing terminal frame
+  fr: Dessin de l'image du terminal
+  de: Zeichnen des Terminal-Frames
+  ja: ターミナルフレームの描画
+  zh: 绘制终端帧
+  ko: 터미널 프레임 그리기
+
+error.renderer.terminal_init:
+  en: Initializing ratatui terminal
+  fr: Initialisation du terminal ratatui
+  de: Initialisieren des ratatui-Terminals
+  ja: ratatui ターミナルの初期化
+  zh: 初始化 ratatui 终端
+  ko: ratatui 터미널 초기화
+
+error.renderer.terminal_u16:
+  en: Converting %{width} to u16
+  fr: Conversion de %{width} en u16
+  de: Konvertieren von %{width} in u16
+  ja: "%{width} の u16 への変換"
+  zh: 将 %{width} 转换为 u16
+  ko: "%{width}을(를) u16으로 변환"

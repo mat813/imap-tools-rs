@@ -1,0 +1,130 @@
+_version: 2
+
+# Texts of the `clean` command (src/commands/clean.rs).
+# Texts that other modules use too are in app.yml.
+
+# ---------------------------------------------------------------------------
+# CLI help
+# ---------------------------------------------------------------------------
+
+cli.clean.about:
+  en: Delete old messages
+  fr: Supprimer les anciens messages
+  de: Alte Nachrichten löschen
+  ja: 古いメッセージを削除する
+  zh: 删除旧邮件
+  ko: 오래된 메시지 삭제
+
+cli.clean.long_about:
+  en: |-
+    This command allows removing old messages from mailboxes.
+
+    It can be configured to keep more messages if they don't take too much space.
+  fr: |-
+    Cette commande permet de supprimer les anciens messages des boîtes aux lettres.
+
+    Elle peut être configurée pour conserver davantage de messages s'ils ne prennent pas trop de place.
+  de: |-
+    Mit diesem Befehl lassen sich alte Nachrichten aus Postfächern entfernen.
+
+    Er kann so konfiguriert werden, dass mehr Nachrichten behalten werden, wenn sie nicht zu viel Platz belegen.
+  ja: |-
+    このコマンドはメールボックスから古いメッセージを削除します。
+
+    容量をあまり使わない場合は、より多くのメッセージを残すように設定できます。
+  zh: |-
+    此命令用于从邮箱中删除旧邮件。
+
+    可以配置为：当邮件占用空间不大时保留更多邮件。
+  ko: |-
+    이 명령은 메일박스에서 오래된 메시지를 삭제합니다.
+
+    용량을 많이 차지하지 않는 경우 더 많은 메시지를 보관하도록 설정할 수 있습니다.
+
+# ---------------------------------------------------------------------------
+# Table titles and column headers
+# ---------------------------------------------------------------------------
+
+render.title.cleaner:
+  en: Mailbox Cleaner
+  fr: Nettoyage des boîtes aux lettres
+  de: Postfach-Bereinigung
+  ja: メールボックスの整理
+  zh: 邮箱清理
+  ko: 메일박스 정리
+
+render.title.cleaner_dry_run:
+  en: Mailbox Cleaner DRY-RUN
+  fr: Nettoyage des boîtes aux lettres (SIMULATION)
+  de: Postfach-Bereinigung (TESTLAUF)
+  ja: メールボックスの整理 (ドライラン)
+  zh: 邮箱清理（试运行）
+  ko: 메일박스 정리 (드라이런)
+
+render.header.del:
+  en: Del
+  fr: Supp.
+  de: Lösch.
+  ja: 削除
+  zh: 删除
+  ko: 삭제
+
+render.header.days:
+  en: Days
+  fr: Jours
+  de: Tage
+  ja: 日数
+  zh: 天数
+  ko: 일수
+
+render.header.first_date:
+  en: First date
+  fr: Première date
+  de: Erstes Datum
+  ja: 最古の日付
+  zh: 最早日期
+  ko: 가장 오래된 날짜
+
+# ---------------------------------------------------------------------------
+# Error contexts
+# ---------------------------------------------------------------------------
+
+error.clean.cleanup:
+  en: Cleaning up mailbox %{mailbox}
+  fr: Nettoyage de la boîte aux lettres %{mailbox}
+  de: Bereinigen des Postfachs %{mailbox}
+  ja: メールボックス %{mailbox} の整理
+  zh: 清理邮箱 %{mailbox}
+  ko: 메일박스 %{mailbox} 정리
+
+error.clean.imap_delete_uid:
+  en: Deleting messages by UID in %{mailbox}
+  fr: Suppression des messages par UID dans %{mailbox}
+  de: Löschen von Nachrichten per UID in %{mailbox}
+  ja: "%{mailbox} 内のメッセージの UID による削除"
+  zh: 按 UID 删除 %{mailbox} 中的邮件
+  ko: "%{mailbox}에서 UID로 메시지 삭제"
+
+error.clean.imap_uid_fetch:
+  en: Fetching message size and date in %{mailbox}
+  fr: Récupération de la taille et de la date des messages dans %{mailbox}
+  de: Abrufen von Größe und Datum der Nachrichten in %{mailbox}
+  ja: "%{mailbox} 内のメッセージのサイズと日付の取得"
+  zh: 获取 %{mailbox} 中邮件的大小和日期
+  ko: "%{mailbox}의 메시지 크기와 날짜 가져오기"
+
+error.clean.imap_uid_search:
+  en: Searching old messages in %{mailbox}
+  fr: Recherche des anciens messages dans %{mailbox}
+  de: Suchen nach alten Nachrichten in %{mailbox}
+  ja: "%{mailbox} 内の古いメッセージの検索"
+  zh: 在 %{mailbox} 中搜索旧邮件
+  ko: "%{mailbox}에서 오래된 메시지 검색"
+
+error.clean.no_first_date:
+  en: Could not find the first message where there should be one
+  fr: Impossible de trouver le premier message alors qu'il devrait y en avoir un
+  de: Die erste Nachricht konnte nicht gefunden werden, obwohl es eine geben sollte
+  ja: 存在するはずの最初のメッセージが見つかりませんでした
+  zh: 未能找到本应存在的第一封邮件
+  ko: 있어야 할 첫 번째 메시지를 찾을 수 없습니다

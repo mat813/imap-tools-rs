@@ -6,6 +6,7 @@ mod xoauth2;
 use std::str::FromStr;
 
 use exn::bail;
+use rust_i18n::t;
 use serde::{Deserialize, Serialize};
 
 pub use self::{cram_md5::CramMd5Auth, plain::PlainAuth, scram::ScramAuth, xoauth2::XOAuth2Auth};
@@ -13,15 +14,13 @@ pub use self::{cram_md5::CramMd5Auth, plain::PlainAuth, scram::ScramAuth, xoauth
 #[derive(Debug, derive_more::Display)]
 /// Error type for auth-method parsing.
 pub enum AuthError {
-    #[display(
-        "Invalid auth method, expects: login, plain, cram-md5, scram-sha-1, scram-sha-256, xoauth2"
-    )]
+    #[display("{}", t!("error.auth.invalid_method"))]
     InvalidMethod,
-    #[display("Building SCRAM client configuration")]
+    #[display("{}", t!("error.auth.scram_config"))]
     ScramConfig,
-    #[display("Selecting SCRAM authentication mechanism")]
+    #[display("{}", t!("error.auth.scram_invalid_mech"))]
     ScramInvalidMech,
-    #[display("Initializing SCRAM session")]
+    #[display("{}", t!("error.auth.scram_session_init"))]
     ScramSessionInit,
 }
 impl std::error::Error for AuthError {}
@@ -32,21 +31,22 @@ impl std::error::Error for AuthError {}
 pub enum AuthMethod {
     /// Standard IMAP LOGIN command (default).
     #[default]
+    #[value(help = t!("cli.auth.login"))]
     Login,
     /// SASL PLAIN — credentials in cleartext (RFC 4616). Requires TLS.
-    #[value(name = "plain")]
+    #[value(name = "plain", help = t!("cli.auth.plain"))]
     Plain,
     /// SASL CRAM-MD5 — HMAC-MD5 challenge/response (RFC 2195).
-    #[value(name = "cram-md5")]
+    #[value(name = "cram-md5", help = t!("cli.auth.cram_md5"))]
     CramMd5,
     /// SASL SCRAM-SHA-1 — salted challenge/response (RFC 5802).
-    #[value(name = "scram-sha-1")]
+    #[value(name = "scram-sha-1", help = t!("cli.auth.scram_sha_1"))]
     ScramSha1,
     /// SASL SCRAM-SHA-256 — salted challenge/response, stronger hash (RFC 7677).
-    #[value(name = "scram-sha-256")]
+    #[value(name = "scram-sha-256", help = t!("cli.auth.scram_sha_256"))]
     ScramSha256,
     /// SASL XOAUTH2 — bearer-token authentication (Gmail, Office 365).
-    #[value(name = "xoauth2")]
+    #[value(name = "xoauth2", help = t!("cli.auth.xoauth2"))]
     XOAuth2,
 }
 

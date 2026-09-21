@@ -22,11 +22,11 @@ use exn::{Result, ResultExt as _, bail};
 use strfmt::strfmt;
 use tokio::task;
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable};
+use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 struct TableState {
-    headers: &'static [&'static str],
+    headers: Vec<String>,
     data: Vec<Vec<String>>,
 }
 
@@ -35,7 +35,7 @@ const TABLE_NAME: &str = "table";
 type TableStateView = TableView<TableDataRow<String>, usize>;
 
 impl TableState {
-    const fn new(headers: &'static [&'static str]) -> Self {
+    const fn new(headers: Vec<String>) -> Self {
         Self {
             headers,
             data: Vec::new(),
@@ -54,7 +54,7 @@ impl TableState {
     fn build(&self) -> TableStateView {
         // TODO: align per column
         TableBuilder::new()
-            .column_header(self.headers.to_vec())
+            .column_header(self.headers.clone())
             .data(self.data.clone())
             .data_orientation(cursive::align::HAlign::Left)
             .sortable(false)
@@ -93,27 +93,23 @@ impl RendererUsable for CursiveRenderer {
 impl<const N: usize> Renderer<N> for CursiveRenderer {
     #[cfg_attr(
         feature = "tracing",
-        tracing::instrument(
-            level = "trace",
-            skip(title, format, headers),
-            ret,
-            err(level = "info")
-        )
+        tracing::instrument(level = "trace", skip(spec), ret, err(level = "info"))
     )]
-    fn new(
-        title: &'static str,
-        format: &'static [&'static str; N],
-        headers: &'static [&'static str; N],
-    ) -> Result<Self, RendererError> {
+    fn new(spec: TableSpec<N>) -> Result<Self, RendererError> {
         if !cfg!(test) && !stdout().is_terminal() {
             bail!(RendererError::CursiveRequireTerminal);
         }
 
         let quit = Arc::new(AtomicBool::new(false));
 
-        let format = format.iter().map(|s| format!("{{value{s}}}")).collect();
+        let format = spec
+            .format
+            .iter()
+            .map(|s| format!("{{value{s}}}"))
+            .collect();
 
-        let state = TableState::new(headers);
+        let state = TableState::new(spec.labels.into());
+        let title = spec.title;
 
         let table = state.build().with_name(TABLE_NAME);
 
