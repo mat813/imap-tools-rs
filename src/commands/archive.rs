@@ -443,7 +443,7 @@ mod tests {
                 .expect("should parse")
                 .is_match(&out[1])
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 
     #[tokio::test]
@@ -508,7 +508,7 @@ mod tests {
                 .expect("should parse")
                 .is_match(&out[1])
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 
     #[test]
@@ -601,6 +601,6 @@ mod tests {
                 .expect("should parse")
                 .is_match(&out[1])
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 }

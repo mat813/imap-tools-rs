@@ -411,7 +411,7 @@ mod tests {
             "not matching {:?}",
             out[1]
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 
     #[tokio::test]
@@ -462,7 +462,7 @@ mod tests {
             "not matching {:?}",
             out[1]
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 
     #[tokio::test]
@@ -522,6 +522,6 @@ mod tests {
             "not matching {:?}",
             out[1]
         );
-        assert!(out[2].is_empty());
+        assert_eq!(out[2], "");
     }
 }

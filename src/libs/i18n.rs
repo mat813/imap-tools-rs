@@ -227,7 +227,7 @@ mod tests {
                 }
             }
         }
-        assert!(problems.is_empty(), "{problems:#?}");
+        assert_eq!(problems, [] as [String; 0]);
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
             missing.is_empty(),
             "keys used but not translated: {missing:#?}"
         );
-        assert!(unused.is_empty(), "translated keys never used: {unused:#?}");
+        assert_eq!(unused, [] as [&String; 0]);
     }
 
     #[test]
@@ -269,7 +269,7 @@ mod tests {
                 }
             }
         }
-        assert!(problems.is_empty(), "{problems:#?}");
+        assert_eq!(problems, [] as [String; 0]);
     }
 
     #[test]
@@ -295,7 +295,7 @@ mod tests {
                 }
             }
         }
-        assert!(problems.is_empty(), "{problems:#?}");
+        assert_eq!(problems, [] as [String; 0]);
     }
 
     #[rstest]
