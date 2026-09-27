@@ -21,7 +21,7 @@ pub enum ImapDeleteCommandError {
 }
 impl std::error::Error for ImapDeleteCommandError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.imap.delete.about"),
     long_about = t!("cli.imap.delete.long_about")

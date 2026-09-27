@@ -4,7 +4,7 @@ use rust_i18n::t;
 
 use crate::commands::MainCommands;
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Clone, Debug, Parser)]
 #[command(
     name = "imap-tools",
     version,

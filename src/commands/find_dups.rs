@@ -43,7 +43,7 @@ pub enum DuError {
 }
 impl std::error::Error for DuError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.find_dups.about"),
     long_about = t!("cli.find_dups.long_about")

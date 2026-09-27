@@ -21,7 +21,7 @@ pub enum ImapCreateCommandError {
 }
 impl std::error::Error for ImapCreateCommandError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.imap.create.about"),
     long_about = t!("cli.imap.create.long_about")

@@ -62,7 +62,7 @@ pub enum ArchiveError {
 }
 impl std::error::Error for ArchiveError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.archive.about"),
     long_about = t!("cli.archive.long_about")
@@ -72,7 +72,7 @@ pub struct Archive {
     config: args::Generic,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 struct MyExtra {
     format: String,
     days: u32, // TODO: should this be a float instead ?

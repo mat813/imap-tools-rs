@@ -51,7 +51,7 @@ pub enum ImapDuCommandError {
 }
 impl std::error::Error for ImapDuCommandError {}
 
-#[derive(Debug, Clone, Default, clap::ValueEnum)]
+#[derive(Clone, Debug, Default, clap::ValueEnum)]
 pub enum Sort {
     /// Sort by mailbox name, ascending
     #[default]
@@ -68,7 +68,7 @@ pub enum Sort {
     SizeDesc,
 }
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.imap.disk_usage.about"),
     long_about = t!("cli.imap.disk_usage.long_about")

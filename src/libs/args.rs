@@ -5,7 +5,7 @@ use rust_i18n::t;
 
 use crate::libs::{auth::AuthMethod, mode::Mode, render::RendererArg};
 
-#[derive(Args, Debug, Clone, Default)]
+#[derive(Args, Clone, Debug, Default)]
 pub struct Generic {
     /// Path to the configuration file.
     #[arg(short = 'c', long, default_value = ".imap-tools.toml", help = t!("cli.args.config"))]
@@ -64,7 +64,7 @@ mod tests {
 
     use super::*;
 
-    #[derive(Parser, Debug, Clone)]
+    #[derive(Clone, Debug, Parser)]
     struct Args {
         #[clap(flatten)]
         generic: Generic,

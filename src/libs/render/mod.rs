@@ -16,7 +16,7 @@ use crate::libs::render::traits::RendererError;
 use crate::libs::render::traits::RendererUsable as _;
 pub use crate::libs::render::traits::{Renderer, TableSpec};
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, derive_more::Display, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Deserialize, derive_more::Display, Serialize, clap::ValueEnum)]
 pub enum RendererArg {
     /// CSV output
     #[value(help = t!("cli.renderer.csv"))]

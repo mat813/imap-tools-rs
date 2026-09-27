@@ -45,7 +45,7 @@ pub enum CleanError {
 }
 impl std::error::Error for CleanError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.clean.about"),
     long_about = t!("cli.clean.long_about")

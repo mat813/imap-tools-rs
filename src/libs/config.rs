@@ -21,7 +21,7 @@ pub enum ConfigError {
 
 impl std::error::Error for ConfigError {}
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Config<T>
 where

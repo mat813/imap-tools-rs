@@ -7,7 +7,7 @@ mod find_dups;
 mod imap;
 mod list;
 
-#[derive(Subcommand, Debug, Clone)]
+#[derive(Clone, Debug, Subcommand)]
 pub enum MainCommands {
     #[command(aliases = &["move"])]
     Archive(archive::Archive),

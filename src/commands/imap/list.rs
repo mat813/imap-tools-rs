@@ -39,7 +39,7 @@ pub enum ImapListCommandError {
 }
 impl std::error::Error for ImapListCommandError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.imap.list.about"),
     long_about = t!("cli.imap.list.long_about")

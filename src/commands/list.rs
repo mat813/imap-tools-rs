@@ -28,7 +28,7 @@ pub enum ListError {
 }
 impl std::error::Error for ListError {}
 
-#[derive(Args, Debug, Clone)]
+#[derive(Args, Clone, Debug)]
 #[command(
     about = t!("cli.list.about"),
     long_about = t!("cli.list.long_about")

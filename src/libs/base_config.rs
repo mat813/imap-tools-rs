@@ -62,7 +62,7 @@ pub enum BaseConfigError {
 }
 impl std::error::Error for BaseConfigError {}
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct BaseConfig {
     pub renderer: Option<RendererArg>,

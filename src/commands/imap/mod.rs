@@ -6,7 +6,7 @@ mod delete;
 mod disk_usage;
 mod list;
 
-#[derive(Subcommand, Debug, Clone)]
+#[derive(Clone, Debug, Subcommand)]
 pub enum ImapCommands {
     #[command(aliases = &["ls"])]
     List(list::List),

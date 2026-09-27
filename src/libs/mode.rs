@@ -13,7 +13,7 @@ pub enum ModeError {
 }
 impl std::error::Error for ModeError {}
 
-#[derive(Clone, Debug, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Debug, Eq, PartialEq, clap::ValueEnum)]
 #[non_exhaustive]
 pub enum Mode {
     #[cfg_attr(

@@ -25,7 +25,7 @@ pub enum AuthError {
 }
 impl std::error::Error for AuthError {}
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, clap::ValueEnum)]
 /// Authentication mechanism used when connecting to the IMAP server.
 #[derive(Default)]
 pub enum AuthMethod {

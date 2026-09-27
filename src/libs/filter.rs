@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use regex::Regex;
 use serde::{Deserialize, Deserializer, Serialize, de};
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct Filter<T>
 where
     T: Clone + Debug + Serialize,
@@ -162,7 +162,7 @@ mod internal {
     impl std::error::Error for FilterError {}
 
     /// Private structure without the regex
-    #[derive(Deserialize, Serialize, Debug)]
+    #[derive(Debug, Deserialize, Serialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct Filter<T>
     where
@@ -276,7 +276,7 @@ mod tests {
 
     use crate::libs::filter::Filter;
 
-    #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+    #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     struct ExtraConfig {
         additional_info: String,
     }
