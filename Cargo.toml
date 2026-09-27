@@ -19,13 +19,6 @@ load-path = "locales"
 pkg-url = "{ repo }/-/releases/v{ version }/downloads/{ name }-v{ version }-{ target }{ archive-suffix }"
 pkg-fmt = "zip"
 
-# cargo watch -x "build --profile dev-rustls --no-default-features -F rustls" -x "build --profile dev-openssl --no-default-features -F openssl"
-[profile.dev-openssl]
-inherits = "dev"
-
-[profile.dev-rustls]
-inherits = "dev"
-
 [features]
 default = ["rustls", "tracing"]
 __tls = []
@@ -36,43 +29,50 @@ tracing = ["dep:tracing", "dep:tracing-subscriber", "regex/logging"]
 cursive = ["dep:cursive"]
 
 [dependencies]
+async-imap = { version = "=0.11.3", default-features = false, features = ["runtime-tokio"] }
+better-cursive-table = "=0.3.0"
 chrono = "=0.4.45"
-csv = "=1.4.0"
 clap = { version = "=4.6.7", features = ["derive", "env"] }
+csv = "=1.4.0"
+cursive = { version = "=0.21.1", optional = true, default-features = false, features = ["crossterm-backend"] }
 derive_more = { version = "=2.1.1", features = ["debug", "display", "from", "into"] }
 exn = "=0.3.1"
 futures = { version = "=0.3.34", default-features = false, features = ["std"] }
+hmac = "=0.13.0"
 indicatif = "=0.18.6"
+md-5 = "=0.11.0"
+native-tls = { version = "=0.2.18", optional = true }
 ratatui = { version = "=0.30.2", optional = true }
-cursive = { version = "=0.21.1", optional = true, default-features = false, features = ["crossterm-backend"] }
 regex = "=1.13.1"
+rsasl = { version = "=2.3.1", default-features = false, features = ["std", "provider", "config_builder", "scram-sha-1", "scram-sha-2"] }
+rust-i18n = "=4.2.3"
+rustls-native-certs = { version = "=0.8.4", optional = true }
 serde = { version = "=1.0.229", features = ["derive"] }
 serde-value = "=0.7.0"
 serde_any = { version = "=0.5.0", default-features = false, features = ["json", "toml", "yaml"] }
+serde_json = { version = "=1.0.151" }
 shell-words = "=1.1.1"
 size = { version = "=0.5.0", features = ["serde"] }
 strfmt = "=0.2.6"
-tracing = { version = "=0.1.44", features = ["log"], optional = true }
-tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional = true }
-serde_json = { version = "=1.0.151" }
-async-imap = { version = "=0.11.3", default-features = false, features = ["runtime-tokio"] }
+sys-locale = "=0.3.2"
 tokio = { version = "=1.53.1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
 tokio-native-tls = { version = "=0.3.1", optional = true }
-native-tls = { version = "=0.2.18", optional = true }
 tokio-rustls = { version = "=0.26.5", optional = true }
-rustls-native-certs = { version = "=0.8.4", optional = true }
-hmac = "=0.13.0"
-md-5 = "=0.11.0"
-rsasl = { version = "=2.3.1", default-features = false, features = ["std", "provider", "config_builder", "scram-sha-1", "scram-sha-2"] }
-better-cursive-table = "=0.3.0"
-rust-i18n = "=4.2.3"
-sys-locale = "=0.3.2"
+tracing = { version = "=0.1.44", features = ["log"], optional = true }
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional = true }
 unicode-width = "=0.2.2"
 
 [dev-dependencies]
 insta = "=1.48.0"
 rstest = "=0.27.0"
 tempfile = "=3.27.0"
+
+# cargo watch -x "build --profile dev-rustls --no-default-features -F rustls" -x "build --profile dev-openssl --no-default-features -F openssl"
+[profile.dev-openssl]
+inherits = "dev"
+
+[profile.dev-rustls]
+inherits = "dev"
 
 [lints.rust]
 absolute_paths_not_starting_with_crate = "warn"
