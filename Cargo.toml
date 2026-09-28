@@ -57,7 +57,7 @@ strfmt = "=0.2.6"
 sys-locale = "=0.3.2"
 tokio = { version = "=1.53.1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync"] }
 tokio-native-tls = { version = "=0.3.1", optional = true }
-tokio-rustls = { version = "=0.26.5", optional = true }
+tokio-rustls = { version = "=0.26.6", optional = true }
 tracing = { version = "=0.1.44", features = ["log"], optional = true }
 tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional = true }
 unicode-width = "=0.2.2"
