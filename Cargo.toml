@@ -63,7 +63,7 @@ tracing-subscriber = { version = "=0.3.23", features = ["env-filter"], optional 
 unicode-width = "=0.2.2"
 
 [dev-dependencies]
-insta = "=1.48.0"
+insta = "=1.49.0"
 rstest = "=0.27.0"
 tempfile = "=3.27.0"
 
