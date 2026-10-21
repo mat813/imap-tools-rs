@@ -1470,7 +1470,7 @@ dependencies = [
 
 [[package]]
 name = "imap-tools"
-version = "1.13.0"
+version = "1.13.1"
 dependencies = [
  "async-imap",
  "better-cursive-table",

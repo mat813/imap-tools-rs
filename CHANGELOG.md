@@ -5,6 +5,251 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.1 (2026-10-21)
+
+### Chore
+
+ - <csr-id-c15349b646d761125016acdc725e218771576908/> update dependency cargo-nextest to v0.9.149
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.148 | 0.9.149 |
+ - <csr-id-02b0301bc0a9dfde6de48d57546a6a69a9662746/> update rust crate rstest to v0.28.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | rstest  | 0.27.0 | 0.28.0 |
+ - <csr-id-33caf24d62a1143de9b313a89a58c20ec6bb9c90/> lock file maintenance
+ - <csr-id-bb38fca9f62bf82cd0ddaf48c6587207c05a4501/> update dependency cargo-binstall to v1.26.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.25.3 | 1.26.0 |
+ - <csr-id-1e3f76a2f2d74bb77b4aa39fde5682179b2bf2ea/> update dependency zipsign to v0.2.2
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | zipsign | 0.2.1 | 0.2.2 |
+ - <csr-id-0898a2ad6ffccd9cdcb42805a8f1ae6dca601913/> update dependency rust-lang/rust to v1.99.1
+   | datasource      | package        | from   | to     |
+   | --------------- | -------------- | ------ | ------ |
+   | github-releases | rust-lang/rust | 1.99.0 | 1.99.1 |
+ - <csr-id-f0131a97ec32c0eb4abb7d3ec97f64b8002313dc/> update docker.io/library/rust docker tag to v1.99.1
+   | datasource | package                | from   | to     |
+   | ---------- | ---------------------- | ------ | ------ |
+   | docker     | docker.io/library/rust | 1.99.0 | 1.99.1 |
+ - <csr-id-284075c9a5f0179718c025c102dc939e6513f4cd/> update dependency cargo-sort-derives to v0.14.1
+   | datasource | package            | from   | to     |
+   | ---------- | ------------------ | ------ | ------ |
+   | crate      | cargo-sort-derives | 0.14.0 | 0.14.1 |
+ - <csr-id-3dbefe7d0679468bc133712460a6556c7bc8d7d6/> lock file maintenance
+ - <csr-id-bf839366dd1bef4750c74f0263c7f8e7100f9c90/> update dependency cargo-sort-derives to v0.14.0
+   | datasource | package            | from   | to     |
+   | ---------- | ------------------ | ------ | ------ |
+   | crate      | cargo-sort-derives | 0.13.0 | 0.14.0 |
+ - <csr-id-9783f57b65bbfbeff13839eb8ec59a8cd4a5eef1/> update dependency cargo-binstall to v1.25.3
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.25.2 | 1.25.3 |
+ - <csr-id-35df6e62f1b62a54f14a8528e093af0e22231116/> update dependency cargo-nextest to v0.9.148
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.146 | 0.9.148 |
+ - <csr-id-9a4c53803ee2662bb3595ce563df502ce60b2c7a/> update dependency cargo-binstall to v1.25.2
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.25.1 | 1.25.2 |
+ - <csr-id-0219c758c553732df8b1c70e95cb0ee022f2631b/> lock file maintenance
+ - <csr-id-8da9aec02085066d5696e6a3d89c6ca420c27075/> update dependency cargo-binstall to v1.25.1
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.25.0 | 1.25.1 |
+ - <csr-id-88b857ec75aff2e4e7751ecf002984834e167541/> update dependency cargo-binstall to v1.25.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.24.0 | 1.25.0 |
+ - <csr-id-dcc4902949217d6c12cb4d7acae169088961eb0d/> update rust crate insta to v1.49.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | insta   | 1.48.0 | 1.49.0 |
+ - <csr-id-dc058913b5d5914d7c92f77bec80ad029badb282/> update dependency rust-lang/rust to v1.99.0
+   | datasource      | package        | from   | to     |
+   | --------------- | -------------- | ------ | ------ |
+   | github-releases | rust-lang/rust | 1.98.1 | 1.99.0 |
+ - <csr-id-0f3f0b0247157012bd4e6604ae095a350daa3ebf/> update docker.io/library/rust docker tag to v1.99.0
+   | datasource | package                | from   | to     |
+   | ---------- | ---------------------- | ------ | ------ |
+   | docker     | docker.io/library/rust | 1.98.1 | 1.99.0 |
+ - <csr-id-1af3517e12a62e0dc8a2d304d211221a3a16101d/> lock file maintenance
+ - <csr-id-40167cbe39ba0e1b99d70f9f3ec60a5c970b6c5e/> update dependency cargo-binstall to v1.24.0
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.23.0 | 1.24.0 |
+ - <csr-id-6b6b7d8c020a9a45d9b310ded698e84839178c6f/> update dependency cargo-nextest to v0.9.146
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.145 | 0.9.146 |
+
+### Bug Fixes
+
+ - <csr-id-dbae05830f3fac4b33e3d3261228655d134c97b7/> update rust crate tokio to v1.54.0
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.53.3 | 1.54.0 |
+ - <csr-id-5a85a20d29d0322222682924299de8d9d529e2e6/> update rust crate size to v0.6.0
+   | datasource | package | from  | to    |
+   | ---------- | ------- | ----- | ----- |
+   | crate      | size    | 0.5.0 | 0.6.0 |
+ - <csr-id-534bdeca5004de8a8fabe97291a3e2e7286687c7/> update rust crate tokio to v1.53.3
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.53.2 | 1.53.3 |
+ - <csr-id-3768df6fc29e56b62a082a37a13ac6c868801050/> update rust crate rustls-native-certs to v0.8.5
+   | datasource | package             | from  | to    |
+   | ---------- | ------------------- | ----- | ----- |
+   | crate      | rustls-native-certs | 0.8.4 | 0.8.5 |
+ - <csr-id-8a818fa10b05d671af0a68b3d94b0f0dcf488dd0/> update rust crate serde_json to v1.0.154
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.153 | 1.0.154 |
+ - <csr-id-f4e471f7ed491fd98c294b46bd7446929d4e389c/> update rust crate serde_json to v1.0.153
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.152 | 1.0.153 |
+ - <csr-id-38b11d280a2a425f75e400eecc361fd82d8e2635/> update rust crate serde_json to v1.0.152
+   | datasource | package    | from    | to      |
+   | ---------- | ---------- | ------- | ------- |
+   | crate      | serde_json | 1.0.151 | 1.0.152 |
+ - <csr-id-99a463624a5440184bda2ebaa559008d8fa80c59/> update rust crate tokio to v1.53.2
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.53.1 | 1.53.2 |
+ - <csr-id-ab9c4af8739e1310bc523d810ce5ddb4fe5b25e2/> update rust crate async-imap to v0.12.0
+   | datasource | package    | from   | to     |
+   | ---------- | ---------- | ------ | ------ |
+   | crate      | async-imap | 0.11.3 | 0.12.0 |
+ - <csr-id-71080f2e2e0bc77c6f4892dc735f7314cd847864/> update rust crate rust-i18n to v4.2.4
+   | datasource | package   | from  | to    |
+   | ---------- | --------- | ----- | ----- |
+   | crate      | rust-i18n | 4.2.3 | 4.2.4 |
+ - <csr-id-cb6eb8d157689531a902c82ec493b4df59e7aa57/> update rust crate tokio-rustls to v0.26.6
+   | datasource | package      | from   | to     |
+   | ---------- | ------------ | ------ | ------ |
+   | crate      | tokio-rustls | 0.26.5 | 0.26.6 |
+ - <csr-id-0764d234f23e019c282a2a2b06d68f74601c041f/> update rust crate rust-i18n to v4.2.3
+   | datasource | package   | from  | to    |
+   | ---------- | --------- | ----- | ----- |
+   | crate      | rust-i18n | 4.2.2 | 4.2.3 |
+
+### Other
+
+ - <csr-id-000048905538f504f150a1242df6064f702d084c/> make better-cursive-table optional, it is only used by the cursive renderer
+ - <csr-id-000043902fe4b3ad8358835a7c3d7d2d8c0a16ca/> add cargo-sort-derives
+ - <csr-id-000043802abe32996a1f56117cabb85f5d054cb9/> add cargo-sort
+
+### Refactor
+
+ - <csr-id-000048805eb0e4037f3e2dd2abbb2f08aa354c43/> small simplifications in scram, find_dups and the test connect helper
+ - <csr-id-000048707eb771c4f562fa7d5e02a9a2236de14f/> build the SASL PLAIN response with format!
+ - <csr-id-000048605a85dd7ea498c75ab5802c1c15a1d986/> inline the one-line Filters alias module
+ - <csr-id-000048401357709c1aaf5b49dd82c896f64dc83b/> imap list returns the extra data directly instead of a one-field wrapper
+ - <csr-id-000048307ebf903fc53ee164992236a058ec5827/> drop the RendererUsable trait, check for a terminal once in RendererArg::default
+ - <csr-id-0000482042236c31493547be707a42b0bbaa0dfc/> split archive's move step out and reuse Imap::flag_deleted
+ - <csr-id-00004810e789d77aec25f354984049b413291ff6/> apply CLI overrides in BaseConfig with Option::or
+ - <csr-id-00004800654b61dab3587967f70e59d01a06efa7/> simplify ids_list_to_collapsed_sequence with a ranges vector
+ - <csr-id-00004790def6aa6f33ebd08dcbc84d915bb34d3f/> parse Mode and AuthMethod through clap's ValueEnum
+   Config-file spellings (auto_tls, start_tls, ...) are kept as aliases and
+   the translated error messages are unchanged.
+ - <csr-id-0000478057ec89807d95cf82af951b49765483a9/> remove unused FromStr and error type for RendererArg
+ - <csr-id-000047704ddfebd7f64569659a5c0d1150b9d094/> share the include/exclude regex filter between imap list and du
+ - <csr-id-0000476045380d0f6152765e58234ef73d57c13c/> share connect/run/report plumbing between imap create and delete
+ - <csr-id-000047502a1e419b2248696ddbdc2f8023a193f6/> route all SASL auth arms through one authenticate helper
+ - <csr-id-00004740a5a5508d31b7ca6290b7e23a34763daa/> deduplicate STARTTLS and implicit-TLS setup in build_stream
+ - <csr-id-000047301fcf0f27ff3485f99b89afd2fece4674/> share one command runner for password and oauth2 commands
+ - <csr-id-000047108862ce726d4a2e7b88c0a83a386126e2/> drop unused Serialize impls and bounds
+   Config types are only ever deserialized; the only users of Serialize were
+   two round-trip tests. Removes the Filter mirror fields (priv_*) and the
+   manual Serialize impls for Filter, Mode and AuthMethod.
+
+### Style
+
+ - <csr-id-00004350b9cd9a47fc0cecd2a0ba92d63d5b2b06/> clippy
+
+### Test
+
+ - <csr-id-0000485049bc8486f9529052d9cdb85d8c263514/> call parse_message_id directly instead of through a test-only forwarder
+ - <csr-id-000047208f11a32f6619d8d3ffecd0b9eebf249f/> table-drive auth and mode tests, drop args tests covered by combined_options
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 56 commits contributed to the release.
+ - 30 days passed between releases.
+ - 56 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Make better-cursive-table optional, it is only used by the cursive renderer (0000489)
+    - Small simplifications in scram, find_dups and the test connect helper (0000488)
+    - Build the SASL PLAIN response with format! (0000487)
+    - Inline the one-line Filters alias module (0000486)
+    - Call parse_message_id directly instead of through a test-only forwarder (0000485)
+    - Imap list returns the extra data directly instead of a one-field wrapper (0000484)
+    - Drop the RendererUsable trait, check for a terminal once in RendererArg::default (0000483)
+    - Split archive's move step out and reuse Imap::flag_deleted (0000482)
+    - Apply CLI overrides in BaseConfig with Option::or (0000481)
+    - Simplify ids_list_to_collapsed_sequence with a ranges vector (0000480)
+    - Parse Mode and AuthMethod through clap's ValueEnum (0000479)
+    - Remove unused FromStr and error type for RendererArg (0000478)
+    - Share the include/exclude regex filter between imap list and du (0000477)
+    - Share connect/run/report plumbing between imap create and delete (0000476)
+    - Route all SASL auth arms through one authenticate helper (0000475)
+    - Deduplicate STARTTLS and implicit-TLS setup in build_stream (0000474)
+    - Share one command runner for password and oauth2 commands (0000473)
+    - Table-drive auth and mode tests, drop args tests covered by combined_options (0000472)
+    - Drop unused Serialize impls and bounds (0000471)
+    - Update rust crate tokio to v1.54.0 (dbae058)
+    - Update dependency cargo-nextest to v0.9.149 (c15349b)
+    - Update rust crate rstest to v0.28.0 (02b0301)
+    - Lock file maintenance (33caf24)
+    - Update dependency cargo-binstall to v1.26.0 (bb38fca)
+    - Update rust crate size to v0.6.0 (5a85a20)
+    - Update dependency zipsign to v0.2.2 (1e3f76a)
+    - Update dependency rust-lang/rust to v1.99.1 (0898a2a)
+    - Update docker.io/library/rust docker tag to v1.99.1 (f0131a9)
+    - Update rust crate tokio to v1.53.3 (534bdec)
+    - Update rust crate rustls-native-certs to v0.8.5 (3768df6)
+    - Update dependency cargo-sort-derives to v0.14.1 (284075c)
+    - Lock file maintenance (3dbefe7)
+    - Update dependency cargo-sort-derives to v0.14.0 (bf83936)
+    - Update rust crate serde_json to v1.0.154 (8a818fa)
+    - Update rust crate serde_json to v1.0.153 (f4e471f)
+    - Update rust crate serde_json to v1.0.152 (38b11d2)
+    - Update dependency cargo-binstall to v1.25.3 (9783f57)
+    - Update dependency cargo-nextest to v0.9.148 (35df6e6)
+    - Update dependency cargo-binstall to v1.25.2 (9a4c538)
+    - Lock file maintenance (0219c75)
+    - Update dependency cargo-binstall to v1.25.1 (8da9aec)
+    - Update rust crate tokio to v1.53.2 (99a4636)
+    - Update dependency cargo-binstall to v1.25.0 (88b857e)
+    - Update rust crate insta to v1.49.0 (dcc4902)
+    - Update rust crate async-imap to v0.12.0 (ab9c4af)
+    - Update dependency rust-lang/rust to v1.99.0 (dc05891)
+    - Update docker.io/library/rust docker tag to v1.99.0 (0f3f0b0)
+    - Update rust crate rust-i18n to v4.2.4 (71080f2)
+    - Update rust crate tokio-rustls to v0.26.6 (cb6eb8d)
+    - Lock file maintenance (1af3517)
+    - Add cargo-sort-derives (0000439)
+    - Add cargo-sort (0000438)
+    - Update dependency cargo-binstall to v1.24.0 (40167cb)
+    - Update rust crate rust-i18n to v4.2.3 (0764d23)
+    - Clippy (0000435)
+    - Update dependency cargo-nextest to v0.9.146 (6b6b7d8)
+</details>
+
 ## v1.13.0 (2026-09-21)
 
 ### Chore
@@ -74,6 +319,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource      | package        | from   | to     |
    | --------------- | -------------- | ------ | ------ |
    | github-releases | rust-lang/rust | 1.97.0 | 1.97.1 |
+ - <csr-id-aa39f4e3d50b9b8735b1e99d7a52f901f1d649f5/> Bump imap-tools v1.13.0
 
 ### New Features
 
@@ -154,9 +400,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 44 commits contributed to the release.
+ - 45 commits contributed to the release.
  - 68 days passed between releases.
- - 44 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 45 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -166,6 +412,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Bump imap-tools v1.13.0 (aa39f4e)
     - Add i18n (en, fr, de, ja, zh, ko) (0000432)
     - Lock file maintenance (59f403e)
     - Update rust crate strfmt to v0.2.6 (0624f60)
