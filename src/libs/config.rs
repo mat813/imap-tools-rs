@@ -2,7 +2,7 @@ use std::{fmt::Debug, path::PathBuf};
 
 use exn::{Result, ResultExt as _};
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::libs::{
     args::Generic,
@@ -21,11 +21,11 @@ pub enum ConfigError {
 
 impl std::error::Error for ConfigError {}
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct Config<T>
 where
-    T: Clone + Debug + Serialize + Send + Sync,
+    T: Clone + Debug + Send + Sync,
 {
     #[serde(flatten)]
     pub base: BaseConfig,
@@ -37,7 +37,7 @@ where
 
 impl<T> Default for Config<T>
 where
-    T: Clone + Debug + Serialize + Send + Sync,
+    T: Clone + Debug + Send + Sync,
 {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
@@ -51,7 +51,7 @@ where
 
 impl<T> Config<T>
 where
-    T: Clone + Debug + Serialize + for<'de> Deserialize<'de> + Send + Sync,
+    T: Clone + Debug + for<'de> Deserialize<'de> + Send + Sync,
 {
     #[cfg_attr(
         feature = "tracing",
@@ -141,7 +141,7 @@ mod tests {
                     mode: Some(
                         AutoTls,
                     ),
-                    debug: false,
+                    _debug: false,
                     dry_run: false,
                     auth: None,
                     oauth2_command: None,
@@ -169,7 +169,7 @@ mod tests {
                     mode: Some(
                         Plaintext,
                     ),
-                    debug: false,
+                    _debug: false,
                     dry_run: false,
                     auth: None,
                     oauth2_command: None,
@@ -404,7 +404,7 @@ mod tests {
                     mode: Some(
                         AutoTls,
                     ),
-                    debug: true,
+                    _debug: true,
                     dry_run: true,
                     auth: None,
                     oauth2_command: None,
@@ -432,7 +432,7 @@ mod tests {
                     mode: Some(
                         Plaintext,
                     ),
-                    debug: true,
+                    _debug: true,
                     dry_run: true,
                     auth: None,
                     oauth2_command: None,
@@ -496,7 +496,7 @@ mod tests {
                     mode: Some(
                         Tls,
                     ),
-                    debug: false,
+                    _debug: false,
                     dry_run: true,
                     auth: None,
                     oauth2_command: None,
@@ -524,7 +524,7 @@ mod tests {
                     mode: Some(
                         Plaintext,
                     ),
-                    debug: false,
+                    _debug: false,
                     dry_run: true,
                     auth: None,
                     oauth2_command: None,

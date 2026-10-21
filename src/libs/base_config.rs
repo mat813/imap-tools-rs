@@ -6,7 +6,7 @@ use std::{
 
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use shell_words::split;
 
 use crate::libs::{args::Generic, auth::AuthMethod, mode::Mode, render::RendererArg};
@@ -62,7 +62,7 @@ pub enum BaseConfigError {
 }
 impl std::error::Error for BaseConfigError {}
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "kebab-case")]
 pub struct BaseConfig {
     pub renderer: Option<RendererArg>,
@@ -81,8 +81,8 @@ pub struct BaseConfig {
     #[serde(default)]
     pub mode: Option<Mode>,
 
-    #[serde(default)]
-    pub debug: bool,
+    #[serde(default, rename = "debug")]
+    pub _debug: bool,
 
     #[serde(default)]
     pub dry_run: bool,
@@ -382,7 +382,7 @@ mod tests {
                 mode: Some(
                     AutoTls,
                 ),
-                debug: false,
+                _debug: false,
                 dry_run: false,
                 auth: None,
                 oauth2_command: None,
@@ -406,7 +406,7 @@ mod tests {
                 mode: Some(
                     Plaintext,
                 ),
-                debug: false,
+                _debug: false,
                 dry_run: false,
                 auth: None,
                 oauth2_command: None,
@@ -636,7 +636,7 @@ mod tests {
                 mode: Some(
                     AutoTls,
                 ),
-                debug: true,
+                _debug: true,
                 dry_run: true,
                 auth: None,
                 oauth2_command: None,
@@ -660,7 +660,7 @@ mod tests {
                 mode: Some(
                     Plaintext,
                 ),
-                debug: true,
+                _debug: true,
                 dry_run: true,
                 auth: None,
                 oauth2_command: None,
@@ -719,7 +719,7 @@ mod tests {
                 mode: Some(
                     Tls,
                 ),
-                debug: false,
+                _debug: false,
                 dry_run: true,
                 auth: None,
                 oauth2_command: None,
@@ -743,7 +743,7 @@ mod tests {
                 mode: Some(
                     Plaintext,
                 ),
-                debug: false,
+                _debug: false,
                 dry_run: true,
                 auth: None,
                 oauth2_command: None,

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use exn::bail;
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Debug, derive_more::Display)]
 pub enum ModeError {
@@ -99,28 +99,6 @@ impl<'de> Deserialize<'de> for Mode {
     }
 }
 
-impl Serialize for Mode {
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, serializer), err(level = "debug"))
-    )]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let s = match *self {
-            Self::AutoTls => "auto_tls",
-            Self::Auto => "auto",
-            Self::Plaintext => "plaintext",
-            #[cfg(feature = "__tls")]
-            Self::Tls => "tls",
-            #[cfg(feature = "__tls")]
-            Self::StartTls => "start_tls",
-        };
-        serializer.serialize_str(s)
-    }
-}
-
 impl Default for Mode {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
@@ -135,8 +113,6 @@ impl Default for Mode {
 #[cfg(test)]
 mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
-
-    use serde_any::{Format, from_str, to_string};
 
     use super::Mode;
 
@@ -201,27 +177,6 @@ mod tests {
     fn from_str_invalid() {
         let result = "bogus".parse::<Mode>();
         assert!(result.is_err(), "bogus should not parse as a valid mode");
-    }
-
-    #[test]
-    fn serde_roundtrip() {
-        for s in &["auto_tls", "auto", "plaintext"] {
-            let mode: Mode = s.parse().expect("should parse");
-            let json = to_string(&mode, Format::Json).expect("should serialize");
-            let back: Mode = from_str(&json, Format::Json).expect("should deserialize");
-            assert_eq!(mode, back);
-        }
-    }
-
-    #[cfg(feature = "__tls")]
-    #[test]
-    fn serde_roundtrip_tls_modes() {
-        for s in &["tls", "start_tls"] {
-            let mode: Mode = s.parse().expect("should parse");
-            let json = to_string(&mode, Format::Json).expect("should serialize");
-            let back: Mode = from_str(&json, Format::Json).expect("should deserialize");
-            assert_eq!(mode, back);
-        }
     }
 
     #[cfg(feature = "__tls")]

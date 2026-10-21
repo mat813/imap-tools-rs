@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 use exn::bail;
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 pub use self::{cram_md5::CramMd5Auth, plain::PlainAuth, scram::ScramAuth, xoauth2::XOAuth2Auth};
 
@@ -93,26 +93,6 @@ impl<'de> Deserialize<'de> for AuthMethod {
     {
         let s = String::deserialize(deserializer)?;
         Self::from_str(&s).map_err(serde::de::Error::custom)
-    }
-}
-
-impl Serialize for AuthMethod {
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, serializer), err(level = "debug"))
-    )]
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(match *self {
-            Self::Login => "login",
-            Self::Plain => "plain",
-            Self::CramMd5 => "cram-md5",
-            Self::ScramSha1 => "scram-sha-1",
-            Self::ScramSha256 => "scram-sha-256",
-            Self::XOAuth2 => "xoauth2",
-        })
     }
 }
 

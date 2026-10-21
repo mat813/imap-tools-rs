@@ -6,7 +6,7 @@ use clap::Args;
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::libs::{
     args,
@@ -72,7 +72,7 @@ pub struct Archive {
     config: args::Generic,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize)]
 struct MyExtra {
     format: String,
     days: u32, // TODO: should this be a float instead ?

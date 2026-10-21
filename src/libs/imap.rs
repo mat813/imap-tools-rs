@@ -10,7 +10,6 @@ use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use rust_i18n::t;
-use serde::Serialize;
 use tokio::net::TcpStream;
 
 use crate::libs::{
@@ -117,7 +116,7 @@ where
 #[derive(Debug)]
 pub struct Imap<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug,
 {
     /// The underlying async-imap session.
     pub session: Session<ImapStream>,
@@ -137,7 +136,7 @@ where
 
 impl<T> Drop for Imap<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug,
 {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     fn drop(&mut self) {
@@ -152,7 +151,7 @@ where
 
 impl<T> Imap<T>
 where
-    T: Clone + Debug + Serialize + Send + Sync,
+    T: Clone + Debug + Send + Sync,
 {
     #[cfg_attr(
         feature = "tracing",

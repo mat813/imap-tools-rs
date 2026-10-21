@@ -9,14 +9,14 @@ mod traits;
 
 use exn::{Exn, Result, ResultExt as _, bail};
 use rust_i18n::t;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::libs::render::traits::RendererError;
 #[cfg(any(feature = "ratatui", feature = "cursive"))]
 use crate::libs::render::traits::RendererUsable as _;
 pub use crate::libs::render::traits::{Renderer, TableSpec};
 
-#[derive(Clone, Copy, Debug, Deserialize, derive_more::Display, Serialize, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Deserialize, derive_more::Display, clap::ValueEnum)]
 pub enum RendererArg {
     /// CSV output
     #[value(help = t!("cli.renderer.csv"))]

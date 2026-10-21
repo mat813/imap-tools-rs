@@ -1,12 +1,12 @@
 use std::fmt::Debug;
 
 use regex::Regex;
-use serde::{Deserialize, Deserializer, Serialize, de};
+use serde::{Deserialize, Deserializer, de};
 
 #[derive(Clone, Debug)]
 pub struct Filter<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug,
 {
     pub reference: Option<String>,
 
@@ -17,16 +17,11 @@ where
     pub exclude_re: Option<Regex>,
 
     pub extra: Option<T>,
-
-    priv_include: Option<Vec<String>>,
-    priv_include_re: Option<Vec<String>>,
-    priv_exclude: Option<Vec<String>>,
-    priv_exclude_re: Option<Vec<String>>,
 }
 
 impl<T> Default for Filter<T>
 where
-    T: Clone + Debug + Serialize,
+    T: Clone + Debug,
 {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip()))]
     fn default() -> Self {
@@ -36,34 +31,13 @@ where
             include_re: None,
             exclude_re: None,
             extra: None,
-            priv_include: None,
-            priv_include_re: None,
-            priv_exclude: None,
-            priv_exclude_re: None,
         }
-    }
-}
-
-impl<T> Serialize for Filter<T>
-where
-    T: Clone + Debug + Serialize,
-{
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self, serializer), err(level = "info"))
-    )]
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let intermediate: internal::Filter<T> = self.into();
-        intermediate.serialize(serializer)
     }
 }
 
 impl<'de, T> Deserialize<'de> for Filter<T>
 where
-    T: Deserialize<'de> + Clone + Debug + Serialize,
+    T: Deserialize<'de> + Clone + Debug,
 {
     #[cfg_attr(
         feature = "tracing",
@@ -83,17 +57,12 @@ where
             .make_exclude_filter_re()
             .map_err(de::Error::custom)?;
 
-        // Return Filter with internal_re populated
         Ok(Self {
             reference: intermediate.reference,
             pattern: intermediate.pattern,
             include_re,
             exclude_re,
             extra: intermediate.extra,
-            priv_include: intermediate.include,
-            priv_include_re: intermediate.include_re,
-            priv_exclude: intermediate.exclude,
-            priv_exclude_re: intermediate.exclude_re,
         })
     }
 }
@@ -104,9 +73,7 @@ mod internal {
     use exn::{Result, ResultExt as _};
     use regex::{Regex, escape};
     use rust_i18n::t;
-    use serde::{Deserialize, Deserializer, Serialize, de};
-
-    use super::Filter as RealFilter;
+    use serde::{Deserialize, Deserializer, de};
 
     #[cfg_attr(
         feature = "tracing",
@@ -162,7 +129,7 @@ mod internal {
     impl std::error::Error for FilterError {}
 
     /// Private structure without the regex
-    #[derive(Debug, Deserialize, Serialize)]
+    #[derive(Debug, Deserialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct Filter<T>
     where
@@ -183,7 +150,7 @@ mod internal {
 
     impl<T> Filter<T>
     where
-        T: Clone + Debug + Serialize,
+        T: Clone + Debug,
     {
         #[cfg_attr(
             feature = "tracing",
@@ -240,43 +207,18 @@ mod internal {
             }
         }
     }
-
-    impl<T> From<&RealFilter<T>> for Filter<T>
-    where
-        T: Clone + Debug + Serialize,
-    {
-        #[cfg_attr(
-            feature = "tracing",
-            tracing::instrument(level = "trace", skip(filter), ret)
-        )]
-        fn from(filter: &RealFilter<T>) -> Self {
-            #[cfg(feature = "tracing")]
-            tracing::trace!(?filter);
-
-            Self {
-                reference: filter.reference.clone(),
-                pattern: filter.pattern.clone(),
-                extra: filter.extra.clone(),
-                include: filter.priv_include.clone(),
-                include_re: filter.priv_include_re.clone(),
-                exclude: filter.priv_exclude.clone(),
-                exclude_re: filter.priv_exclude_re.clone(),
-            }
-        }
-    }
 }
 
 #[cfg(test)]
 mod tests {
     #![expect(clippy::expect_used, reason = "test")]
 
-    use regex::Regex;
-    use serde::{Deserialize, Serialize};
-    use serde_any::{Format, from_str, to_string};
+    use serde::Deserialize;
+    use serde_any::{Format, from_str};
 
     use crate::libs::filter::Filter;
 
-    #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+    #[derive(Clone, Debug, Deserialize, PartialEq)]
     struct ExtraConfig {
         additional_info: String,
     }
@@ -321,37 +263,6 @@ mod tests {
         );
     }
 
-    /// Test serialization, ensuring expected fields are present
-    #[test]
-    fn filter_serialization() {
-        let filter = Filter::<ExtraConfig> {
-            reference: Some("test_ref".to_owned()),
-            pattern: Some("*".to_owned()),
-            include_re: Some(
-                Regex::new("include_this|^include_pattern.*").expect("valid include regex pattern"),
-            ),
-            exclude_re: Some(
-                Regex::new("exclude_this|^exclude_pattern.*").expect("valid exclude regex pattern"),
-            ),
-            extra: Some(ExtraConfig {
-                additional_info: "test info".to_owned(),
-            }),
-            priv_include: Some(vec!["include_this".to_owned(), "also_this".to_owned()]),
-            priv_include_re: Some(vec!["^include_pattern.*".to_owned()]),
-            priv_exclude: Some(vec!["exclude_this".to_owned()]),
-            priv_exclude_re: Some(vec!["^exclude_pattern.*".to_owned()]),
-        };
-
-        let json = to_string(&filter, Format::Json).expect("filter should serialize to JSON");
-        assert!(json.contains(r#""reference":"test_ref""#));
-        assert!(json.contains(r#""pattern":"*""#));
-        assert!(json.contains(r#""include":["include_this","also_this"]"#));
-        assert!(json.contains(r#""include-re":["^include_pattern.*"]"#));
-        assert!(json.contains(r#""exclude":["exclude_this"]"#));
-        assert!(json.contains(r#""exclude-re":["^exclude_pattern.*"]"#));
-        assert!(json.contains(r#""additional_info":"test info""#));
-    }
-
     /// Test default values
     #[test]
     fn filter_default() {
@@ -361,10 +272,6 @@ mod tests {
         assert!(filter.include_re.is_none());
         assert!(filter.exclude_re.is_none());
         assert!(filter.extra.is_none());
-        assert!(filter.priv_include.is_none());
-        assert!(filter.priv_include_re.is_none());
-        assert!(filter.priv_exclude.is_none());
-        assert!(filter.priv_exclude_re.is_none());
     }
 
     /// Test regex creation with empty include/exclude to confirm None is returned
