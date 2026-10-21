@@ -102,16 +102,6 @@ pub enum ImapError {
 // #[display()]
 impl std::error::Error for ImapError {}
 
-/// The result of listing a mailbox, including optional command-specific extra data.
-#[derive(Clone, Debug)]
-pub struct ListResult<T>
-where
-    T: Clone + Debug,
-{
-    /// Optional extra data associated with the mailbox, from matching filter config.
-    pub extra: Option<T>,
-}
-
 /// Wraps an async-imap Session with connection state and filter configuration.
 #[derive(Debug)]
 pub struct Imap<T>
@@ -393,8 +383,8 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), ret, err(level = "info"))
     )]
-    pub async fn list(&mut self) -> Result<BTreeMap<String, ListResult<T>>, ImapError> {
-        let mut mailboxes: BTreeMap<String, ListResult<T>> = BTreeMap::new();
+    pub async fn list(&mut self) -> Result<BTreeMap<String, Option<T>>, ImapError> {
+        let mut mailboxes: BTreeMap<String, Option<T>> = BTreeMap::new();
 
         for filter in self
             .filters
@@ -431,9 +421,10 @@ where
                 })
             {
                 found = true;
-                mailboxes.insert(mailbox.name().to_owned(), ListResult {
-                    extra: filter.extra.clone().or_else(|| self.extra.clone()),
-                });
+                mailboxes.insert(
+                    mailbox.name().to_owned(),
+                    filter.extra.clone().or_else(|| self.extra.clone()),
+                );
             }
 
             if !found {

@@ -89,12 +89,9 @@ impl List {
         imap: &mut Imap<MyExtra>,
         renderer: &mut Box<dyn Renderer<RENDERER_LEN> + Send>,
     ) -> Result<(), ListError> {
-        for (mailbox, result) in imap.list().await.or_raise(|| ListError::ImapList)? {
+        for (mailbox, extra) in imap.list().await.or_raise(|| ListError::ImapList)? {
             renderer
-                .add_row(&[
-                    &mailbox,
-                    &std::fmt::from_fn(|f| write!(f, "{:?}", result.extra)),
-                ])
+                .add_row(&[&mailbox, &std::fmt::from_fn(|f| write!(f, "{extra:?}"))])
                 .or_raise(|| ListError::RendererAddRow)?;
         }
 

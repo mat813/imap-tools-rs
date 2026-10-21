@@ -127,8 +127,8 @@ impl Archive {
             .await
             .or_raise(|| ArchiveError::ImapConnect)?;
 
-        for (mailbox, result) in imap.list().await.or_raise(|| ArchiveError::ImapList)? {
-            match result.extra {
+        for (mailbox, extra) in imap.list().await.or_raise(|| ArchiveError::ImapList)? {
+            match extra {
                 Some(ref extra) => {
                     Self::archive(
                         &mut imap,

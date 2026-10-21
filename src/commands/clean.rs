@@ -117,8 +117,8 @@ impl Clean {
         let mut renderer = new_renderer(config.base.renderer, table_spec(config.base.dry_run))
             .or_raise(|| CleanError::NewRenderer)?;
 
-        for (mailbox, result) in imap.list().await.or_raise(|| CleanError::ImapList)? {
-            match result.extra {
+        for (mailbox, extra) in imap.list().await.or_raise(|| CleanError::ImapList)? {
+            match extra {
                 Some(ref extra) => {
                     Self::cleanup_mailbox(
                         &mut imap,
