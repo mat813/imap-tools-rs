@@ -491,105 +491,66 @@ async fn build_stream(
         expect(unused_variables, reason = "only needed when using tls")
     )]
     server: &str,
+    #[cfg_attr(
+        not(feature = "__tls"),
+        expect(unused_variables, reason = "only needed when using tls")
+    )]
     port: u16,
 ) -> Result<(ImapStream, bool), ImapError> {
     match *mode {
         Mode::Plaintext => Ok((Box::new(tcp), false)),
         #[cfg(feature = "__tls")]
-        Mode::Tls => {
-            let tls = wrap_tls(tcp, server)
-                .await
-                .or_raise(|| ImapError::WrapTls)?;
-            Ok((tls, false))
-        },
+        Mode::Tls => implicit_tls(tcp, server).await,
         #[cfg(feature = "__tls")]
-        Mode::StartTls => {
-            let mut plain_client = async_imap::Client::new(tcp);
-            plain_client
-                .read_response()
-                .await
-                .or_raise(|| ImapError::GreetingStarttls)?;
-            plain_client
-                .run_command_and_check_ok("STARTTLS", None)
-                .await
-                .or_raise(|| ImapError::StartTls)?;
-            let tcp_back: TcpStream = plain_client.into_inner();
-            let tls = wrap_tls(tcp_back, server)
-                .await
-                .or_raise(|| ImapError::WrapTls)?;
-            Ok((tls, true))
-        },
-        Mode::AutoTls => {
-            #[cfg(feature = "__tls")]
-            {
-                if port == 993 {
-                    let tls = wrap_tls(tcp, server)
-                        .await
-                        .or_raise(|| ImapError::WrapTls)?;
-                    Ok((tls, false))
-                } else {
-                    // Treat as StartTls
-                    let mut plain_client = async_imap::Client::new(tcp);
-                    plain_client
-                        .read_response()
-                        .await
-                        .or_raise(|| ImapError::GreetingStarttls)?;
-                    plain_client
-                        .run_command_and_check_ok("STARTTLS", None)
-                        .await
-                        .or_raise(|| ImapError::StartTls)?;
-                    let tcp_back: TcpStream = plain_client.into_inner();
-                    let tls = wrap_tls(tcp_back, server)
-                        .await
-                        .or_raise(|| ImapError::WrapTls)?;
-                    Ok((tls, true))
-                }
-            }
-            #[cfg(not(feature = "__tls"))]
-            {
-                let _ = port;
-                Ok((Box::new(tcp), false))
-            }
-        },
-        Mode::Auto => {
-            #[cfg(feature = "__tls")]
-            {
-                if port == 993 {
-                    let tls = wrap_tls(tcp, server)
-                        .await
-                        .or_raise(|| ImapError::WrapTls)?;
-                    return Ok((tls, false));
-                }
-                // Non-993: read greeting then attempt STARTTLS; fall back to plaintext if not supported
-                let mut plain_client = async_imap::Client::new(tcp);
-                plain_client
-                    .read_response()
-                    .await
-                    .or_raise(|| ImapError::Greeting)?;
-                // Try STARTTLS; if the server returns NO/BAD, fall back to plaintext
-                let starttls_ok = plain_client
-                    .run_command_and_check_ok("STARTTLS", None)
-                    .await
-                    .is_ok();
-                if starttls_ok {
-                    let tcp_back: TcpStream = plain_client.into_inner();
-                    let tls = wrap_tls(tcp_back, server)
-                        .await
-                        .or_raise(|| ImapError::WrapTls)?;
-                    Ok((tls, true))
-                } else {
-                    // Server does not support STARTTLS; use plaintext
-                    let stream: TcpStream = plain_client.into_inner();
-                    Ok((Box::new(stream), true))
-                }
-            }
-            #[cfg(not(feature = "__tls"))]
-            {
-                let _ = port;
-                Ok((Box::new(tcp), false))
-            }
-        },
+        Mode::StartTls => starttls(tcp, server, false).await,
+        #[cfg(feature = "__tls")]
+        Mode::AutoTls | Mode::Auto if port == 993 => implicit_tls(tcp, server).await,
+        #[cfg(feature = "__tls")]
+        Mode::AutoTls => starttls(tcp, server, false).await,
+        #[cfg(feature = "__tls")]
+        Mode::Auto => starttls(tcp, server, true).await,
+        #[cfg(not(feature = "__tls"))]
+        Mode::AutoTls | Mode::Auto => Ok((Box::new(tcp), false)),
     }
+}
+
+/// TLS from the first byte; the server greeting is still to be read.
+#[cfg(feature = "__tls")]
+async fn implicit_tls(tcp: TcpStream, server: &str) -> Result<(ImapStream, bool), ImapError> {
+    let tls = wrap_tls(tcp, server)
+        .await
+        .or_raise(|| ImapError::WrapTls)?;
+    Ok((tls, false))
+}
+
+/// Read the greeting, then upgrade with STARTTLS. When `optional`, a server
+/// that refuses STARTTLS gets a plaintext connection instead of an error.
+/// The greeting is always consumed.
+#[cfg(feature = "__tls")]
+async fn starttls(
+    tcp: TcpStream,
+    server: &str,
+    optional: bool,
+) -> Result<(ImapStream, bool), ImapError> {
+    let mut plain_client = async_imap::Client::new(tcp);
+    plain_client.read_response().await.or_raise(|| {
+        if optional {
+            ImapError::Greeting
+        } else {
+            ImapError::GreetingStarttls
+        }
+    })?;
+    let starttls = plain_client
+        .run_command_and_check_ok("STARTTLS", None)
+        .await;
+    if optional && starttls.is_err() {
+        return Ok((Box::new(plain_client.into_inner()), true));
+    }
+    starttls.or_raise(|| ImapError::StartTls)?;
+    let tls = wrap_tls(plain_client.into_inner(), server)
+        .await
+        .or_raise(|| ImapError::WrapTls)?;
+    Ok((tls, true))
 }
 
 #[cfg_attr(
