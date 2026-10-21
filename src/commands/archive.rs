@@ -149,10 +149,6 @@ impl Archive {
         Ok(())
     }
 
-    #[expect(
-        clippy::too_many_lines,
-        reason = "archive handles dry-run/non-dry-run with MOVE/COPY paths"
-    )]
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(imap, renderer), err(level = "info"))
@@ -201,112 +197,32 @@ impl Archive {
             .await
             .or_raise(|| ArchiveError::ComputeDestinations)?;
 
-            if dry_run {
-                for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
-                    renderer
-                        .add_row(&[
-                            &mailbox,
-                            &mbx.exists,
-                            &archive_mailbox.replace(mailbox, "%MBX"),
-                            &moving_msgs,
-                            &cutoff_str,
-                            &sequence,
-                        ])
-                        .or_raise(|| ArchiveError::RendererAddRow)?;
-                }
-            } else {
+            if !dry_run {
                 imap.session
                     .select(mailbox)
                     .await
                     .or_raise(|| ArchiveError::ImapSelect {
                         mailbox: mailbox.to_owned(),
                     })?;
+            }
 
-                for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
-                    let quoted_mailbox =
-                        if archive_mailbox.contains(' ') || archive_mailbox.contains('"') {
-                            &format!(
-                                "\"{}\"",
-                                archive_mailbox.replace('\\', r"\\").replace('"', "\\\"")
-                            )
-                        } else {
-                            &archive_mailbox
-                        };
-
-                    let names: Vec<_> = imap
-                        .session
-                        .list(None, Some(quoted_mailbox))
-                        .await
-                        .or_raise(|| ArchiveError::ImapListPattern {
-                            pattern: quoted_mailbox.clone(),
-                        })?
-                        .try_collect()
-                        .await
-                        .or_raise(|| ArchiveError::ImapListPattern {
-                            pattern: quoted_mailbox.clone(),
-                        })?;
-
-                    // If archive mailbox does not exist, or is a simple folder that is not a mailbox, create it
-                    if names.is_empty()
-                        || names
-                            .iter()
-                            .all(|n| n.attributes().contains(&NameAttribute::NoSelect))
-                    {
-                        imap.session.create(&archive_mailbox).await.or_raise(|| {
-                            ArchiveError::ImapCreate {
-                                mailbox: archive_mailbox.clone(),
-                            }
-                        })?;
-                    }
-
-                    if imap.has_capability("MOVE").await.or_raise(|| {
-                        ArchiveError::ImapCapability {
-                            cap: "MOVE".to_owned(),
-                        }
-                    })? {
-                        // MV does COPY / MARK \Deleted / EXPUNGE all in one go
-                        imap.session
-                            .uid_mv(&sequence, quoted_mailbox)
-                            .await
-                            .or_raise(|| ArchiveError::ImapMove {
-                                mailbox: quoted_mailbox.clone(),
-                            })?;
-                    } else {
-                        // If we don't have MV, do it the old fashion way.
-                        imap.session
-                            .uid_copy(&sequence, quoted_mailbox)
-                            .await
-                            .or_raise(|| ArchiveError::ImapCopy {
-                                mailbox: quoted_mailbox.clone(),
-                            })?;
-
-                        {
-                            let mut stream = imap
-                                .session
-                                .uid_store(&sequence, "+FLAGS (\\Deleted)")
-                                .await
-                                .or_raise(|| ArchiveError::ImapStore)?;
-                            while stream
-                                .try_next()
-                                .await
-                                .or_raise(|| ArchiveError::ImapStore)?
-                                .is_some()
-                            {}
-                        }
-                    }
-
-                    renderer
-                        .add_row(&[
-                            &mailbox,
-                            &mbx.exists,
-                            &archive_mailbox.replace(mailbox, "%MBX"),
-                            &moving_msgs,
-                            &cutoff_str,
-                            &sequence,
-                        ])
-                        .or_raise(|| ArchiveError::RendererAddRow)?;
+            for (archive_mailbox, (sequence, moving_msgs)) in uids_and_sequence_by_mailbox {
+                if !dry_run {
+                    Self::move_messages(imap, &archive_mailbox, &sequence).await?;
                 }
+                renderer
+                    .add_row(&[
+                        &mailbox,
+                        &mbx.exists,
+                        &archive_mailbox.replace(mailbox, "%MBX"),
+                        &moving_msgs,
+                        &cutoff_str,
+                        &sequence,
+                    ])
+                    .or_raise(|| ArchiveError::RendererAddRow)?;
+            }
 
+            if !dry_run {
                 // Close the moved messages
                 imap.session
                     .close()
@@ -315,6 +231,81 @@ impl Archive {
             }
         }
 
+        Ok(())
+    }
+
+    /// Create `archive_mailbox` if needed, then move the messages of the
+    /// selected mailbox identified by `sequence` into it.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(imap), err(level = "info"))
+    )]
+    async fn move_messages(
+        imap: &mut Imap<MyExtra>,
+        archive_mailbox: &str,
+        sequence: &str,
+    ) -> Result<(), ArchiveError> {
+        let quoted_mailbox = if archive_mailbox.contains(' ') || archive_mailbox.contains('"') {
+            format!(
+                "\"{}\"",
+                archive_mailbox.replace('\\', r"\\").replace('"', "\\\"")
+            )
+        } else {
+            archive_mailbox.to_owned()
+        };
+        let names: Vec<_> = imap
+            .session
+            .list(None, Some(&quoted_mailbox))
+            .await
+            .or_raise(|| ArchiveError::ImapListPattern {
+                pattern: quoted_mailbox.clone(),
+            })?
+            .try_collect()
+            .await
+            .or_raise(|| ArchiveError::ImapListPattern {
+                pattern: quoted_mailbox.clone(),
+            })?;
+
+        // If archive mailbox does not exist, or is a simple folder that is not a mailbox, create it
+        if names.is_empty()
+            || names
+                .iter()
+                .all(|n| n.attributes().contains(&NameAttribute::NoSelect))
+        {
+            imap.session
+                .create(archive_mailbox)
+                .await
+                .or_raise(|| ArchiveError::ImapCreate {
+                    mailbox: archive_mailbox.to_owned(),
+                })?;
+        }
+
+        if imap
+            .has_capability("MOVE")
+            .await
+            .or_raise(|| ArchiveError::ImapCapability {
+                cap: "MOVE".to_owned(),
+            })?
+        {
+            // MV does COPY / MARK \Deleted / EXPUNGE all in one go
+            imap.session
+                .uid_mv(sequence, &quoted_mailbox)
+                .await
+                .or_raise(|| ArchiveError::ImapMove {
+                    mailbox: quoted_mailbox.clone(),
+                })?;
+        } else {
+            // If we don't have MV, do it the old fashion way.
+            imap.session
+                .uid_copy(sequence, &quoted_mailbox)
+                .await
+                .or_raise(|| ArchiveError::ImapCopy {
+                    mailbox: quoted_mailbox.clone(),
+                })?;
+            imap.flag_deleted(sequence)
+                .await
+                .or_raise(|| ArchiveError::ImapStore)?;
+        }
         Ok(())
     }
 

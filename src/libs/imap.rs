@@ -331,6 +331,29 @@ where
         Ok(has_capability)
     }
 
+    /// Flag the given UID sequence of the selected mailbox as `\Deleted`.
+    ///
+    /// # Errors
+    /// Imap errors can happen
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    pub async fn flag_deleted(&mut self, sequence: &str) -> Result<(), ImapError> {
+        let mut stream = self
+            .session
+            .uid_store(sequence, "+FLAGS (\\Deleted)")
+            .await
+            .or_raise(|| ImapError::UidStore)?;
+        while stream
+            .try_next()
+            .await
+            .or_raise(|| ImapError::Stream)?
+            .is_some()
+        {}
+        Ok(())
+    }
+
     /// Select a mailbox, flag the given UID sequence as `\Deleted`, then CLOSE
     /// (which expunges the flagged messages).
     ///
@@ -348,19 +371,7 @@ where
                 mailbox: mailbox.to_owned(),
             })?;
 
-        {
-            let mut stream = self
-                .session
-                .uid_store(sequence, "+FLAGS (\\Deleted)")
-                .await
-                .or_raise(|| ImapError::UidStore)?;
-            while stream
-                .try_next()
-                .await
-                .or_raise(|| ImapError::Stream)?
-                .is_some()
-            {}
-        }
+        self.flag_deleted(sequence).await?;
 
         self.session
             .close()
