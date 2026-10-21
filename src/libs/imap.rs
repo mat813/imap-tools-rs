@@ -265,10 +265,7 @@ where
     pub async fn connect_base_on_port(base: &BaseConfig, port: u16) -> Result<Self, ImapError> {
         let mut test_base = base.clone();
         test_base.port = Some(port);
-        #[expect(clippy::expect_used, reason = "known-valid literal")]
-        {
-            test_base.mode = Some("plaintext".parse().expect("plaintext is a valid mode"));
-        }
+        test_base.mode = Some(Mode::Plaintext);
         Self::connect_base(&test_base).await
     }
 

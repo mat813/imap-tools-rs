@@ -173,13 +173,9 @@ impl FindDups {
         let mut duplicates = HashSet::<Uid>::new();
 
         for ids in message_ids.values() {
-            if ids.len() > 1 {
-                // Sort ascending so the lowest UID (oldest message) is kept
-                let mut sorted = ids.clone();
-                sorted.sort_unstable();
-                // Keep the oldest, mark the rest as duplicates
-                #[expect(clippy::indexing_slicing, reason = "we just tested it's ok")]
-                duplicates.extend(&sorted[1..]);
+            // Keep the lowest UID (oldest message), mark the rest as duplicates
+            if let Some(oldest) = ids.iter().min() {
+                duplicates.extend(ids.iter().filter(|&uid| uid != oldest));
             }
         }
 

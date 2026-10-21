@@ -59,9 +59,8 @@ impl async_imap::Authenticator for ScramAuth {
             None // client-first: drive the mechanism before any server challenge
         };
         let mut out = Vec::new();
-        match self.session.step(input, &mut out) {
-            Ok(_) | Err(_) => out,
-        }
+        let _ = self.session.step(input, &mut out);
+        out
     }
 }
 
