@@ -5,7 +5,7 @@ mod xoauth2;
 
 use std::str::FromStr;
 
-use exn::bail;
+use clap::ValueEnum;
 use rust_i18n::t;
 use serde::Deserialize;
 
@@ -25,7 +25,7 @@ pub enum AuthError {
 }
 impl std::error::Error for AuthError {}
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum)]
 /// Authentication mechanism used when connecting to the IMAP server.
 #[derive(Default)]
 pub enum AuthMethod {
@@ -68,17 +68,7 @@ impl FromStr for AuthMethod {
         tracing::instrument(level = "trace", skip(s), ret, err(level = "debug"))
     )]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s.to_ascii_lowercase().as_str() {
-            "login" => Self::Login,
-            "plain" => Self::Plain,
-            "cram-md5" => Self::CramMd5,
-            "scram-sha-1" => Self::ScramSha1,
-            "scram-sha-256" => Self::ScramSha256,
-            "xoauth2" => Self::XOAuth2,
-            _ => {
-                bail!(AuthError::InvalidMethod);
-            },
-        })
+        <Self as ValueEnum>::from_str(s, true).map_err(|_| exn::Exn::new(AuthError::InvalidMethod))
     }
 }
 
@@ -92,7 +82,7 @@ impl<'de> Deserialize<'de> for AuthMethod {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Self::from_str(&s).map_err(serde::de::Error::custom)
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
 

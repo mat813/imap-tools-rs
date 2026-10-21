@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use exn::bail;
+use clap::ValueEnum;
 use rust_i18n::t;
 use serde::Deserialize;
 
@@ -13,7 +13,7 @@ pub enum ModeError {
 }
 impl std::error::Error for ModeError {}
 
-#[derive(Clone, Debug, Eq, PartialEq, clap::ValueEnum)]
+#[derive(Clone, Debug, Eq, PartialEq, ValueEnum)]
 #[non_exhaustive]
 pub enum Mode {
     #[cfg_attr(
@@ -28,6 +28,7 @@ pub enum Mode {
     )]
     #[cfg_attr(feature = "__tls", value(help = t!("cli.mode.auto_tls")))]
     #[cfg_attr(not(feature = "__tls"), value(help = t!("cli.mode.tls_disabled")))]
+    #[value(aliases = ["auto_tls", "autotls"])]
     AutoTls,
     #[cfg_attr(
         feature = "__tls",
@@ -44,6 +45,7 @@ pub enum Mode {
     Auto,
     /// A plain unencrypted TCP connection
     #[value(help = t!("cli.mode.plaintext"))]
+    #[value(alias = "none")]
     Plaintext,
     /// An encrypted TLS connection
     #[cfg(feature = "__tls")]
@@ -52,6 +54,7 @@ pub enum Mode {
     /// An eventually-encrypted (i.e., STARTTLS) connection
     #[cfg(feature = "__tls")]
     #[value(help = t!("cli.mode.start_tls"))]
+    #[value(aliases = ["start_tls", "starttls"])]
     StartTls,
 }
 
@@ -63,24 +66,14 @@ impl FromStr for Mode {
         tracing::instrument(level = "trace", ret, err(level = "debug"))
     )]
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let v = s.to_ascii_lowercase();
-        Ok(match v.as_str() {
-            "auto_tls" | "autotls" => Self::AutoTls,
-            "auto" => Self::Auto,
-            "plaintext" | "none" => Self::Plaintext,
-            #[cfg(feature = "__tls")]
-            "tls" => Self::Tls,
-            #[cfg(feature = "__tls")]
-            "start_tls" | "starttls" => Self::StartTls,
-            _ => {
-                bail!(
-                    if cfg!(feature = "__tls") {
-                        ModeError::InvalidModeTls
-                    } else {
-                        ModeError::InvalidMode
-                    }
-                );
-            },
+        <Self as ValueEnum>::from_str(s, true).map_err(|_| {
+            exn::Exn::new(
+                if cfg!(feature = "__tls") {
+                    ModeError::InvalidModeTls
+                } else {
+                    ModeError::InvalidMode
+                },
+            )
         })
     }
 }
@@ -95,7 +88,7 @@ impl<'de> Deserialize<'de> for Mode {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Self::from_str(&s).map_err(serde::de::Error::custom)
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
 
