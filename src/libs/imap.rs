@@ -174,7 +174,6 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(base), ret, err(level = "info"))
     )]
-    #[expect(clippy::too_many_lines, reason = "many auth methods")]
     pub async fn connect_base(base: &BaseConfig) -> Result<Self, ImapError> {
         #[cfg(feature = "tracing")]
         tracing::trace!(?base);
@@ -210,78 +209,47 @@ where
             .as_ref()
             .ok_or_raise(|| ImapError::NoUsername)?;
 
-        let session =
-            match base.auth.unwrap_or_default() {
-                AuthMethod::Login => {
-                    let password = base.password().or_raise(|| ImapError::Password)?;
-                    client
-                        .login(username, password)
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login { method: "LOGIN" })?
-                },
-                AuthMethod::Plain => {
-                    let password = base.password().or_raise(|| ImapError::Password)?;
-                    client
-                        .authenticate("PLAIN", PlainAuth {
-                            user: username.clone(),
-                            password,
-                        })
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login { method: "PLAIN" })?
-                },
-                AuthMethod::CramMd5 => {
-                    let password = base.password().or_raise(|| ImapError::Password)?;
-                    client
-                        .authenticate("CRAM-MD5", CramMd5Auth {
-                            user: username.clone(),
-                            password,
-                        })
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login { method: "CRAM-MD5" })?
-                },
-                AuthMethod::ScramSha1 => {
-                    let password = base.password().or_raise(|| ImapError::Password)?;
-                    let auth = ScramAuth::new(b"SCRAM-SHA-1", username.clone(), password)
-                        .or_raise(|| ImapError::ScramSession {
-                            method: "SCRAM-SHA-1",
-                        })?;
-                    client
-                        .authenticate("SCRAM-SHA-1", auth)
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login {
-                            method: "SCRAM-SHA-1",
-                        })?
-                },
-                AuthMethod::ScramSha256 => {
-                    let password = base.password().or_raise(|| ImapError::Password)?;
-                    let auth = ScramAuth::new(b"SCRAM-SHA-256", username.clone(), password)
-                        .or_raise(|| ImapError::ScramSession {
-                            method: "SCRAM-SHA-256",
-                        })?;
-                    client
-                        .authenticate("SCRAM-SHA-256", auth)
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login {
-                            method: "SCRAM-SHA-256",
-                        })?
-                },
-                AuthMethod::XOAuth2 => {
-                    let token = base.oauth2_token().or_raise(|| ImapError::OAuth2Token)?;
-                    client
-                        .authenticate("XOAUTH2", XOAuth2Auth {
-                            user: username.clone(),
-                            token,
-                        })
-                        .await
-                        .map_err(|(err, _client)| err)
-                        .or_raise(|| ImapError::Login { method: "XOAUTH2" })?
-                },
-            };
+        let method = base.auth.unwrap_or_default();
+        let password = || base.password().or_raise(|| ImapError::Password);
+
+        let session = match method {
+            AuthMethod::Login => client
+                .login(username, password()?)
+                .await
+                .map_err(|(err, _client)| err)
+                .or_raise(|| ImapError::Login { method: "LOGIN" })?,
+            AuthMethod::Plain => {
+                let auth = PlainAuth {
+                    user: username.clone(),
+                    password: password()?,
+                };
+                authenticate(client, "PLAIN", auth).await?
+            },
+            AuthMethod::CramMd5 => {
+                let auth = CramMd5Auth {
+                    user: username.clone(),
+                    password: password()?,
+                };
+                authenticate(client, "CRAM-MD5", auth).await?
+            },
+            AuthMethod::ScramSha1 | AuthMethod::ScramSha256 => {
+                let mech = if matches!(method, AuthMethod::ScramSha1) {
+                    "SCRAM-SHA-1"
+                } else {
+                    "SCRAM-SHA-256"
+                };
+                let auth = ScramAuth::new(mech.as_bytes(), username.clone(), password()?)
+                    .or_raise(|| ImapError::ScramSession { method: mech })?;
+                authenticate(client, mech, auth).await?
+            },
+            AuthMethod::XOAuth2 => {
+                let auth = XOAuth2Auth {
+                    user: username.clone(),
+                    token: base.oauth2_token().or_raise(|| ImapError::OAuth2Token)?,
+                };
+                authenticate(client, "XOAUTH2", auth).await?
+            },
+        };
 
         let mut ret = Self {
             session,
@@ -466,6 +434,19 @@ where
 
         Ok(mailboxes)
     }
+}
+
+/// Run a SASL `AUTHENTICATE` exchange with `method` as the mechanism name.
+async fn authenticate<A: async_imap::Authenticator>(
+    client: async_imap::Client<ImapStream>,
+    method: &'static str,
+    auth: A,
+) -> Result<Session<ImapStream>, ImapError> {
+    client
+        .authenticate(method, auth)
+        .await
+        .map_err(|(err, _client)| err)
+        .or_raise(|| ImapError::Login { method })
 }
 
 #[cfg_attr(
