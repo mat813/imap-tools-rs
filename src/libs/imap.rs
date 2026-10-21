@@ -605,47 +605,29 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
 
     debug_assert!(!ids.is_empty(), "ids must not be empty");
 
-    // Collect and sort the IDs
-    let mut sorted_ids: Vec<_> = ids.iter().copied().collect();
+    let mut sorted_ids: Vec<Uid> = ids.iter().copied().collect();
     sorted_ids.sort_unstable();
 
-    // Collect ranges from the sorted list
-    let mut result = Vec::new();
-    let mut start = sorted_ids.first().copied();
-    let mut end = start;
-
-    for &id in sorted_ids.get(1..).unwrap_or_default() {
-        match (end, start) {
-            (Some(e), Some(_s)) if id == e + 1 => end = Some(id),
-            _ => {
-                // Push the previous range
-                if let (Some(s), Some(e)) = (start, end) {
-                    result.push(
-                        if s == e {
-                            s.to_string()
-                        } else {
-                            format!("{s}:{e}")
-                        },
-                    );
-                }
-                start = Some(id);
-                end = start;
-            },
+    // Merge consecutive ids into inclusive (start, end) ranges
+    let mut ranges: Vec<(Uid, Uid)> = Vec::new();
+    for id in sorted_ids {
+        match ranges.last_mut() {
+            Some(&mut (_, ref mut end)) if id == end.saturating_add(1) => *end = id,
+            _ => ranges.push((id, id)),
         }
     }
 
-    // Push the last range
-    if let (Some(s), Some(e)) = (start, end) {
-        result.push(
+    ranges
+        .iter()
+        .map(|&(s, e)| {
             if s == e {
                 s.to_string()
             } else {
                 format!("{s}:{e}")
-            },
-        );
-    }
-
-    result.join(",")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 #[cfg(test)]
