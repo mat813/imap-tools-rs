@@ -7,7 +7,7 @@ use serde::Deserialize;
 use crate::libs::{
     args::Generic,
     base_config::{BaseConfig, SerdeAnyWrapper},
-    filters::Filters,
+    filter::Filter,
 };
 
 #[derive(Debug, derive_more::Display)]
@@ -32,7 +32,7 @@ where
 
     pub extra: Option<T>,
 
-    pub filters: Option<Filters<T>>,
+    pub filters: Option<Vec<Filter<T>>>,
 }
 
 impl<T> Default for Config<T>

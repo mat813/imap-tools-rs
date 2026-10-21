@@ -17,7 +17,6 @@ use crate::libs::{
     base_config::BaseConfig,
     config::Config,
     filter::Filter,
-    filters::Filters,
     mode::Mode,
 };
 
@@ -115,7 +114,7 @@ where
     extra: Option<T>,
 
     /// Optional list of filters to apply when listing mailboxes.
-    filters: Option<Filters<T>>,
+    filters: Option<Vec<Filter<T>>>,
 
     /// Cache of previously fetched capabilities to avoid redundant round trips.
     cached_capabilities: HashMap<String, bool>,

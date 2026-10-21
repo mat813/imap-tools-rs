@@ -3,7 +3,6 @@ pub mod auth;
 pub mod base_config;
 pub mod config;
 pub mod filter;
-pub mod filters;
 pub mod i18n;
 pub mod imap;
 mod mode;
