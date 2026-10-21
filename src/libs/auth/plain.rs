@@ -18,12 +18,8 @@ impl Authenticator for PlainAuth {
         tracing::instrument(level = "trace", skip(self, _challenge), ret)
     )]
     fn process(&mut self, _challenge: &[u8]) -> Self::Response {
-        let mut r = Vec::with_capacity(self.user.len() + self.password.len() + 2);
-        r.push(0); // empty authzid
-        r.extend_from_slice(self.user.as_bytes());
-        r.push(0);
-        r.extend_from_slice(self.password.as_bytes());
-        r
+        // empty authzid, then authcid and passwd, NUL-separated
+        format!("\0{}\0{}", self.user, self.password).into_bytes()
     }
 }
 
