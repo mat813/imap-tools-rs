@@ -1,25 +1,9 @@
 use clap::Args;
-use exn::{Result, ResultExt as _};
+use exn::Result;
 use rust_i18n::t;
 
-use crate::libs::{args, base_config::BaseConfig, imap::Imap};
-
-#[derive(Debug, derive_more::Display)]
-pub enum ImapCreateCommandError {
-    #[display("{}", t!("error.shared.config"))]
-    Config,
-    #[display("{}", t!("error.shared.connect"))]
-    Connect,
-    #[display("{}", t!("error.shared.imap_close"))]
-    Close,
-    #[display("{}", t!("error.imap_create.run"))]
-    Run,
-    #[display("{}", t!("error.shared.write_output"))]
-    WriteOutput,
-    #[display("{}", t!("error.imap_create.imap_create", mailbox = mailbox))]
-    ImapCreate { mailbox: String },
-}
-impl std::error::Error for ImapCreateCommandError {}
+use super::mailbox::{MailboxCommandError, connect_and_run, report};
+use crate::libs::{args, imap::Imap};
 
 #[derive(Args, Clone, Debug)]
 #[command(
@@ -36,26 +20,11 @@ pub struct Create {
 }
 
 impl Create {
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self), err(level = "info"))
-    )]
-    pub async fn execute(&self) -> Result<(), ImapCreateCommandError> {
-        let config = BaseConfig::new(&self.config).or_raise(|| ImapCreateCommandError::Config)?;
-        #[cfg(feature = "tracing")]
-        tracing::trace!(?config);
-
-        let mut imap: Imap<()> = Imap::connect_base(&config)
-            .await
-            .or_raise(|| ImapCreateCommandError::Connect)?;
-
-        self.run(&mut imap, &mut std::io::stdout())
-            .await
-            .or_raise(|| ImapCreateCommandError::Run)?;
-        imap.close()
-            .await
-            .or_raise(|| ImapCreateCommandError::Close)?;
-        Ok(())
+    pub async fn execute(&self) -> Result<(), MailboxCommandError> {
+        connect_and_run(&self.config, "create", async |imap, out| {
+            self.run(imap, out).await
+        })
+        .await
     }
 
     #[cfg_attr(
@@ -66,38 +35,18 @@ impl Create {
         &self,
         imap: &mut Imap<()>,
         out: &mut (dyn std::io::Write + Send),
-    ) -> Result<(), ImapCreateCommandError> {
+    ) -> Result<(), MailboxCommandError> {
         let mailbox = &self.mailbox;
-
-        match imap.session.create(mailbox).await {
-            Ok(()) => writeln!(
-                out,
-                "{}",
-                t!("output.imap_create.created", mailbox = mailbox)
-            )
-            .or_raise(|| ImapCreateCommandError::WriteOutput)?,
-            Err(async_imap::error::Error::No(reason))
-                if reason.contains("Mailbox already exist") =>
-            {
-                writeln!(
-                    out,
-                    "{}",
-                    t!(
-                        "output.imap_create.already_exists",
-                        mailbox = mailbox : {:?},
-                        reason = reason
-                    )
-                )
-                .or_raise(|| ImapCreateCommandError::WriteOutput)?;
+        report(
+            out,
+            imap.session.create(mailbox).await,
+            "Mailbox already exist",
+            t!("output.imap_create.created", mailbox = mailbox),
+            |reason| t!("output.imap_create.already_exists", mailbox = mailbox : {:?}, reason = reason),
+            MailboxCommandError::Create {
+                mailbox: mailbox.clone(),
             },
-            Err(e) => {
-                return Err(e).or_raise(|| ImapCreateCommandError::ImapCreate {
-                    mailbox: mailbox.clone(),
-                });
-            },
-        }
-
-        Ok(())
+        )
     }
 }
 

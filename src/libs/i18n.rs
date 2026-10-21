@@ -155,6 +155,7 @@ mod tests {
         ("commands/imap/delete.rs", "commands/imap.yml"),
         ("commands/imap/disk_usage.rs", "commands/imap.yml"),
         ("commands/imap/list.rs", "commands/imap.yml"),
+        ("commands/imap/mailbox.rs", "commands/imap.yml"),
         ("commands/imap/mod.rs", "commands/imap.yml"),
         ("libs/args.rs", "libs/args.yml"),
         ("libs/auth/mod.rs", "libs/auth.yml"),

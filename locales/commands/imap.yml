@@ -224,13 +224,13 @@ error.imap_create.imap_create:
   zh: 创建邮箱 %{mailbox}
   ko: 메일박스 %{mailbox} 생성
 
-error.imap_create.run:
-  en: Running create command
-  fr: Exécution de la commande create
-  de: Ausführen des Befehls create
-  ja: create コマンドの実行
-  zh: 运行 create 命令
-  ko: create 명령 실행
+error.imap_mailbox.run:
+  en: Running %{command} command
+  fr: Exécution de la commande %{command}
+  de: Ausführen des Befehls %{command}
+  ja: "%{command} コマンドの実行"
+  zh: 运行 %{command} 命令
+  ko: "%{command} 명령 실행"
 
 error.imap_delete.imap_delete:
   en: Deleting mailbox %{mailbox}
@@ -239,14 +239,6 @@ error.imap_delete.imap_delete:
   ja: メールボックス %{mailbox} の削除
   zh: 删除邮箱 %{mailbox}
   ko: 메일박스 %{mailbox} 삭제
-
-error.imap_delete.run:
-  en: Running delete command
-  fr: Exécution de la commande delete
-  de: Ausführen des Befehls delete
-  ja: delete コマンドの実行
-  zh: 运行 delete 命令
-  ko: delete 명령 실행
 
 error.imap_disk_usage.imap_list_stream:
   en: Streaming LIST results

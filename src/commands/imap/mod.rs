@@ -5,6 +5,7 @@ mod create;
 mod delete;
 mod disk_usage;
 mod list;
+mod mailbox;
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum ImapCommands {

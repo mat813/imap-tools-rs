@@ -1,25 +1,9 @@
 use clap::Args;
-use exn::{Result, ResultExt as _};
+use exn::Result;
 use rust_i18n::t;
 
-use crate::libs::{args, base_config::BaseConfig, imap::Imap};
-
-#[derive(Debug, derive_more::Display)]
-pub enum ImapDeleteCommandError {
-    #[display("{}", t!("error.shared.config"))]
-    Config,
-    #[display("{}", t!("error.shared.connect"))]
-    Connect,
-    #[display("{}", t!("error.imap_delete.run"))]
-    Run,
-    #[display("{}", t!("error.shared.imap_close"))]
-    ImapClose,
-    #[display("{}", t!("error.shared.write_output"))]
-    Write,
-    #[display("{}", t!("error.imap_delete.imap_delete", mailbox = mailbox))]
-    ImapDelete { mailbox: String },
-}
-impl std::error::Error for ImapDeleteCommandError {}
+use super::mailbox::{MailboxCommandError, connect_and_run, report};
+use crate::libs::{args, imap::Imap};
 
 #[derive(Args, Clone, Debug)]
 #[command(
@@ -36,28 +20,11 @@ pub struct Delete {
 }
 
 impl Delete {
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self), err(level = "info"))
-    )]
-    pub async fn execute(&self) -> Result<(), ImapDeleteCommandError> {
-        let config = BaseConfig::new(&self.config).or_raise(|| ImapDeleteCommandError::Config)?;
-        #[cfg(feature = "tracing")]
-        tracing::trace!(?config);
-
-        let mut imap: Imap<()> = Imap::connect_base(&config)
-            .await
-            .or_raise(|| ImapDeleteCommandError::Connect)?;
-
-        self.run(&mut imap, &mut std::io::stdout())
-            .await
-            .or_raise(|| ImapDeleteCommandError::Run)?;
-
-        imap.close()
-            .await
-            .or_raise(|| ImapDeleteCommandError::ImapClose)?;
-
-        Ok(())
+    pub async fn execute(&self) -> Result<(), MailboxCommandError> {
+        connect_and_run(&self.config, "delete", async |imap, out| {
+            self.run(imap, out).await
+        })
+        .await
     }
 
     #[cfg_attr(
@@ -68,38 +35,18 @@ impl Delete {
         &self,
         imap: &mut Imap<()>,
         out: &mut (dyn std::io::Write + Send),
-    ) -> Result<(), ImapDeleteCommandError> {
+    ) -> Result<(), MailboxCommandError> {
         let mailbox = &self.mailbox;
-
-        match imap.session.delete(mailbox).await {
-            Ok(()) => writeln!(
-                out,
-                "{}",
-                t!("output.imap_delete.removed", mailbox = mailbox)
-            )
-            .or_raise(|| ImapDeleteCommandError::Write)?,
-            Err(async_imap::error::Error::No(reason))
-                if reason.contains("Mailbox doesn't exist") =>
-            {
-                writeln!(
-                    out,
-                    "{}",
-                    t!(
-                        "output.imap_delete.not_found",
-                        mailbox = mailbox : {:?},
-                        reason = reason
-                    )
-                )
-                .or_raise(|| ImapDeleteCommandError::Write)?;
+        report(
+            out,
+            imap.session.delete(mailbox).await,
+            "Mailbox doesn't exist",
+            t!("output.imap_delete.removed", mailbox = mailbox),
+            |reason| t!("output.imap_delete.not_found", mailbox = mailbox : {:?}, reason = reason),
+            MailboxCommandError::Delete {
+                mailbox: mailbox.clone(),
             },
-            Err(e) => {
-                return Err(e).or_raise(|| ImapDeleteCommandError::ImapDelete {
-                    mailbox: mailbox.clone(),
-                });
-            },
-        }
-
-        Ok(())
+        )
     }
 }
 
