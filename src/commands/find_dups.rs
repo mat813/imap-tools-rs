@@ -203,15 +203,6 @@ impl FindDups {
         Ok(())
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(header), ret)
-    )]
-    #[cfg(test)]
-    pub(super) fn parse_message_id_pub(header: Option<&[u8]>) -> Option<String> {
-        Self::parse_message_id(header)
-    }
-
     // Parses a Message-ID from the header
     #[cfg_attr(
         feature = "tracing",
@@ -250,34 +241,34 @@ mod tests {
     #[test]
     fn parse_message_id_valid() {
         let header = b"Message-ID: <abc123@example.com>\r\n\r\n";
-        let result = FindDups::parse_message_id_pub(Some(header));
+        let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, Some("<abc123@example.com>".to_owned()));
     }
 
     #[test]
     fn parse_message_id_case_insensitive() {
         let header = b"message-id: <ABC@EXAMPLE.COM>\r\n\r\n";
-        let result = FindDups::parse_message_id_pub(Some(header));
+        let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, Some("<ABC@EXAMPLE.COM>".to_owned()));
     }
 
     #[test]
     fn parse_message_id_missing() {
         let header = b"Subject: hello\r\n\r\n";
-        let result = FindDups::parse_message_id_pub(Some(header));
+        let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, None);
     }
 
     #[test]
     fn parse_message_id_none_input() {
-        assert_eq!(FindDups::parse_message_id_pub(None), None);
+        assert_eq!(FindDups::parse_message_id(None), None);
     }
 
     #[test]
     fn parse_message_id_folded_header() {
         // RFC 2822 continuation: CRLF followed by a space unfolds to a single line
         let header = b"Message-ID:\r\n <folded@example.com>\r\n\r\n";
-        let result = FindDups::parse_message_id_pub(Some(header));
+        let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, Some("<folded@example.com>".to_owned()));
     }
 
@@ -285,7 +276,7 @@ mod tests {
     fn parse_message_id_too_short() {
         // "<x@y>" is 5 chars (MIN_MESSAGE_ID_LEN), "<x@>" is 4 chars → None
         let header = b"Message-ID: <x@>\r\n\r\n";
-        let result = FindDups::parse_message_id_pub(Some(header));
+        let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, None);
     }
 
