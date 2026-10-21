@@ -51,14 +51,6 @@ cli.renderer.cursive:
 # Error contexts
 # ---------------------------------------------------------------------------
 
-error.renderer_arg.unknown:
-  en: Unknown renderer %{renderer}
-  fr: Format de sortie inconnu %{renderer}
-  de: Unbekanntes Ausgabeformat %{renderer}
-  ja: 不明な出力形式 %{renderer}
-  zh: 未知的输出格式 %{renderer}
-  ko: 알 수 없는 출력 형식 %{renderer}
-
 error.renderer.csv:
   en: Writing CSV output
   fr: Écriture de la sortie CSV

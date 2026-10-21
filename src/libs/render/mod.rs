@@ -7,7 +7,7 @@ mod print;
 mod terminal;
 mod traits;
 
-use exn::{Exn, Result, ResultExt as _, bail};
+use exn::{Result, ResultExt as _};
 use rust_i18n::t;
 use serde::Deserialize;
 
@@ -56,36 +56,6 @@ impl Default for RendererArg {
         }
 
         Self::Terminal
-    }
-}
-
-#[derive(Clone, Debug, derive_more::Display)]
-pub enum RendererArgError {
-    #[display("{}", t!("error.renderer_arg.unknown", renderer = renderer : {:?}))]
-    Unknown { renderer: String },
-}
-
-impl std::error::Error for RendererArgError {}
-
-impl std::str::FromStr for RendererArg {
-    type Err = Exn<RendererArgError>;
-
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(s), ret, err(level = "debug"))
-    )]
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "csv" => Ok(Self::Csv),
-            #[cfg(feature = "ratatui")]
-            "ratatui" => Ok(Self::Ratatui),
-            "terminal" => Ok(Self::Terminal),
-            #[cfg(feature = "cursive")]
-            "cursive" => Ok(Self::Cursive),
-            s => bail!(RendererArgError::Unknown {
-                renderer: s.to_owned()
-            }),
-        }
     }
 }
 
