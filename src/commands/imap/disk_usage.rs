@@ -172,24 +172,7 @@ impl DiskUsage {
             .iter()
             // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
             .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
-            // If we have an include regex, keep folders that match it
-            // Otherwise, keep everything
-            .filter(|mbx| {
-                if self.include_re.is_empty() {
-                    true
-                } else {
-                    self.include_re.iter().any(|re| re.is_match(mbx.name()))
-                }
-            })
-            // If we have an exclude regex, filter out folders that match it
-            // Otherwise, keep everything
-            .filter(|mbx| {
-                if self.exclude_re.is_empty() {
-                    true
-                } else {
-                    self.exclude_re.iter().all(|re| !re.is_match(mbx.name()))
-                }
-            })
+            .filter(|mbx| super::name_selected(mbx.name(), &self.include_re, &self.exclude_re))
             .collect();
 
         let len_mbox =

@@ -1,11 +1,18 @@
 use clap::Subcommand;
 use exn::{Result, ResultExt as _};
+use regex::Regex;
 use rust_i18n::t;
 mod create;
 mod delete;
 mod disk_usage;
 mod list;
 mod mailbox;
+
+/// Whether `name` passes the `--include-re` / `--exclude-re` options.
+fn name_selected(name: &str, include_re: &[Regex], exclude_re: &[Regex]) -> bool {
+    (include_re.is_empty() || include_re.iter().any(|re| re.is_match(name)))
+        && !exclude_re.iter().any(|re| re.is_match(name))
+}
 
 #[derive(Clone, Debug, Subcommand)]
 pub enum ImapCommands {
