@@ -11,7 +11,7 @@ use shell_words::split;
 
 use crate::libs::{args::Generic, auth::AuthMethod, mode::Mode, render::RendererArg};
 
-#[derive(Debug, derive_more::Display)]
+#[derive(Clone, Copy, Debug, derive_more::Display)]
 pub enum CommandType {
     #[display("password")]
     Password,
@@ -206,48 +206,7 @@ impl BaseConfig {
         #[expect(clippy::needless_borrowed_reference, reason = "ok")]
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
-            (_, &Some(ref command)) => {
-                let command_vec = split(command).or_raise(|| BaseConfigError::ParsingCommand {
-                    command_type: CommandType::Password,
-                    command: command.clone(),
-                })?;
-                let (exe, args) =
-                    command_vec
-                        .split_first()
-                        .ok_or_raise(|| BaseConfigError::CommandEmpty {
-                            command_type: CommandType::Password,
-                        })?;
-                let output = Command::new(exe).args(args).output().or_raise(|| {
-                    BaseConfigError::CommandExec {
-                        command_type: CommandType::Password,
-                    }
-                })?;
-
-                if !output.status.success() {
-                    bail!(BaseConfigError::CommandFail {
-                        command_type: CommandType::Password,
-                        command: command.clone(),
-                        status: output.status,
-                        stdout: indent_output("STDOUT: ", &output.stdout),
-                        stderr: indent_output("STDERR: ", &output.stderr),
-                    })
-                }
-
-                let mut password = String::from_utf8(output.stdout).or_raise(|| {
-                    BaseConfigError::PasswordCommandOutput {
-                        command_type: CommandType::Password,
-                    }
-                })?;
-
-                // Strip trailing newline added by most password commands
-                if password.ends_with('\n') {
-                    password.pop();
-                    if password.ends_with('\r') {
-                        password.pop();
-                    }
-                }
-                Ok(password)
-            },
+            (_, &Some(ref command)) => run_command(command, CommandType::Password),
             _ => bail!(BaseConfigError::NoPassword),
         }
     }
@@ -264,45 +223,46 @@ impl BaseConfig {
     pub fn oauth2_token(&self) -> Result<String, BaseConfigError> {
         match self.oauth2_command {
             None => bail!(BaseConfigError::Oauth2NoCommand),
-            Some(ref command) => {
-                let args = split(command).or_raise(|| BaseConfigError::ParsingCommand {
-                    command_type: CommandType::Oauth2,
-                    command: command.clone(),
-                })?;
-                let (exe, args) =
-                    args.split_first()
-                        .ok_or_raise(|| BaseConfigError::CommandEmpty {
-                            command_type: CommandType::Oauth2,
-                        })?;
-                let output = Command::new(exe).args(args).output().or_raise(|| {
-                    BaseConfigError::CommandExec {
-                        command_type: CommandType::Oauth2,
-                    }
-                })?;
-                if !output.status.success() {
-                    bail!(BaseConfigError::CommandFail {
-                        command_type: CommandType::Oauth2,
-                        command: command.clone(),
-                        status: output.status,
-                        stdout: indent_output("STDOUT: ", &output.stdout),
-                        stderr: indent_output("STDERR: ", &output.stderr),
-                    })
-                }
-                let mut token = String::from_utf8(output.stdout).or_raise(|| {
-                    BaseConfigError::PasswordCommandOutput {
-                        command_type: CommandType::Oauth2,
-                    }
-                })?;
-                if token.ends_with('\n') {
-                    token.pop();
-                    if token.ends_with('\r') {
-                        token.pop();
-                    }
-                }
-                Ok(token)
-            },
+            Some(ref command) => run_command(command, CommandType::Oauth2),
         }
     }
+}
+
+/// Run `command` and return its stdout without the trailing newline.
+fn run_command(command: &str, command_type: CommandType) -> Result<String, BaseConfigError> {
+    let command_vec = split(command).or_raise(|| BaseConfigError::ParsingCommand {
+        command_type,
+        command: command.to_owned(),
+    })?;
+    let (exe, args) = command_vec
+        .split_first()
+        .ok_or_raise(|| BaseConfigError::CommandEmpty { command_type })?;
+    let output = Command::new(exe)
+        .args(args)
+        .output()
+        .or_raise(|| BaseConfigError::CommandExec { command_type })?;
+
+    if !output.status.success() {
+        bail!(BaseConfigError::CommandFail {
+            command_type,
+            command: command.to_owned(),
+            status: output.status,
+            stdout: indent_output("STDOUT: ", &output.stdout),
+            stderr: indent_output("STDERR: ", &output.stderr),
+        })
+    }
+
+    let mut out = String::from_utf8(output.stdout)
+        .or_raise(|| BaseConfigError::PasswordCommandOutput { command_type })?;
+
+    // Strip trailing newline added by most commands
+    if out.ends_with('\n') {
+        out.pop();
+        if out.ends_with('\r') {
+            out.pop();
+        }
+    }
+    Ok(out)
 }
 
 #[cfg_attr(
@@ -485,8 +445,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:210:50
-            `-- missing closing quote, at src/libs/base_config.rs:210:50,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:233:38
+            `-- missing closing quote, at src/libs/base_config.rs:233:38,
         )
         "#);
     }
@@ -508,8 +468,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:220:68
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:220:68,
+            Executing password command, at src/libs/base_config.rs:243:10
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:243:10,
         )
         ");
     }
@@ -531,7 +491,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:217:26,
+            password command is empty, at src/libs/base_config.rs:239:10,
         )
         ");
     }

@@ -254,8 +254,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:210:50
-            `-- missing closing quote, at src/libs/base_config.rs:210:50,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:233:38
+            `-- missing closing quote, at src/libs/base_config.rs:233:38,
         )
         "#);
     }
@@ -277,8 +277,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:220:68
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:220:68,
+            Executing password command, at src/libs/base_config.rs:243:10
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:243:10,
         )
         ");
     }
@@ -300,7 +300,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:217:26,
+            password command is empty, at src/libs/base_config.rs:239:10,
         )
         ");
     }
