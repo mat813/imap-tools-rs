@@ -127,35 +127,16 @@ impl BaseConfig {
         tracing::instrument(level = "trace", skip(self, args), ret, err(level = "info"))
     )]
     pub fn apply_args(mut self, args: &Generic) -> Result<Self, BaseConfigError> {
-        if let Some(ref server) = args.server {
-            self.server = Some(server.clone());
-        }
-
-        if let Some(port) = args.port {
-            self.port = Some(port);
-        }
-
-        if let Some(ref username) = args.username {
-            self.username = Some(username.clone());
-        }
-
-        if let Some(ref password) = args.password {
-            self.password = Some(password.clone());
-        }
-
-        if let Some(ref password_command) = args.password_command {
-            self.password_command = Some(password_command.clone());
-        }
-
-        if args.dry_run {
-            self.dry_run = args.dry_run;
-        }
-
-        if args.mode.is_some() {
-            self.mode.clone_from(&args.mode);
-        } else {
-            self.mode.get_or_insert_with(Mode::default);
-        }
+        self.server = args.server.clone().or(self.server);
+        self.port = args.port.or(self.port);
+        self.username = args.username.clone().or(self.username);
+        self.password = args.password.clone().or(self.password);
+        self.password_command = args.password_command.clone().or(self.password_command);
+        self.dry_run |= args.dry_run;
+        self.mode = Some(args.mode.clone().or(self.mode).unwrap_or_default());
+        self.auth = args.auth.or(self.auth);
+        self.oauth2_command = args.oauth2_command.clone().or(self.oauth2_command);
+        self.renderer = args.renderer.or(self.renderer);
 
         if self.server.is_none() {
             bail!(BaseConfigError::NoServer);
@@ -163,14 +144,6 @@ impl BaseConfig {
 
         if self.username.is_none() {
             bail!(BaseConfigError::NoUsername);
-        }
-
-        if let Some(auth) = args.auth {
-            self.auth = Some(auth);
-        }
-
-        if let Some(ref oauth2_command) = args.oauth2_command {
-            self.oauth2_command = Some(oauth2_command.clone());
         }
 
         let auth = self.auth.unwrap_or_default();
@@ -186,10 +159,6 @@ impl BaseConfig {
             if self.oauth2_command.is_none() {
                 bail!(BaseConfigError::Oauth2NoCommand);
             }
-        }
-
-        if let Some(renderer) = args.renderer {
-            self.renderer = Some(renderer);
         }
 
         Ok(self)
@@ -387,7 +356,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:161:13,
+            The server must be set, at src/libs/base_config.rs:142:13,
         )
         ");
     }
@@ -404,7 +373,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:165:13,
+            The username must be set, at src/libs/base_config.rs:146:13,
         )
         ");
     }
@@ -445,8 +414,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:233:38
-            `-- missing closing quote, at src/libs/base_config.rs:233:38,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:202:38
+            `-- missing closing quote, at src/libs/base_config.rs:202:38,
         )
         "#);
     }
@@ -468,8 +437,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:243:10
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:243:10,
+            Executing password command, at src/libs/base_config.rs:212:10
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:212:10,
         )
         ");
     }
@@ -491,7 +460,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:239:10,
+            password command is empty, at src/libs/base_config.rs:208:10,
         )
         ");
     }
@@ -528,7 +497,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:179:17,
+            The password or password command must be set, at src/libs/base_config.rs:152:17,
         )
         ");
     }

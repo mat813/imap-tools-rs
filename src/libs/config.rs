@@ -194,7 +194,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             Applying CLI args to configuration, at src/libs/config.rs:80:14
-            `-- The server must be set, at src/libs/base_config.rs:161:13,
+            `-- The server must be set, at src/libs/base_config.rs:142:13,
         )
         ");
     }
@@ -212,7 +212,7 @@ mod tests {
         assert_debug_snapshot!(result, @"
         Err(
             Applying CLI args to configuration, at src/libs/config.rs:80:14
-            `-- The username must be set, at src/libs/base_config.rs:165:13,
+            `-- The username must be set, at src/libs/base_config.rs:146:13,
         )
         ");
     }
@@ -254,8 +254,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:233:38
-            `-- missing closing quote, at src/libs/base_config.rs:233:38,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:202:38
+            `-- missing closing quote, at src/libs/base_config.rs:202:38,
         )
         "#);
     }
@@ -277,8 +277,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:243:10
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:243:10,
+            Executing password command, at src/libs/base_config.rs:212:10
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:212:10,
         )
         ");
     }
@@ -300,7 +300,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:239:10,
+            password command is empty, at src/libs/base_config.rs:208:10,
         )
         ");
     }
@@ -339,7 +339,7 @@ mod tests {
         assert_debug_snapshot!(config, @"
         Err(
             Applying CLI args to configuration, at src/libs/config.rs:80:14
-            `-- The password or password command must be set, at src/libs/base_config.rs:179:17,
+            `-- The password or password command must be set, at src/libs/base_config.rs:152:17,
         )
         ");
     }
