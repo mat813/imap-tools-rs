@@ -3,7 +3,7 @@ use std::fmt::Display;
 use exn::Result;
 use serde_json::Value;
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
+use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
@@ -12,8 +12,6 @@ pub struct JsonRenderer {
     keys: &'static [&'static str],
     json: Vec<Value>,
 }
-
-impl RendererUsable for JsonRenderer {}
 
 impl<const N: usize> Renderer<N> for JsonRenderer {
     #[cfg_attr(

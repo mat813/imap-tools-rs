@@ -4,7 +4,7 @@ use exn::{Result, ResultExt as _};
 use strfmt::strfmt;
 use unicode_width::UnicodeWidthStr as _;
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
+use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct PrintRenderer {
@@ -43,8 +43,6 @@ fn column_formats(index: usize, spec: &str, label: &str) -> (String, String) {
         format!("{{{index}{align}{header_width}}}"),
     )
 }
-
-impl RendererUsable for PrintRenderer {}
 
 impl<const N: usize> Renderer<N> for PrintRenderer {
     #[cfg_attr(

@@ -12,8 +12,6 @@ use rust_i18n::t;
 use serde::Deserialize;
 
 use crate::libs::render::traits::RendererError;
-#[cfg(any(feature = "ratatui", feature = "cursive"))]
-use crate::libs::render::traits::RendererUsable as _;
 pub use crate::libs::render::traits::{Renderer, TableSpec};
 
 #[derive(Clone, Copy, Debug, Deserialize, derive_more::Display, clap::ValueEnum)]
@@ -45,13 +43,11 @@ impl Default for RendererArg {
             return Self::Csv;
         }
 
-        #[cfg(feature = "cursive")]
-        if cursive::CursiveRenderer::is_usable() {
+        #[cfg(any(feature = "cursive", feature = "ratatui"))]
+        if std::io::IsTerminal::is_terminal(&std::io::stdout()) {
+            #[cfg(feature = "cursive")]
             return Self::Cursive;
-        }
-
-        #[cfg(feature = "ratatui")]
-        if terminal::TerminalRenderer::is_usable() {
+            #[cfg(all(feature = "ratatui", not(feature = "cursive")))]
             return Self::Ratatui;
         }
 

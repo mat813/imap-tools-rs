@@ -22,7 +22,7 @@ use exn::{Result, ResultExt as _, bail};
 use strfmt::strfmt;
 use tokio::task;
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
+use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 struct TableState {
@@ -81,13 +81,6 @@ pub struct CursiveRenderer {
     cb_sink: CbSink,
     /// Handle to the cursive background thread; `take()`-n in `drop` to join it.
     handle: Option<task::JoinHandle<()>>,
-}
-
-impl RendererUsable for CursiveRenderer {
-    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
-    fn is_usable() -> bool {
-        stdout().is_terminal()
-    }
 }
 
 impl<const N: usize> Renderer<N> for CursiveRenderer {

@@ -61,16 +61,6 @@ pub enum RendererError {
 }
 impl std::error::Error for RendererError {}
 
-pub trait RendererUsable {
-    #[allow(dead_code, reason = "when the feature is not enabled")]
-    fn is_usable() -> bool
-    where
-        Self: Sized,
-    {
-        true
-    }
-}
-
 /// What a renderer draws: a title, and `N` columns.
 ///
 /// The machine-readable renderers (CSV, JSON) use the stable, English `keys`, so
@@ -120,7 +110,7 @@ impl<const N: usize> TableSpec<N> {
     }
 }
 
-pub trait Renderer<const N: usize>: RendererUsable {
+pub trait Renderer<const N: usize> {
     fn new(spec: TableSpec<N>) -> Result<Self, RendererError>
     where
         Self: Sized;

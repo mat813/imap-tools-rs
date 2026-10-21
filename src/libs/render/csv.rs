@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use exn::{Result, ResultExt as _};
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
+use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
 /// Output is flushed to stdout on `Drop` (unless running in test mode).
@@ -10,8 +10,6 @@ use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, Table
 pub struct CsvRenderer {
     writer: csv::Writer<Vec<u8>>,
 }
-
-impl RendererUsable for CsvRenderer {}
 
 impl<const N: usize> Renderer<N> for CsvRenderer {
     #[cfg_attr(

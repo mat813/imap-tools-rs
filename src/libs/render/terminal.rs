@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    io::{IsTerminal as _, Stdout, stdout},
-};
+use std::{fmt::Display, io::Stdout};
 
 use exn::{Result, ResultExt as _};
 use ratatui::{
@@ -13,7 +10,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table},
 };
 
-use crate::libs::render::traits::{Renderer, RendererError, RendererUsable, TableSpec};
+use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct TerminalRenderer<'a> {
@@ -22,13 +19,6 @@ pub struct TerminalRenderer<'a> {
     column_widths: Vec<u16>,
     headers: Row<'a>,
     title: String,
-}
-
-impl RendererUsable for TerminalRenderer<'_> {
-    #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", ret))]
-    fn is_usable() -> bool {
-        stdout().is_terminal()
-    }
 }
 
 impl<const N: usize> Renderer<N> for TerminalRenderer<'_> {
