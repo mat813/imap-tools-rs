@@ -99,6 +99,8 @@ impl<'de> Deserialize<'de> for AuthMethod {
 #[cfg(test)]
 mod tests {
     #![expect(clippy::expect_used, reason = "test")]
+    use rstest::rstest;
+
     use super::AuthMethod;
 
     #[test]
@@ -106,79 +108,21 @@ mod tests {
         assert_eq!(AuthMethod::default(), AuthMethod::Login);
     }
 
-    #[test]
-    fn auth_method_from_str_login() {
+    #[rstest]
+    #[case("login", AuthMethod::Login)]
+    #[case("plain", AuthMethod::Plain)]
+    #[case("cram-md5", AuthMethod::CramMd5)]
+    #[case("scram-sha-1", AuthMethod::ScramSha1)]
+    #[case("scram-sha-256", AuthMethod::ScramSha256)]
+    #[case("xoauth2", AuthMethod::XOAuth2)]
+    #[case("XOAUTH2", AuthMethod::XOAuth2)]
+    #[case("SCRAM-SHA-256", AuthMethod::ScramSha256)]
+    fn auth_method_from_str(#[case] input: &str, #[case] expected: AuthMethod) {
         assert_eq!(
-            "login"
+            input
                 .parse::<AuthMethod>()
-                .expect("\"login\" is a valid auth method"),
-            AuthMethod::Login
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_plain() {
-        assert_eq!(
-            "plain"
-                .parse::<AuthMethod>()
-                .expect("\"plain\" is a valid auth method"),
-            AuthMethod::Plain
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_cram_md5() {
-        assert_eq!(
-            "cram-md5"
-                .parse::<AuthMethod>()
-                .expect("\"cram-md5\" is a valid auth method"),
-            AuthMethod::CramMd5
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_scram_sha1() {
-        assert_eq!(
-            "scram-sha-1"
-                .parse::<AuthMethod>()
-                .expect("\"scram-sha-1\" is a valid auth method"),
-            AuthMethod::ScramSha1
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_scram_sha256() {
-        assert_eq!(
-            "scram-sha-256"
-                .parse::<AuthMethod>()
-                .expect("\"scram-sha-256\" is a valid auth method"),
-            AuthMethod::ScramSha256
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_xoauth2() {
-        assert_eq!(
-            "xoauth2"
-                .parse::<AuthMethod>()
-                .expect("\"xoauth2\" is a valid auth method"),
-            AuthMethod::XOAuth2
-        );
-    }
-
-    #[test]
-    fn auth_method_from_str_case_insensitive() {
-        assert_eq!(
-            "XOAUTH2"
-                .parse::<AuthMethod>()
-                .expect("auth method parsing must be case-insensitive"),
-            AuthMethod::XOAuth2
-        );
-        assert_eq!(
-            "SCRAM-SHA-256"
-                .parse::<AuthMethod>()
-                .expect("auth method parsing must be case-insensitive"),
-            AuthMethod::ScramSha256
+                .expect("valid auth method (case-insensitive)"),
+            expected
         );
     }
 
@@ -187,33 +131,14 @@ mod tests {
         assert!("digest-md5".parse::<AuthMethod>().is_err());
     }
 
-    #[test]
-    fn auth_method_requires_password_login() {
-        assert!(AuthMethod::Login.requires_password());
-    }
-
-    #[test]
-    fn auth_method_requires_password_plain() {
-        assert!(AuthMethod::Plain.requires_password());
-    }
-
-    #[test]
-    fn auth_method_requires_password_cram_md5() {
-        assert!(AuthMethod::CramMd5.requires_password());
-    }
-
-    #[test]
-    fn auth_method_requires_password_scram_sha1() {
-        assert!(AuthMethod::ScramSha1.requires_password());
-    }
-
-    #[test]
-    fn auth_method_requires_password_scram_sha256() {
-        assert!(AuthMethod::ScramSha256.requires_password());
-    }
-
-    #[test]
-    fn auth_method_requires_password_xoauth2_false() {
-        assert!(!AuthMethod::XOAuth2.requires_password());
+    #[rstest]
+    #[case(AuthMethod::Login, true)]
+    #[case(AuthMethod::Plain, true)]
+    #[case(AuthMethod::CramMd5, true)]
+    #[case(AuthMethod::ScramSha1, true)]
+    #[case(AuthMethod::ScramSha256, true)]
+    #[case(AuthMethod::XOAuth2, false)]
+    fn auth_method_requires_password(#[case] method: AuthMethod, #[case] expected: bool) {
+        assert_eq!(method.requires_password(), expected);
     }
 }

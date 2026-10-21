@@ -114,63 +114,28 @@ impl Default for Mode {
 mod tests {
     #![expect(clippy::expect_used, reason = "tests")]
 
+    use rstest::rstest;
+
     use super::Mode;
 
-    #[test]
-    fn from_str_auto_tls() {
-        let mode = "auto_tls".parse::<Mode>().expect("auto_tls should parse");
-        assert_eq!(mode, Mode::AutoTls);
-    }
-
-    #[test]
-    fn from_str_autotls_alias() {
-        let mode = "autotls".parse::<Mode>().expect("autotls should parse");
-        assert_eq!(mode, Mode::AutoTls);
-    }
-
-    #[test]
-    fn from_str_auto() {
-        let mode = "auto".parse::<Mode>().expect("auto should parse");
-        assert_eq!(mode, Mode::Auto);
-    }
-
-    #[test]
-    fn from_str_plaintext() {
-        let mode = "plaintext".parse::<Mode>().expect("plaintext should parse");
-        assert_eq!(mode, Mode::Plaintext);
-    }
-
-    #[test]
-    fn from_str_none_alias() {
-        let mode = "none".parse::<Mode>().expect("none should parse");
-        assert_eq!(mode, Mode::Plaintext);
+    #[rstest]
+    #[case("auto_tls", Mode::AutoTls)]
+    #[case("autotls", Mode::AutoTls)]
+    #[case("AUTO_TLS", Mode::AutoTls)]
+    #[case("auto", Mode::Auto)]
+    #[case("plaintext", Mode::Plaintext)]
+    #[case("none", Mode::Plaintext)]
+    fn from_str(#[case] input: &str, #[case] expected: Mode) {
+        assert_eq!(input.parse::<Mode>().expect("should parse"), expected);
     }
 
     #[cfg(feature = "__tls")]
-    #[test]
-    fn from_str_tls() {
-        let mode = "tls".parse::<Mode>().expect("tls should parse");
-        assert_eq!(mode, Mode::Tls);
-    }
-
-    #[cfg(feature = "__tls")]
-    #[test]
-    fn from_str_start_tls() {
-        let mode = "start_tls".parse::<Mode>().expect("start_tls should parse");
-        assert_eq!(mode, Mode::StartTls);
-    }
-
-    #[cfg(feature = "__tls")]
-    #[test]
-    fn from_str_starttls_alias() {
-        let mode = "starttls".parse::<Mode>().expect("starttls should parse");
-        assert_eq!(mode, Mode::StartTls);
-    }
-
-    #[test]
-    fn from_str_case_insensitive() {
-        let mode = "AUTO_TLS".parse::<Mode>().expect("AUTO_TLS should parse");
-        assert_eq!(mode, Mode::AutoTls);
+    #[rstest]
+    #[case("tls", Mode::Tls)]
+    #[case("start_tls", Mode::StartTls)]
+    #[case("starttls", Mode::StartTls)]
+    fn from_str_tls(#[case] input: &str, #[case] expected: Mode) {
+        assert_eq!(input.parse::<Mode>().expect("should parse"), expected);
     }
 
     #[test]
