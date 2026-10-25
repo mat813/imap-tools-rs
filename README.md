@@ -8,20 +8,20 @@ $ cargo install imap-tools
 
 ## Usage
 
-Most tools have the same generic arguments :
+Most tools have the same generic arguments:
 
 - `-c` - `--config` - The configuration file to use.
 
-Next, these arguments can be either set on the command line or in the config file.
+You can set the next arguments on the command line or in the configuration file.
 
-- `-u` - `--username` - The username to use for login.
-- `-p` -  `--password` - The password to use for login.
-- `-P` - `--password_command` - A command to use to get the password.
-- `-s` - `--server` - The imap server, defaults to localhost.
-- `-d` - `--debug` - Dump all the imap dialogue.
-- `-n` - `--dry-run` - Don't change anything on the server.
+- `-u` - `--username` - The username for login.
+- `-p` -  `--password` - The password for login.
+- `-P` - `--password_command` - A command that prints the password.
+- `-s` - `--server` - The IMAP server. The default is localhost.
+- `-d` - `--debug` - Print all the IMAP dialogue.
+- `-n` - `--dry-run` - Do not change anything on the server.
 
-So a configuration file may start with:
+A configuration file can start like this:
 
 ```toml
 password-command = "secret-tool lookup id example"
@@ -41,14 +41,17 @@ username         = "alice@example.com"
   include   = ["INBOX", "Sent"]
 ```
 
-There are four fields that allow a finer selection of mailboxes.
+Four fields give a finer selection of mailboxes.
 They are `include`, `exclude`, `include_re` and `exclude_re`.
-The first two will include and exclude based on basic string matching.
-The later two will need to be valid [Regex patterns](https://docs.rs/regex/latest/), and will also include mailboxes and exclude them.
+`include` and `exclude` match basic strings.
+`include_re` and `exclude_re` need valid [Regex patterns](https://docs.rs/regex/latest/).
+Each field adds mailboxes to the selection (`include`, `include_re`) or excludes them from it (`exclude`, `exclude_re`).
 
-Some tools like clean have an `extra` parameter added globally, and/or to each filter, description is provided when this happens.
-If a filter does not have the `extra` parameter set, the global one gets used instead.
-For example if you have these filters with extras:
+Some tools, for example clean, have an `extra` parameter.
+You can set `extra` globally, in each filter, or in both.
+The documentation of each tool describes its `extra` parameter.
+If a filter does not set `extra`, it uses the global `extra`.
+In this example, the filters have these `extra` values:
 
 ```toml
 extra = "foo"
@@ -67,7 +70,7 @@ extra = "foo"
   name = "*"
 ```
 
-They would end up as if this had been written as:
+The result is the same as this configuration:
 
 ```toml
 [[filters]]
@@ -96,18 +99,19 @@ $ imap-tools list -c config.toml
 
 ### list
 
-This tool will list the mailboxes that would be processed by other tools.
-It helps you figure out your filters without actually doing anything.
+This tool lists the mailboxes that the other tools process.
+Use it to test your filters. It does not change anything.
 
 ### finddup
 
-This tool will go over all the mailboxes from an imap server, find messages with duplicate message ids, and remove duplicates.
+This tool reads all the mailboxes of an IMAP server and finds messages that have the same message id.
+It deletes the duplicates.
 
 ### clean
 
-This tool will go over the mailboxes and cleanup old messages according to simples rules.
+This tool reads the mailboxes and deletes old messages. It uses simple rules.
 
-The rules are added to a filter using the extra parameter.
+Put the rules in the `extra` parameter of a filter.
 For example:
 
 ```toml
@@ -121,16 +125,19 @@ For example:
     10MB = 55
 ```
 
-The reference and name are the same as for other tools. `extra` is a map of mailbox size in MB to days of messages that should be kept.
-In this example, messages are kept up to 105 days, unless the mailbox is larger than 5MB, and oldest message is newer than 105 days, then messages are kept up to 85 days, unless the mailbox is more than 10MB and the oldest message is less than 55 days old.
+The reference and name are the same as for the other tools.
+`extra` is a map. Each key is a mailbox size in MB. Each value is the number of days to keep messages.
+In this example, the tool keeps messages for 105 days.
+If the mailbox is larger than 5MB and the oldest message is newer than 105 days, the tool keeps messages for 85 days.
+If the mailbox is larger than 10MB and the oldest message is newer than 55 days, the tool keeps messages for 55 days.
 
 ### archive
 
-This tool will "archive", aka move, old emails from mailboxes into archive mailboxes.
-Its extra parameter contains a number of days and a string format for the archive mailbox location.
-The string format can contain is passed through [strftime](https://docs.rs/chrono/latest/chrono/format/strftime/index.html#specifiers) so all its specifiers can be used.
-The strftime calls are made based on the date on which each email was received. (Called the internaldate in IMAP terms).
-The string format can also contain `%%MBX` (yes, with two %) that will be replaced with the full mailbox name.
+This tool archives old messages. It moves them from mailboxes into archive mailboxes.
+Its `extra` parameter contains a number of days and a string format for the location of the archive mailbox.
+The tool passes the string format through [strftime](https://docs.rs/chrono/latest/chrono/format/strftime/index.html#specifiers). You can use all its specifiers.
+The strftime calls use the date on which the server received each message. IMAP calls this date the internaldate.
+The string format can also contain `%%MBX` (with two %). The tool replaces it with the full mailbox name.
 For example:
 
 ```toml
@@ -143,10 +150,10 @@ For example:
     format = "Archive/%Y/%%MBX"
 ```
 
-Will move messages older than 200 days into the archive mailbox.
-If the mailbox is `INBOX/bob`, and the email is from 2024, it will be moved into `Archive/2024/INBOX/bob`.
+This configuration moves messages that are older than 200 days into the archive mailbox.
+If the mailbox is `INBOX/bob` and the message is from 2024, the tool moves it into `Archive/2024/INBOX/bob`.
 
-Another example could be:
+Here is another example:
 
 ```toml
 [[filters]]
@@ -158,11 +165,12 @@ Another example could be:
     format = "%%MBX/old/%Y/%m"
 ```
 
-If the mailbox is `INBOX/bob`, and the email is from september 2024, it will be moved into `INBOX/bob/old/2024/09`.
+If the mailbox is `INBOX/bob` and the message is from September 2024, the tool moves it into `INBOX/bob/old/2024/09`.
 
 ### Authentication
 
-The `auth` field (config file or `--auth` CLI flag) selects the SASL mechanism. The default is `login` (standard IMAP LOGIN command).
+The `auth` field selects the SASL mechanism. Set it in the configuration file or with the `--auth` command-line flag.
+The default is `login` (the standard IMAP LOGIN command).
 
 | `auth` value    | Mechanism     | Credential needed           | Notes                                    |
 |-----------------|---------------|-----------------------------|------------------------------------------|
@@ -173,7 +181,7 @@ The `auth` field (config file or `--auth` CLI flag) selects the SASL mechanism. 
 | `scram-sha-256` | SASL SCRAM-SHA-256 | `password` / `password-command` | Preferred over SHA-1, RFC 7677   |
 | `xoauth2`       | SASL XOAUTH2  | `oauth2-command`            | Bearer token, for Gmail / Office 365     |
 
-Example using SCRAM-SHA-256:
+Example that uses SCRAM-SHA-256:
 
 ```toml
 auth             = "scram-sha-256"
@@ -184,7 +192,8 @@ password-command = "pass show imap/example"
 
 ### `OAuth2` (Gmail / Office 365)
 
-Gmail and Office 365 no longer accept plain-password IMAP login. Use `auth = "xoauth2"` together with `oauth2-command`, a shell command whose **stdout** is a valid bearer access token.
+Gmail and Office 365 do not accept plain-password IMAP login.
+Set `auth = "xoauth2"` and `oauth2-command`. The **stdout** of `oauth2-command` must be a valid bearer access token.
 
 ```toml
 auth           = "xoauth2"
@@ -194,27 +203,26 @@ username       = "user@gmail.com"
 oauth2-command = "oauth2l fetch --output_format=bare https://mail.google.com/"
 ```
 
-imap-tools does **not** handle token refresh or caching; delegate that to an external tool:
+imap-tools does **not** refresh or cache tokens. Use an external tool for this:
 
 - **Gmail** — [`oauth2l`](https://github.com/google/oauth2l) or [`mutt_oauth2.py`](https://gitlab.com/muttmua/mutt/-/blob/master/contrib/oauth2/mutt_oauth2.py).
-  Obtain a refresh token once (follow the tool's setup guide), then use the command above.
+  Get a refresh token once. Follow the setup guide of the tool. Then use the command above.
 - **Office 365** — [`mutt_oauth2.py`](https://gitlab.com/muttmua/mutt/-/blob/master/contrib/oauth2/mutt_oauth2.py) with `--provider microsoft`.
 
-The access token is fetched fresh on every invocation. If it has expired, the IMAP server will return an authentication error.
+The tool gets a new access token on every run. If the token expired, the IMAP server returns an authentication error.
 
 ### imap
 
-Permit somewhat "raw" imap commands
+These commands send "raw" IMAP commands.
 
 #### list
 
-This is comparable to the list command, but it does not need a config file.
+This command is like the list tool, but it does not need a configuration file.
 
 #### create
 
-Permits direct creation of a mailbox
+This command creates a mailbox.
 
 #### delete
 
-Permits direct deletion of a mailbox
-
+This command deletes a mailbox.
