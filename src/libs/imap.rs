@@ -116,10 +116,10 @@ where
     /// Optional list of filters to apply when listing mailboxes.
     filters: Option<Vec<Filter<T>>>,
 
-    /// Cache of previously fetched capabilities to avoid redundant round trips.
+    /// Cache of the capabilities that the session already fetched. It avoids redundant round trips.
     cached_capabilities: HashMap<String, bool>,
 
-    /// Whether the session has been explicitly closed.
+    /// Whether the code closed the session explicitly.
     closed: bool,
 }
 
@@ -155,7 +155,7 @@ where
         self.session.logout().await.or_raise(|| ImapError::Logout)
     }
 
-    /// Connect and login to the IMAP server described by `base`.
+    /// Connect and log in to the IMAP server that `base` describes.
     ///
     /// # Errors
     /// Returns an error if the connection, TLS setup, or login fails.
@@ -260,7 +260,7 @@ where
         tracing::instrument(level = "trace", skip(base, port), ret, err(level = "debug"))
     )]
     /// Test-only: connect to a specific port in plaintext mode (no TLS).
-    /// Useful for connecting to a mock IMAP server.
+    /// Use it to connect to a mock IMAP server.
     #[cfg(test)]
     pub async fn connect_base_on_port(base: &BaseConfig, port: u16) -> Result<Self, ImapError> {
         let mut test_base = base.clone();
@@ -269,7 +269,7 @@ where
         Self::connect_base(&test_base).await
     }
 
-    /// Connect to the server and login with the given credentials.
+    /// Connect to the server and log in with the given credentials.
     ///
     /// # Errors
     /// Many errors can happen
@@ -288,7 +288,7 @@ where
         Ok(ret)
     }
 
-    /// Check if the imap server has some capability.
+    /// Check if the IMAP server has a capability.
     ///
     /// # Errors
     /// Imap errors can happen
@@ -367,11 +367,11 @@ where
         Ok(())
     }
 
-    /// Get a list of mailboxes given filters, returns a `BTreeMap` so it is
-    /// sorted and stable.
+    /// Get a list of mailboxes for the given filters. It returns a `BTreeMap`, so
+    /// the list is sorted and stable.
     ///
-    /// We use a map to be able to have generic filters at the beginning of the
-    /// configuration that are overwritten by more specific filters afterwards.
+    /// A map lets more specific filters overwrite the generic filters at the
+    /// beginning of the configuration.
     ///
     /// # Errors
     /// Many errors can happen
@@ -456,8 +456,8 @@ async fn authenticate<A: async_imap::Authenticator>(
         err(level = "debug")
     )
 )]
-/// Wrap a raw `TcpStream` in the appropriate TLS layer (or leave as-is for plaintext),
-/// returning the opaque `ImapStream` and whether the server greeting has already been consumed.
+/// Wrap a raw `TcpStream` in the right TLS layer, or leave it as is for plaintext.
+/// Return the opaque `ImapStream` and whether the code already consumed the server greeting.
 #[cfg_attr(
     not(any(feature = "__tls", feature = "tracing")),
     expect(clippy::unused_async, reason = "only needed when using tls")
@@ -493,7 +493,7 @@ async fn build_stream(
     }
 }
 
-/// TLS from the first byte; the server greeting is still to be read.
+/// TLS from the first byte. The code must still read the server greeting.
 #[cfg(feature = "__tls")]
 async fn implicit_tls(tcp: TcpStream, server: &str) -> Result<(ImapStream, bool), ImapError> {
     let tls = wrap_tls(tcp, server)
@@ -504,7 +504,7 @@ async fn implicit_tls(tcp: TcpStream, server: &str) -> Result<(ImapStream, bool)
 
 /// Read the greeting, then upgrade with STARTTLS. When `optional`, a server
 /// that refuses STARTTLS gets a plaintext connection instead of an error.
-/// The greeting is always consumed.
+/// The function always consumes the greeting.
 #[cfg(feature = "__tls")]
 async fn starttls(
     tcp: TcpStream,

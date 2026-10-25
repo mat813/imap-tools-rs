@@ -5,7 +5,7 @@ use exn::{Result, ResultExt as _};
 use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
 /// CSV renderer that buffers output to an internal `Vec<u8>`.
-/// Output is flushed to stdout on `Drop` (unless running in test mode).
+/// The renderer writes the output to stdout on `Drop`, except in test mode.
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct CsvRenderer {
     writer: csv::Writer<Vec<u8>>,

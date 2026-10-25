@@ -1,14 +1,14 @@
 //! Locale selection for user-facing messages.
 //!
-//! The language is picked automatically from the environment (`LC_ALL`,
-//! `LC_MESSAGES`, `LANG`, ...). When it is not one of the supported languages,
+//! The program picks the language from the environment (`LC_ALL`,
+//! `LC_MESSAGES`, `LANG`, ...). If the language is not a supported language,
 //! the messages stay in English.
 
-/// Languages for which a translation exists, primary language subtag only.
+/// Languages that have a translation. Only the primary language subtag.
 pub const SUPPORTED: &[&str] = &["en", "fr", "de", "ja", "zh", "ko"];
 
-/// Reduce a locale tag such as `fr_FR.UTF-8` or `zh-Hans-CN` to its supported
-/// primary language, if any.
+/// Reduce a locale tag, such as `fr_FR.UTF-8` or `zh-Hans-CN`, to its supported
+/// primary language. Return nothing if the language is not supported.
 fn primary_language(tag: &str) -> Option<&'static str> {
     let language = tag.split(['_', '-', '.', '@']).next()?.to_ascii_lowercase();
     SUPPORTED.iter().copied().find(|l| *l == language)
@@ -16,8 +16,8 @@ fn primary_language(tag: &str) -> Option<&'static str> {
 
 /// Select the display language from the system locale.
 ///
-/// Must be called before anything user-facing is built, in particular before
-/// the command line is parsed, as clap resolves its help texts at that point.
+/// Call this before the program builds anything user-facing. In particular, call
+/// it before the command line parsing, because clap resolves its help texts then.
 pub fn init() {
     if let Some(language) = sys_locale::get_locale()
         .as_deref()
@@ -47,7 +47,7 @@ mod tests {
     /// Translations of each key, by language.
     type Catalog = BTreeMap<String, BTreeMap<String, String>>;
 
-    /// The path of `path` under `root`, with `/` as separator.
+    /// The path of `path` under `root`. It uses `/` as separator.
     fn relative(root: &Path, path: &Path) -> String {
         path.strip_prefix(root)
             .expect("under the root")
@@ -75,7 +75,7 @@ mod tests {
         files_with_extension(&root, "yml", &mut files);
         files
             .iter()
-            // `cargo i18n` writes what is missing there, rust-i18n does not load it
+            // `cargo i18n` writes the missing texts there. rust-i18n does not load it.
             .filter(|f| !f.ends_with("TODO.yml"))
             .map(|f| {
                 (
@@ -124,7 +124,7 @@ mod tests {
             .collect()
     }
 
-    /// Every key given to `t!()` in the sources, but the ones of this file, with the
+    /// Every key that the sources give to `t!()`, except the keys of this file, with the
     /// source files (under `src/`) that use it.
     fn used_keys() -> BTreeMap<String, BTreeSet<String>> {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -143,9 +143,9 @@ mod tests {
         used
     }
 
-    /// The file of `locales/` for the texts that only this source file uses. What is not
-    /// here (`main.rs`, `run.rs`, `commands/mod.rs`), and what several of these files use,
-    /// is in `app.yml`.
+    /// The file of `locales/` for the texts that only this source file uses.
+    /// `app.yml` has the texts of `main.rs`, `run.rs` and `commands/mod.rs`,
+    /// and the texts that several of these files use.
     const HOMES: &[(&str, &str)] = &[
         ("commands/archive.rs", "commands/archive.yml"),
         ("commands/clean.rs", "commands/clean.yml"),
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn every_locale_file_is_version_2() {
-        // Without it, rust-i18n reads the file as the texts of a language named after it
+        // Without it, rust-i18n reads the file as the texts of a language that has the name of the file.
         let wrong: Vec<_> = locale_files()
             .into_iter()
             .filter(|entry| !entry.1.starts_with("_version: 2\n"))
@@ -260,7 +260,7 @@ mod tests {
 
     #[test]
     fn no_key_is_defined_in_two_files() {
-        // rust-i18n merges the files, and silently keeps only one of the two texts
+        // rust-i18n merges the files. It silently keeps only one of the two texts.
         let mut owner: BTreeMap<String, String> = BTreeMap::new();
         let mut problems = Vec::new();
         for (file, catalog) in catalog_by_file() {
@@ -279,7 +279,7 @@ mod tests {
         let mut problems = Vec::new();
         for (file, catalog) in catalog_by_file() {
             for key in catalog.keys() {
-                // Keys that are never used are reported by another test
+                // Another test reports the keys that nothing uses.
                 let Some(sources) = used.get(key) else {
                     continue;
                 };
@@ -306,7 +306,7 @@ mod tests {
     #[case("ja", "設定ファイルのパス")]
     #[case("zh", "配置文件的路径")]
     #[case("ko", "설정 파일 경로")]
-    // A territory falls back to its language, an unknown language to English
+    // A territory falls back to its language. An unknown language falls back to English.
     #[case("zh-TW", "配置文件的路径")]
     #[case("es", "Path to the configuration file")]
     fn translates_to_the_requested_language(#[case] locale: &str, #[case] expected: &str) {

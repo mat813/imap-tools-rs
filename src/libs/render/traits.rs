@@ -61,11 +61,11 @@ pub enum RendererError {
 }
 impl std::error::Error for RendererError {}
 
-/// What a renderer draws: a title, and `N` columns.
+/// What a renderer draws: a title and `N` columns.
 ///
-/// The machine-readable renderers (CSV, JSON) use the stable, English `keys`, so
-/// that their output does not depend on the language. The renderers meant for a
-/// human use the translated `title` and `labels`.
+/// The machine-readable renderers (CSV, JSON) use the stable English `keys`.
+/// Their output does not depend on the language. The renderers for a human use
+/// the translated `title` and `labels`.
 #[derive(Debug)]
 pub struct TableSpec<const N: usize> {
     /// Translated title of the table.
@@ -94,7 +94,7 @@ impl<const N: usize> TableSpec<N> {
         }
     }
 
-    /// A table whose labels are its keys, for tests that do not care about translations.
+    /// A table whose labels are its keys. Use it in tests that do not depend on translations.
     #[cfg(test)]
     pub fn untranslated(
         title: &str,
@@ -116,7 +116,7 @@ pub trait Renderer<const N: usize> {
         Self: Sized;
     fn add_row(&mut self, row: &[&dyn Display; N]) -> Result<(), RendererError>;
 
-    /// Returns the accumulated output as a string, for renderers that buffer internally.
+    /// Returns the accumulated output as a string. Renderers that buffer internally implement it.
     /// Other renderers return an empty string.
     #[cfg(test)]
     fn output(&mut self) -> String {

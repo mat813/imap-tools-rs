@@ -26,9 +26,10 @@ impl std::error::Error for RunError {}
     feature = "tracing",
     tracing::instrument(level = "trace", err(level = "info"))
 )]
-/// Dispatch-run our commands
+/// Run the command that the user selected.
+///
 /// # Errors
-/// forwards the errors from the commands to `main()`
+/// Forward the errors of the command to `main()`.
 pub async fn run() -> Result<(), RunError> {
     let cli = MainArgs::parse();
 

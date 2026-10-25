@@ -19,7 +19,7 @@ pub enum RendererArg {
     /// CSV output
     #[value(help = t!("cli.renderer.csv"))]
     Csv,
-    /// Table-ish output
+    /// Plain text table output
     #[value(help = t!("cli.renderer.terminal"))]
     Terminal,
     #[cfg(feature = "ratatui")]

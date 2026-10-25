@@ -48,7 +48,7 @@ cli.args.password:
   ko: 연결에 사용할 비밀번호
 
 cli.args.password_command:
-  en: The command to use to get the password
+  en: The command that prints the password
   fr: La commande à utiliser pour obtenir le mot de passe
   de: Der Befehl, mit dem das Passwort abgerufen wird
   ja: パスワードを取得するために使用するコマンド
@@ -80,7 +80,7 @@ cli.args.renderer:
   ko: 사용할 출력 형식
 
 cli.args.dry_run:
-  en: Do not actually make any changes to the server
+  en: Do not change anything on the server
   fr: Ne réellement rien modifier sur le serveur
   de: Keine tatsächlichen Änderungen auf dem Server vornehmen
   ja: サーバーに実際の変更を加えない
@@ -96,7 +96,7 @@ cli.args.auth:
   ko: 인증 방식 (login 또는 xoauth2)
 
 cli.args.oauth2_command:
-  en: Command whose stdout is the `OAuth2` access token (required when `--auth xoauth2`)
+  en: Command that prints the `OAuth2` access token on stdout. Required when `--auth xoauth2`
   fr: Commande dont la sortie standard est le jeton d'accès `OAuth2` (requise avec `--auth xoauth2`)
   de: Befehl, dessen Standardausgabe das `OAuth2`-Zugriffstoken ist (erforderlich bei `--auth xoauth2`)
   ja: 標準出力が `OAuth2` アクセストークンとなるコマンド (`--auth xoauth2` の場合は必須)

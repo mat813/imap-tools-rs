@@ -2,7 +2,7 @@ use async_imap::Authenticator;
 
 /// SASL PLAIN authenticator for use with [`async_imap::Client::authenticate`].
 ///
-/// Encodes `\0authcid\0passwd`; async-imap handles base64 wrapping.
+/// Encodes `\0authcid\0passwd`. async-imap does the base64 wrapping.
 pub struct PlainAuth {
     /// IMAP username.
     pub user: String,
@@ -18,7 +18,7 @@ impl Authenticator for PlainAuth {
         tracing::instrument(level = "trace", skip(self, _challenge), ret)
     )]
     fn process(&mut self, _challenge: &[u8]) -> Self::Response {
-        // empty authzid, then authcid and passwd, NUL-separated
+        // Empty authzid, then authcid and passwd. NUL characters separate them.
         format!("\0{}\0{}", self.user, self.password).into_bytes()
     }
 }

@@ -48,7 +48,7 @@ cli.mode.tls:
   ko: 암호화된 TLS 연결
 
 cli.mode.start_tls:
-  en: An eventually-encrypted (i.e., STARTTLS) connection
+  en: A connection that upgrades to TLS with STARTTLS
   fr: Une connexion éventuellement chiffrée (c.-à-d. STARTTLS)
   de: Eine gegebenenfalls verschlüsselte Verbindung (d. h. STARTTLS)
   ja: 場合によって暗号化される接続 (つまり STARTTLS)

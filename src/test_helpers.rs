@@ -64,15 +64,15 @@ impl From<&str> for ExpectCommand {
     }
 }
 
-/// A scripted IMAP exchange: untagged response lines + final tagged response.
+/// A scripted IMAP exchange: untagged response lines and a final tagged response.
 #[derive(Debug)]
 pub struct MockExchange {
-    /// Untagged lines sent before the tagged response (each must include `\r\n`).
+    /// Untagged lines that the server sends before the tagged response. Each line must include `\r\n`.
     pub untagged: Vec<String>,
     /// Tagged response suffix, e.g. `"OK completed"` or `"NO Mailbox already exist"`.
     pub tagged: String,
-    /// If set, the mock server asserts the client sent this exact command
-    /// (everything after the IMAP tag, trimmed).
+    /// The mock server asserts that the client sent this exact command.
+    /// The command is everything after the IMAP tag, trimmed.
     pub command: ExpectCommand,
 }
 
@@ -81,7 +81,7 @@ impl MockExchange {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(command, untagged), ret)
     )]
-    /// Successful exchange: tagged `OK completed` after the untagged lines.
+    /// A successful exchange: the untagged lines, then the tagged `OK completed`.
     #[track_caller]
     pub fn ok(command: impl Into<ExpectCommand>, untagged: Vec<String>) -> Self {
         Self {
@@ -95,7 +95,7 @@ impl MockExchange {
         feature = "tracing",
         tracing::instrument(level = "trace", skip(command, reason), ret)
     )]
-    /// Failed exchange: tagged `NO <reason>`, no untagged lines.
+    /// A failed exchange: the tagged `NO <reason>` and no untagged lines.
     #[track_caller]
     pub fn no(command: impl Into<ExpectCommand>, reason: impl Into<String>) -> Self {
         Self {
@@ -106,15 +106,15 @@ impl MockExchange {
     }
 }
 
-/// A single-connection mock IMAP TCP server for tests.
+/// A mock IMAP TCP server for tests. It accepts one connection.
 ///
-/// Handles `CAPABILITY`, `LOGIN`, and `LOGOUT` automatically.
-/// All other commands are answered from the provided script in order.
+/// It answers `CAPABILITY`, `LOGIN` and `LOGOUT` by itself.
+/// It answers all other commands from the script, in order.
 #[derive(Debug)]
 pub struct MockServer {
-    /// The local port the mock server is listening on.
+    /// The local port that the mock server listens on.
     pub port: u16,
-    /// The background task running the mock server.
+    /// The background task that runs the mock server.
     handle: JoinHandle<()>,
 }
 
@@ -125,8 +125,8 @@ impl MockServer {
     )]
     /// Start the server on a random local port.
     ///
-    /// `extra_caps`: additional capabilities beyond `IMAP4rev1 UIDPLUS` (e.g. `&["MOVE"]`).
-    /// `script`: one `MockExchange` per non-handshake IMAP command.
+    /// `extra_caps`: the capabilities to add to `IMAP4rev1 UIDPLUS` (for example `&["MOVE"]`).
+    /// `script`: one `MockExchange` for each IMAP command that is not part of the handshake.
     pub async fn start(extra_caps: &'static [&'static str], script: Vec<MockExchange>) -> Self {
         let listener = TcpListener::bind("127.0.0.1:0")
             .await
@@ -140,7 +140,7 @@ impl MockServer {
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
-    /// Wait for the mock server task to complete.
+    /// Wait until the mock server task ends.
     pub async fn join(self) {
         self.handle.await.expect("mock server task panicked");
     }
@@ -240,7 +240,7 @@ async fn run_session(stream: TcpStream, extra_caps: &[&str], script: Vec<MockExc
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(), ret))]
-/// Create a minimal `BaseConfig` pointing at 127.0.0.1 with test credentials.
+/// Create a minimal `BaseConfig` for 127.0.0.1 with test credentials.
 pub fn test_base() -> crate::libs::base_config::BaseConfig {
     crate::libs::base_config::BaseConfig::new(&crate::libs::args::Generic {
         server: Some("127.0.0.1".to_owned()),
@@ -257,7 +257,7 @@ pub fn test_base() -> crate::libs::base_config::BaseConfig {
 )]
 /// Build a `BODY[HEADER.FIELDS ("MESSAGE-ID")]` FETCH response line for one message.
 ///
-/// `seq` is the sequence number, `uid` is the UID, `msg_id` is e.g. `"<foo@bar.com>"`.
+/// `seq` is the sequence number. `uid` is the UID. `msg_id` is the message id (for example `"<foo@bar.com>"`).
 pub fn header_fetch_line(seq: u32, uid: u32, msg_id: &str) -> String {
     let header = format!("Message-ID: {msg_id}\r\n\r\n");
     let len = header.len();

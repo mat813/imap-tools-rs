@@ -1,6 +1,6 @@
-// NOTE: This renderer owns the terminal for its entire lifetime.  Any concurrent
-// writes to stdout/stderr (tracing logs, indicatif progress bars) will corrupt
-// the display — accepted limitation of a full-screen TUI renderer.
+// NOTE: This renderer owns the terminal for its whole lifetime. Concurrent
+// writes to stdout or stderr (tracing logs, indicatif progress bars) corrupt
+// the display. We accept this limitation of a full-screen TUI renderer.
 use std::{
     fmt::Display,
     io::{IsTerminal as _, stdout},
@@ -62,24 +62,24 @@ impl TableState {
     }
 }
 
-/// Interactive TUI renderer backed by the `cursive` crate.
+/// Interactive TUI renderer that uses the `cursive` crate.
 ///
-/// Rows are displayed incrementally as they arrive via [`add_row`].  A `cursive`
-/// event loop runs in a background thread; the main thread communicates with it
-/// through a [`CbSink`].  `q`, `Esc`, and `Ctrl+C` set a shared quit flag and
-/// stop the event loop; the next [`add_row`] call propagates the interruption as
-/// an error so the calling command unwinds cleanly.
+/// The renderer shows each row when it arrives through [`add_row`]. A `cursive`
+/// event loop runs in a background thread. The main thread sends commands to it
+/// through a [`CbSink`]. `q`, `Esc` and `Ctrl+C` set a shared quit flag and
+/// stop the event loop. The next [`add_row`] call returns the interruption as
+/// an error, so the calling command stops cleanly.
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct CursiveRenderer {
-    /// The content to be rendered
+    /// The content to render
     state: TableState,
     /// The formatting
     format: Vec<String>,
-    /// Shared stop flag; set by the cursive thread when the user requests quit.
+    /// Shared stop flag. The cursive thread sets it when the user asks to quit.
     quit: Arc<AtomicBool>,
     /// Callback channel to the cursive background thread
     cb_sink: CbSink,
-    /// Handle to the cursive background thread; `take()`-n in `drop` to join it.
+    /// Handle to the cursive background thread. `drop` uses `take()` on it to join the thread.
     handle: Option<task::JoinHandle<()>>,
 }
 
@@ -189,10 +189,10 @@ impl Drop for CursiveRenderer {
     #[cfg_attr(feature = "tracing", tracing::instrument(level = "trace", skip(self)))]
     fn drop(&mut self) {
         if std::thread::panicking() {
-            // Best-effort: signal cursive to quit so the terminal gets restored.
+            // Best effort: tell cursive to quit, so that it restores the terminal.
             let _ = self.cb_sink.send(Box::new(|s: &mut Cursive| s.quit()));
         }
-        // Block until the cursive thread finishes (user pressed q/Esc/Ctrl+C).
+        // Wait until the cursive thread ends (the user pressed q, Esc or Ctrl+C).
         self.handle
             .take()
             .map(|handle| task::spawn_blocking(async || handle.await));

@@ -1,0 +1,29 @@
+{"run_id":"1792918693-509466582","line":301,"new":{"module_name":"imap_tools__libs__config__tests","snapshot_name":"password_fn_command_empty","metadata":{"source":"src/libs/config.rs","assertion_line":301,"expression":"result"},"snapshot":"Err(\n    password command is empty, at src/libs/base_config.rs:209:10,\n)"},"old":{"module_name":"imap_tools__libs__config__tests","metadata":{},"snapshot":"Err(\n    password command is empty, at src/libs/base_config.rs:208:10,\n)"}}
+{"run_id":"1792918693-509466582","line":255,"new":{"module_name":"imap_tools__libs__config__tests","snapshot_name":"password_fn_command_cannot_be_parsed","metadata":{"source":"src/libs/config.rs","assertion_line":255,"expression":"result"},"snapshot":"Err(\n    Parsing password command echo \"secret_password, at src/libs/base_config.rs:203:38\n    `-- missing closing quote, at src/libs/base_config.rs:203:38,\n)"},"old":{"module_name":"imap_tools__libs__config__tests","metadata":{},"snapshot":"Err(\n    Parsing password command echo \"secret_password, at src/libs/base_config.rs:202:38\n    `-- missing closing quote, at src/libs/base_config.rs:202:38,\n)"}}
+{"run_id":"1792918693-509466582","line":325,"new":null,"old":null}
+{"run_id":"1792918693-509466582","line":278,"new":{"module_name":"imap_tools__libs__config__tests","snapshot_name":"password_fn_command_fails","metadata":{"source":"src/libs/config.rs","assertion_line":278,"expression":"result"},"snapshot":"Err(\n    Executing password command, at src/libs/base_config.rs:213:10\n    `-- No such file or directory (os error 2), at src/libs/base_config.rs:213:10,\n)"},"old":{"module_name":"imap_tools__libs__config__tests","metadata":{},"snapshot":"Err(\n    Executing password command, at src/libs/base_config.rs:212:10\n    `-- No such file or directory (os error 2), at src/libs/base_config.rs:212:10,\n)"}}
+{"run_id":"1792918698-6595047","line":301,"new":{"module_name":"imap_tools__libs__config__tests","snapshot_name":"password_fn_command_empty","metadata":{"source":"src/libs/config.rs","assertion_line":301,"expression":"result"},"snapshot":"Err(\n    password command is empty, at src/libs/base_config.rs:209:10,\n)"},"old":{"module_name":"imap_tools__libs__config__tests","metadata":{},"snapshot":"Err(\n    password command is empty, at src/libs/base_config.rs:208:10,\n)"}}
+{"run_id":"1792918710-158413752","line":481,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":389,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":362,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":126,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":194,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":212,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":339,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":255,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":301,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":278,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":325,"new":null,"old":null}
+{"run_id":"1792918710-158413752","line":237,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":481,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":389,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":362,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":126,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":194,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":212,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":339,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":255,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":301,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":278,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":325,"new":null,"old":null}
+{"run_id":"1792918730-667518313","line":237,"new":null,"old":null}

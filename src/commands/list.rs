@@ -42,7 +42,7 @@ type MyExtra = serde_value::Value;
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Mailbox extra"];
 
 fn table_spec() -> TableSpec<RENDERER_LEN> {

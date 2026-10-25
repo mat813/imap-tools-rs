@@ -71,7 +71,7 @@ pub struct List {
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
 
 fn table_spec() -> TableSpec<RENDERER_LEN> {
@@ -135,7 +135,7 @@ impl List {
 
         for mailbox in names
             .iter()
-            // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
+            // Remove folders that the server marks as NoSelect. They are folders, not mailboxes
             .filter(|mbx| self.no_select || !mbx.attributes().contains(&NameAttribute::NoSelect))
             .filter(|mbx| super::name_selected(mbx.name(), &self.include_re, &self.exclude_re))
         {
@@ -203,7 +203,7 @@ mod tests {
 
     #[tokio::test]
     async fn list_excludes_noselect_by_default() {
-        // [Gmail] is NoSelect → filtered out; INBOX is kept
+        // [Gmail] is NoSelect, so the tool removes it. The tool keeps INBOX
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
             "* LIST () \"/\" INBOX\r\n".into(),
@@ -252,7 +252,7 @@ mod tests {
 
     #[tokio::test]
     async fn list_include_re_filters_mailboxes() {
-        // include_re = "^INBOX$" → only INBOX is kept, Sent is discarded
+        // include_re = "^INBOX$": the tool keeps only INBOX and discards Sent
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),
@@ -277,7 +277,7 @@ mod tests {
 
     #[tokio::test]
     async fn list_exclude_re_filters_mailboxes() {
-        // exclude_re = "^Spam" → Spam/Junk is excluded, INBOX and Sent are kept
+        // exclude_re = "^Spam": the tool excludes Spam/Junk and keeps INBOX and Sent
         let server = MockServer::start(&[], vec![MockExchange::ok("LIST \"\" *", vec![
             "* LIST () \"/\" INBOX\r\n".into(),
             "* LIST () \"/\" Sent\r\n".into(),

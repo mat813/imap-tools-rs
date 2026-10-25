@@ -25,14 +25,14 @@ fn split_width(spec: &str) -> (&str, Option<usize>) {
 
 /// Build the `strfmt` fields of column `index` for its rows and for its header.
 ///
-/// The width of a column is widened when its translated label does not fit. `strfmt`
-/// pads by number of characters, while wide characters (CJK) take two terminal
-/// cells: the header is therefore padded with fewer characters, so that its
-/// columns line up with the ones of the rows.
+/// The function makes a column wider when its translated label does not fit. `strfmt`
+/// pads by number of characters. Wide characters (CJK) take two terminal cells.
+/// The function therefore pads the header with fewer characters, so that its
+/// columns line up with the columns of the rows.
 fn column_formats(index: usize, spec: &str, label: &str) -> (String, String) {
     let (align, width) = split_width(spec);
     let Some(width) = width else {
-        // No width, the cells are printed as is.
+        // No width. The cells are printed as is.
         let field = format!("{{{index}{spec}}}");
         return (field.clone(), field);
     };

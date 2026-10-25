@@ -80,7 +80,7 @@ struct MyExtra {
 
 static RENDERER_LEN: usize = 6;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ":>5", ":<25", ":>5", ":>11", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &[
     "Mailbox",
     "Msgs",
@@ -186,7 +186,7 @@ impl Archive {
                 cutoff_str: cutoff_str.clone(),
             })?;
 
-        // Only delete if the rule applies based on mailbox size and message age
+        // Move messages only if the search found some
         if !uids_to_move.is_empty() {
             let uids_and_sequence_by_mailbox = Self::compute_destinations(
                 imap,
@@ -223,7 +223,7 @@ impl Archive {
             }
 
             if !dry_run {
-                // Close the moved messages
+                // CLOSE expunges the moved messages
                 imap.session
                     .close()
                     .await
@@ -266,7 +266,7 @@ impl Archive {
                 pattern: quoted_mailbox.clone(),
             })?;
 
-        // If archive mailbox does not exist, or is a simple folder that is not a mailbox, create it
+        // Create the archive mailbox if it does not exist, or if it is only a folder and not a mailbox
         if names.is_empty()
             || names
                 .iter()
@@ -287,7 +287,7 @@ impl Archive {
                 cap: "MOVE".to_owned(),
             })?
         {
-            // MV does COPY / MARK \Deleted / EXPUNGE all in one go
+            // MOVE does COPY, MARK \Deleted and EXPUNGE in one command
             imap.session
                 .uid_mv(sequence, &quoted_mailbox)
                 .await
@@ -295,7 +295,7 @@ impl Archive {
                     mailbox: quoted_mailbox.clone(),
                 })?;
         } else {
-            // If we don't have MV, do it the old fashion way.
+            // Without MOVE, use COPY and flag the messages as \Deleted
             imap.session
                 .uid_copy(sequence, &quoted_mailbox)
                 .await
@@ -319,7 +319,7 @@ impl Archive {
         extra: &MyExtra,
         uid_set: String,
     ) -> Result<BTreeMap<String, (String, usize)>, ArchiveError> {
-        // First group uids by archive mailbox
+        // First, group the UIDs by archive mailbox
         let mut uids_by_mailbox = BTreeMap::<String, HashSet<Uid>>::new();
 
         {
@@ -347,7 +347,7 @@ impl Archive {
             }
         }
 
-        // Then compute the emails sequence and length
+        // Then compute the sequence and the number of messages
         let mut uids_and_sequence_by_mailbox = BTreeMap::new();
 
         for (mbx, uids) in uids_by_mailbox {
@@ -376,19 +376,19 @@ mod tests {
 
     #[tokio::test]
     async fn archive_non_dry_run_with_move() {
-        // Non-dry-run path with MOVE capability: SELECT, LIST, UID MV, CLOSE
+        // Path without dry-run and with the MOVE capability: SELECT, LIST, UID MV, CLOSE
         let server = MockServer::start(&["MOVE"], vec![
-            // EXAMINE INBOX → 5 messages
+            // EXAMINE INBOX returns 5 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 5 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-            // UID SEARCH → UIDs 1, 2, 3
+            // UID SEARCH returns UIDs 1, 2 and 3
             MockExchange::ok(
                 r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                 vec!["* SEARCH 1 2 3\r\n".into()],
             ),
-            // UID FETCH INTERNALDATE → 3 messages all in Jan 2020 (same archive mailbox)
+            // UID FETCH INTERNALDATE returns 3 messages, all in Jan 2020 (same archive mailbox)
             MockExchange::ok("UID FETCH 1:3 INTERNALDATE", vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
@@ -399,7 +399,7 @@ mod tests {
                 "* 5 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-            // LIST to check archive mailbox existence → exists and selectable
+            // LIST checks if the archive mailbox exists. It exists and is selectable
             MockExchange::ok("LIST \"\" Archives/2020/01/INBOX", vec![
                 "* LIST () \"/\" Archives/2020/01/INBOX\r\n".into(),
             ]),
@@ -439,19 +439,19 @@ mod tests {
 
     #[tokio::test]
     async fn archive_non_dry_run_copy_delete_fallback() {
-        // Non-dry-run path without MOVE capability: SELECT, LIST, UID COPY, UID STORE, CLOSE
+        // Path without dry-run and without the MOVE capability: SELECT, LIST, UID COPY, UID STORE, CLOSE
         let server = MockServer::start(&[], vec![
-            // EXAMINE INBOX → 5 messages
+            // EXAMINE INBOX returns 5 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 5 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-            // UID SEARCH → UIDs 1, 2, 3
+            // UID SEARCH returns UIDs 1, 2 and 3
             MockExchange::ok(
                 r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                 vec!["* SEARCH 1 2 3\r\n".into()],
             ),
-            // UID FETCH INTERNALDATE → 3 messages all in Jan 2020
+            // UID FETCH INTERNALDATE returns 3 messages, all in Jan 2020
             MockExchange::ok("UID FETCH 1:3 INTERNALDATE", vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
@@ -462,11 +462,11 @@ mod tests {
                 "* 5 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-            // LIST to check archive mailbox existence → exists and selectable
+            // LIST checks if the archive mailbox exists. It exists and is selectable
             MockExchange::ok("LIST \"\" Archives/2020/01/INBOX", vec![
                 "* LIST () \"/\" Archives/2020/01/INBOX\r\n".into(),
             ]),
-            // UID COPY (fallback: no MOVE capability) — async-imap always quotes the mailbox
+            // UID COPY (fallback: no MOVE capability). async-imap always quotes the mailbox
             MockExchange::ok("UID COPY 1:3 \"Archives/2020/01/INBOX\"", vec![]),
             // UID STORE +FLAGS (\Deleted)
             MockExchange::ok("UID STORE 1:3 +FLAGS (\\Deleted)", vec![]),
@@ -509,7 +509,7 @@ mod tests {
             .with_ymd_and_hms(2020, 1, 15, 0, 0, 0)
             .single()
             .expect("valid date");
-        // %% in chrono format produces a literal %, so %%MBX → %MBX → replaced with mailbox name
+        // %% in a chrono format produces a literal %. So %%MBX becomes %MBX, and the tool replaces it with the mailbox name
         assert_eq!(
             Archive::archive_mbx("INBOX", "Archives/%Y/%m/%%MBX", date),
             "Archives/2020/01/INBOX"
@@ -523,7 +523,7 @@ mod tests {
     #[tokio::test]
     async fn archive_skips_empty_mailbox() {
         let server = MockServer::start(&[], vec![
-            // EXAMINE INBOX → 0 messages
+            // EXAMINE INBOX returns 0 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
@@ -549,17 +549,17 @@ mod tests {
     #[tokio::test]
     async fn archive_dry_run_moves_old_messages() {
         let server = MockServer::start(&[], vec![
-            // EXAMINE INBOX → 5 messages
+            // EXAMINE INBOX returns 5 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 5 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
             ]),
-            // UID SEARCH → UIDs 1, 2, 3
+            // UID SEARCH returns UIDs 1, 2 and 3
             MockExchange::ok(
                 r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                 vec!["* SEARCH 1 2 3\r\n".into()],
             ),
-            // UID FETCH INTERNALDATE → 3 old messages (all Jan 2020)
+            // UID FETCH INTERNALDATE returns 3 old messages (all Jan 2020)
             MockExchange::ok("UID FETCH 1:3 INTERNALDATE", vec![
                 "* 1 FETCH (UID 1 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 "* 2 FETCH (UID 2 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),

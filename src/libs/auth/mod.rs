@@ -53,7 +53,7 @@ pub enum AuthMethod {
 impl AuthMethod {
     /// Returns `true` for every mechanism that authenticates with a password.
     ///
-    /// Used in config validation to decide whether `password`/`password-command`
+    /// Config validation uses it to decide whether `password` or `password-command`
     /// must be set.
     pub const fn requires_password(self) -> bool {
         !matches!(self, Self::XOAuth2)

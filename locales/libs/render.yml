@@ -16,7 +16,7 @@ cli.renderer.csv:
   ko: CSV 출력
 
 cli.renderer.terminal:
-  en: Table-ish output
+  en: Plain text table output
   fr: Sortie en forme de tableau
   de: Tabellenähnliche Ausgabe
   ja: 表形式の出力

@@ -5,13 +5,13 @@ use crate::libs::auth::AuthError;
 
 /// SASL SCRAM authenticator (SHA-1 or SHA-256) via `rsasl`.
 ///
-/// Drives the multi-step SCRAM exchange; async-imap handles base64 wrapping.
+/// Runs the multi-step SCRAM exchange. async-imap does the base64 wrapping.
 #[derive(derive_more::Debug)]
 pub struct ScramAuth {
-    /// Active rsasl session driving the SCRAM state machine.
+    /// Active rsasl session that runs the SCRAM state machine.
     #[debug(skip)]
     session: rsasl::prelude::Session,
-    /// `false` on the first call to `process` (client-first step needs `None` input).
+    /// `false` on the first call to `process`. The client-first step needs `None` as input.
     started: bool,
 }
 
@@ -25,7 +25,7 @@ impl ScramAuth {
             err(level = "debug")
         )
     )]
-    /// Create a new SCRAM session for the given mechanism name (e.g. `"SCRAM-SHA-256"`).
+    /// Create a new SCRAM session for the given mechanism name (for example `"SCRAM-SHA-256"`).
     ///
     /// # Errors
     /// Returns [`AuthError`] if rsasl cannot initialise the session.

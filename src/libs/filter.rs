@@ -128,7 +128,7 @@ mod internal {
     }
     impl std::error::Error for FilterError {}
 
-    /// Private structure without the regex
+    /// Private structure that has no regex.
     #[derive(Debug, Deserialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct Filter<T>
@@ -223,7 +223,7 @@ mod tests {
         additional_info: String,
     }
 
-    /// Test deserialization and internal regex creation
+    /// Test deserialization. Test that it creates the internal regex.
     #[test]
     fn filter_deserialization_and_regex_creation() {
         let json_data = r#"
@@ -241,7 +241,7 @@ mod tests {
         assert_eq!(filter.reference, Some("test_ref".to_owned()));
         assert_eq!(filter.pattern, Some("*".to_owned()));
 
-        // Test regex patterns created in include_re and exclude_re
+        // Test the regex patterns that `include_re` and `exclude_re` create
         assert!(filter.include_re.is_some());
         let include_re = filter.include_re.as_ref().expect("should parse");
         assert!(include_re.is_match("include_this"));
@@ -254,7 +254,7 @@ mod tests {
         assert!(exclude_re.is_match("exclude_pattern123"));
         assert!(!exclude_re.is_match("include_this"));
 
-        // Check additional information in extra field
+        // Check the additional information in the `extra` field
         assert_eq!(
             filter.extra,
             Some(ExtraConfig {
@@ -274,7 +274,7 @@ mod tests {
         assert!(filter.extra.is_none());
     }
 
-    /// Test regex creation with empty include/exclude to confirm None is returned
+    /// Test with empty include and exclude lists. Confirm that it returns None.
     #[test]
     fn filter_no_regex_created() {
         let json_data = r#"
@@ -298,7 +298,7 @@ mod tests {
             .include_re
             .as_ref()
             .expect("include_re should be set after parsing literal includes");
-        // Literals are regex-escaped: "foo" matches exactly, "b.r" does NOT match "bar"
+        // The regex escapes literals. "foo" matches exactly. "b.r" does NOT match "bar".
         assert!(re.is_match("foo"), "literal 'foo' should match");
         assert!(re.is_match("b.r"), "literal 'b.r' should match");
         assert!(!re.is_match("bar"), "'bar' should not match escaped 'b.r'");
@@ -321,7 +321,7 @@ mod tests {
         assert!(!re.is_match("no_prefix"), "no_prefix should not match");
     }
 
-    /// Test error handling for invalid regex patterns
+    /// Test that invalid regex patterns give an error
     #[test]
     fn filter_invalid_regex() {
         let json_data = r#"

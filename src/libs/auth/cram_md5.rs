@@ -5,7 +5,7 @@ use md5::Md5;
 
 /// SASL CRAM-MD5 authenticator for use with [`async_imap::Client::authenticate`].
 ///
-/// Computes HMAC-MD5(password, challenge) and returns `"username hex_digest"`.
+/// Computes HMAC-MD5(password, challenge). Returns `"username hex_digest"`.
 pub struct CramMd5Auth {
     /// IMAP username.
     pub user: String,

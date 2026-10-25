@@ -104,7 +104,7 @@ pub struct DiskUsage {
 
 static RENDERER_LEN: usize = 2;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Attributes"];
 
 fn table_spec() -> TableSpec<RENDERER_LEN> {
@@ -170,7 +170,7 @@ impl DiskUsage {
 
         let mailboxes: Vec<_> = names
             .iter()
-            // Filter out folders that are marked as NoSelect, which are not mailboxes, only folders
+            // Remove folders that the server marks as NoSelect. They are folders, not mailboxes
             .filter(|mbx| !mbx.attributes().contains(&NameAttribute::NoSelect))
             .filter(|mbx| super::name_selected(mbx.name(), &self.include_re, &self.exclude_re))
             .collect();
@@ -279,7 +279,7 @@ mod tests {
 
     #[tokio::test]
     async fn disk_usage_include_re_filters() {
-        // LIST returns INBOX and Sent; include_re matches only INBOX → only INBOX is examined
+        // LIST returns INBOX and Sent. include_re matches only INBOX, so only INBOX is examined
         let server = MockServer::start(&[], vec![
             MockExchange::ok("LIST \"\" *", vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
@@ -311,7 +311,7 @@ mod tests {
 
     #[tokio::test]
     async fn disk_usage_exclude_re_filters() {
-        // LIST returns INBOX and Sent; exclude_re removes Sent → only INBOX is examined
+        // LIST returns INBOX and Sent. exclude_re removes Sent, so only INBOX is examined
         let server = MockServer::start(&[], vec![
             MockExchange::ok("LIST \"\" *", vec![
                 "* LIST () \"/\" INBOX\r\n".into(),
@@ -343,11 +343,11 @@ mod tests {
 
     #[tokio::test]
     async fn disk_usage_empty_mailbox() {
-        // INBOX has 0 messages → size reported as 0, no UID FETCH needed
+        // INBOX has 0 messages, so the tool reports a size of 0. No UID FETCH is needed
         let server = MockServer::start(&[], vec![
             // LIST
             MockExchange::ok("LIST \"\" *", vec!["* LIST () \"/\" INBOX\r\n".into()]),
-            // EXAMINE INBOX → 0 messages
+            // EXAMINE INBOX returns 0 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 0 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
@@ -372,11 +372,11 @@ mod tests {
 
     #[tokio::test]
     async fn disk_usage_sums_message_sizes() {
-        // INBOX has 2 messages of 1024 + 2048 bytes = 3072 bytes total
+        // INBOX has 2 messages of 1024 and 2048 bytes: 3072 bytes in total
         let server = MockServer::start(&[], vec![
             // LIST
             MockExchange::ok("LIST \"\" *", vec!["* LIST () \"/\" INBOX\r\n".into()]),
-            // EXAMINE INBOX → 2 messages
+            // EXAMINE INBOX returns 2 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 2 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
@@ -418,7 +418,7 @@ mod tests {
     ) {
         let server = MockServer::start(
             &[],
-            // Alpha=1KiB, Beta=3KiB, Gamma=2KiB — LIST returns them alphabetically
+            // Alpha=1KiB, Beta=3KiB, Gamma=2KiB. LIST returns them in alphabetical order
             vec![
                 MockExchange::ok("LIST \"\" *", vec![
                     "* LIST () \"/\" Alpha\r\n".into(),
@@ -471,9 +471,9 @@ mod tests {
 
     #[tokio::test]
     async fn disk_usage_skips_noselect_folders() {
-        // [Gmail] is NoSelect → filtered out; only INBOX is examined
+        // [Gmail] is NoSelect, so the tool removes it. Only INBOX is examined
         let server = MockServer::start(&[], vec![
-            // LIST → NoSelect folder + real mailbox
+            // LIST returns a NoSelect folder and a real mailbox
             MockExchange::ok("LIST \"\" *", vec![
                 "* LIST (\\Noselect) \"/\" [Gmail]\r\n".into(),
                 "* LIST () \"/\" INBOX\r\n".into(),

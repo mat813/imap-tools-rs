@@ -57,16 +57,16 @@ pub struct Clean {
 
 type MyExtra = BTreeMap<Size, u64>;
 
-/// Minimum number of messages in a mailbox before cleanup is considered.
+/// Minimum number of messages in a mailbox before the tool considers a cleanup.
 const MIN_MESSAGE_COUNT: u32 = 300;
 
-/// Minimum total mailbox size in bytes before cleanup is considered.
+/// Minimum total mailbox size in bytes before the tool considers a cleanup.
 const MIN_TOTAL_SIZE_BYTES: i64 = 1_000_000;
 
 static RENDERER_LEN: usize = 8;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] =
     &[":<42", ":>5", ":>10", ":>4", ":>11", ":>11", ":>4", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &[
     "Mailbox",
     "Msgs",
@@ -211,7 +211,7 @@ impl Clean {
                     mailbox: mailbox.to_owned(),
                 })?;
 
-            // Only delete if the rule applies based on mailbox size and message age
+            // Delete only if the rule applies to the mailbox size and message age
             if total_size > rule_size.bytes() && !uids_to_delete.is_empty() {
                 // Mark messages for deletion
 
@@ -263,7 +263,7 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_skips_small_mailbox() {
-        // exists = 50 ≤ 300 → should return immediately without UID FETCH
+        // exists = 50 is not more than 300: the function returns without UID FETCH
         let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
             "* 50 EXISTS\r\n".into(),
             "* 0 RECENT\r\n".into(),
@@ -284,16 +284,16 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_skips_small_total_size() {
-        // exists = 350 but total size < 1 MB → should skip
+        // exists = 350, but the total size is less than 1 MB: the function skips the mailbox
         let server = MockServer::start(
             &[],
             vec![
-                // EXAMINE → 350 messages
+                // EXAMINE returns 350 messages
                 MockExchange::ok("EXAMINE \"INBOX\"", vec![
                     "* 350 EXISTS\r\n".into(),
                     "* 0 RECENT\r\n".into(),
                 ]),
-                // UID FETCH RFC822.SIZE INTERNALDATE → small messages
+                // UID FETCH RFC822.SIZE INTERNALDATE returns small messages
                 MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 1024 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 1024 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
@@ -316,21 +316,21 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_skips_when_no_old_messages() {
-        // Large mailbox (> 1 MB) but UID SEARCH returns empty → no deletion
+        // Large mailbox (more than 1 MB), but UID SEARCH returns no result: no deletion
         let server = MockServer::start(
             &[],
             vec![
-                // EXAMINE → 350 messages
+                // EXAMINE returns 350 messages
                 MockExchange::ok("EXAMINE \"INBOX\"", vec![
                     "* 350 EXISTS\r\n".into(),
                     "* 0 RECENT\r\n".into(),
                 ]),
-                // UID FETCH → 2 large messages (total > 1 MB)
+                // UID FETCH returns 2 large messages (total more than 1 MB)
                 MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
-                // UID SEARCH → no results
+                // UID SEARCH returns no result
                 MockExchange::ok(
                     r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                     vec!["* SEARCH\r\n".into()],
@@ -353,10 +353,10 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_multi_rule_first_skips_second_matches() {
-        // Two rules: (500 KB, 1 day) and (1 MB, 365 days). BTreeMap iterates ascending by size,
-        // so the 500 KB rule runs first. Total size is 1.2 MB so both thresholds are exceeded,
-        // but the 1-day search returns nothing → first rule skipped. 365-day search finds old
-        // messages → second rule matches. dry_run=true so no SELECT/STORE/CLOSE.
+        // Two rules: (500 KB, 1 day) and (1 MB, 365 days). BTreeMap iterates in ascending order of size,
+        // so the 500 KB rule runs first. The total size is 1.2 MB, so both thresholds are exceeded.
+        // The 1-day search returns nothing, so the tool skips the first rule. The 365-day search finds old
+        // messages, so the second rule matches. dry_run=true, so there is no SELECT, STORE or CLOSE.
         let extra: MyExtra = [
             (Size::from_bytes(500_000_i64), 1_u64),
             (Size::from_bytes(1_000_000_i64), 365_u64),
@@ -365,22 +365,22 @@ mod tests {
         let server = MockServer::start(
             &[],
             vec![
-                // EXAMINE → 350 messages
+                // EXAMINE returns 350 messages
                 MockExchange::ok("EXAMINE \"INBOX\"", vec![
                     "* 350 EXISTS\r\n".into(),
                     "* 0 RECENT\r\n".into(),
                 ]),
-                // UID FETCH → 2 large messages (total 1.2 MB)
+                // UID FETCH returns 2 large messages (total 1.2 MB)
                 MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
-                // UID SEARCH (1 day) → empty
+                // UID SEARCH (1 day) returns no result
                 MockExchange::ok(
                     r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                     vec!["* SEARCH\r\n".into()],
                 ),
-                // UID SEARCH (365 days) → UIDs 1 and 2
+                // UID SEARCH (365 days) returns UIDs 1 and 2
                 MockExchange::ok(
                     r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                     vec!["* SEARCH 1 2\r\n".into()],
@@ -416,21 +416,21 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_dry_run_large_old_mailbox() {
-        // exists = 350, total size > 1 MB, old messages → dry-run: no SELECT/STORE/CLOSE
+        // exists = 350, total size more than 1 MB, old messages. In dry-run mode there is no SELECT, STORE or CLOSE
         let server = MockServer::start(
             &[],
             vec![
-                // EXAMINE → 350 messages
+                // EXAMINE returns 350 messages
                 MockExchange::ok("EXAMINE \"INBOX\"", vec![
                     "* 350 EXISTS\r\n".into(),
                     "* 0 RECENT\r\n".into(),
                 ]),
-                // UID FETCH → 2 large old messages (total > 1 MB)
+                // UID FETCH returns 2 large old messages (total more than 1 MB)
                 MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
-                // UID SEARCH → old messages to delete
+                // UID SEARCH returns the old messages to delete
                 MockExchange::ok(
                     r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                     vec!["* SEARCH 1 2\r\n".into()],
@@ -467,21 +467,21 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_destructive_large_old_mailbox() {
-        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
+        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and CLOSE
         let server = MockServer::start(
             &[],
             vec![
-                // EXAMINE → 350 messages
+                // EXAMINE returns 350 messages
                 MockExchange::ok("EXAMINE \"INBOX\"", vec![
                     "* 350 EXISTS\r\n".into(),
                     "* 0 RECENT\r\n".into(),
                 ]),
-                // UID FETCH RFC822.SIZE INTERNALDATE → 2 large old messages (total > 1 MB)
+                // UID FETCH RFC822.SIZE INTERNALDATE returns 2 large old messages (total more than 1 MB)
                 MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
                     "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
                     "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
                 ]),
-                // UID SEARCH → old messages to delete
+                // UID SEARCH returns the old messages to delete
                 MockExchange::ok(
                     r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
                     vec!["* SEARCH 1 2\r\n".into()],

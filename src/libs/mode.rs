@@ -51,7 +51,7 @@ pub enum Mode {
     #[cfg(feature = "__tls")]
     #[value(help = t!("cli.mode.tls"))]
     Tls,
-    /// An eventually-encrypted (i.e., STARTTLS) connection
+    /// A connection that upgrades to TLS with STARTTLS
     #[cfg(feature = "__tls")]
     #[value(help = t!("cli.mode.start_tls"))]
     #[value(aliases = ["start_tls", "starttls"])]

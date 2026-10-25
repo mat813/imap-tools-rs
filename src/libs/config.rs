@@ -57,7 +57,7 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(args), ret, err(level = "info"))
     )]
-    /// Creates from a file and arguments
+    /// Create the config from a file and arguments.
     /// # Errors
     /// Many errors can happen
     pub fn new(args: &Generic) -> Result<Self, ConfigError> {
@@ -93,9 +93,9 @@ mod tests {
 
     use super::*;
 
-    // Helper to create temporary config files with given content.
-    // We have to return the directory too otherwise it goes out of scope, gets
-    // destroyed, and the directory is deleteda.
+    // Helper that creates temporary config files with the given content.
+    // It must also return the directory. Otherwise the directory goes out of scope
+    // and the system deletes it.
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(content), ret)
@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     fn new_with_args_minimal_config() {
-        // Create a minimal args with required fields only
+        // Create minimal args that have only the required fields
         let args = Generic {
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
@@ -229,7 +229,7 @@ mod tests {
         let config: Config<()> =
             Config::new(&args).expect("config with password-command should be constructable");
 
-        // Mock the command execution with a fake password output
+        // Mock the command execution. The mock returns a fake password.
         let password = config
             .base
             .password()
@@ -249,7 +249,7 @@ mod tests {
         let config: Config<()> =
             Config::new(&args).expect("config with unparseable command should be constructable");
 
-        // Mock the command execution with a fake password output
+        // Mock the command execution. The mock returns a fake password.
         let result = config.base.password();
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
@@ -272,7 +272,7 @@ mod tests {
         let config: Config<()> =
             Config::new(&args).expect("config with failing command should be constructable");
 
-        // Mock the command execution with a fake password output
+        // Mock the command execution. The mock returns a fake password.
         let result = config.base.password();
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
@@ -295,7 +295,7 @@ mod tests {
         let config: Config<()> =
             Config::new(&args).expect("config with empty command should be constructable");
 
-        // Mock the command execution with a fake password output
+        // Mock the command execution. The mock returns a fake password.
         let result = config.base.password();
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
@@ -317,7 +317,7 @@ mod tests {
         let config: Config<()> =
             Config::new(&args).expect("config with static password should be valid");
 
-        // Mock the command execution with a fake password output
+        // Mock the command execution. The mock returns a fake password.
         let password = config
             .base
             .password()

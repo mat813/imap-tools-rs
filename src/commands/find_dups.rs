@@ -58,19 +58,19 @@ type MyExtra = serde_value::Value;
 // "<*@*>"
 const MIN_MESSAGE_ID_LEN: usize = 5;
 
-// Define the regex as a static global variable
+// The regex is a static global variable
 static MESSAGE_ID_REGEX: std::sync::LazyLock<Regex> = std::sync::LazyLock::new(|| {
-    // Regular expression to capture Message-ID values across line breaks
+    // This regex captures Message-ID values across line breaks
     #[expect(clippy::unwrap_used, reason = "re is correct")]
     Regex::new(r"(?i)Message-ID:\s*(<[^>]+>)")
-        // We cannot bubble up the error here, so we unwrap(), but it's ok because
-        // we wrote it and we know it is valid.
+        // We cannot return the error here, so we call unwrap(). This is safe because
+        // we wrote the regex and we know it is valid.
         .unwrap()
 });
 
 static RENDERER_LEN: usize = 3;
 static RENDERER_FORMAT: &[&str; RENDERER_LEN] = &[":<42", "", ""];
-/// Stable, untranslated names of the columns, used by the machine-readable renderers.
+/// Stable, untranslated column names. The machine-readable renderers use them.
 static RENDERER_KEYS: &[&str; RENDERER_LEN] = &["Mailbox", "Dups", "Sequence"];
 
 fn table_spec(dry_run: bool) -> TableSpec<RENDERER_LEN> {
@@ -126,8 +126,8 @@ impl FindDups {
         mailbox: &str,
         dry_run: bool,
     ) -> Result<(), DuError> {
-        // Examine the mailbox in read only mode, so that we don't change any
-        // "seen" flags if there are no duplicate messages
+        // Examine the mailbox in read-only mode. This keeps the
+        // "seen" flags unchanged if there are no duplicate messages
         let mbx = imap
             .session
             .examine(mailbox)
@@ -136,8 +136,8 @@ impl FindDups {
                 mailbox: mailbox.to_owned(),
             })?;
 
-        // If there are less than 2 messages, there cannot possible be
-        // duplicates, stop here
+        // With fewer than 2 messages, there cannot be any
+        // duplicates. Stop here
         if mbx.exists < 2 {
             return Ok(());
         }
@@ -199,7 +199,7 @@ impl FindDups {
         Ok(())
     }
 
-    // Parses a Message-ID from the header
+    // Parse a Message-ID from the header
     #[cfg_attr(
         feature = "tracing",
         tracing::instrument(level = "trace", skip(header), ret, fields(header = ?header.map(|h| std::str::from_utf8(h))))
@@ -219,7 +219,7 @@ impl FindDups {
             .captures(&cleaned_headers)?
             .get(1)
             .map(|m| m.as_str().to_owned())?;
-        // If the length of the message id is too short, say it's None
+        // If the message id is too short, return None
 
         (s.len() >= MIN_MESSAGE_ID_LEN).then_some(s)
     }
@@ -262,7 +262,7 @@ mod tests {
 
     #[test]
     fn parse_message_id_folded_header() {
-        // RFC 2822 continuation: CRLF followed by a space unfolds to a single line
+        // RFC 2822 continuation: CRLF and a space unfold to a single line
         let header = b"Message-ID:\r\n <folded@example.com>\r\n\r\n";
         let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, Some("<folded@example.com>".to_owned()));
@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn parse_message_id_too_short() {
-        // "<x@y>" is 5 chars (MIN_MESSAGE_ID_LEN), "<x@>" is 4 chars → None
+        // "<x@y>" has 5 chars (MIN_MESSAGE_ID_LEN). "<x@>" has 4 chars, so the result is None
         let header = b"Message-ID: <x@>\r\n\r\n";
         let result = FindDups::parse_message_id(Some(header));
         assert_eq!(result, None);
@@ -278,7 +278,7 @@ mod tests {
 
     #[tokio::test]
     async fn process_no_duplicates() {
-        // 2 messages with different Message-IDs → no deletions
+        // 2 messages with different Message-IDs: no deletion
         let server = MockServer::start(&[], vec![
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 2 EXISTS\r\n".into(),
@@ -307,8 +307,8 @@ mod tests {
 
     #[tokio::test]
     async fn process_keeps_oldest_with_three_duplicates() {
-        // 3 messages sharing the same Message-ID: UIDs 1, 3, 5.
-        // The oldest (lowest UID = 1) is kept; UIDs 3 and 5 are deleted.
+        // 3 messages share the same Message-ID: UIDs 1, 3 and 5.
+        // The function keeps the oldest message (lowest UID = 1). It deletes UIDs 3 and 5.
         let server = MockServer::start(&[], vec![
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 3 EXISTS\r\n".into(),
@@ -350,7 +350,7 @@ mod tests {
 
     #[tokio::test]
     async fn process_skips_mailbox_with_one_message() {
-        // exists = 1 < 2 → returns immediately without UID FETCH
+        // exists = 1 is less than 2: the function returns without UID FETCH
         let server = MockServer::start(&[], vec![MockExchange::ok("EXAMINE \"INBOX\"", vec![
             "* 1 EXISTS\r\n".into(),
             "* 0 RECENT\r\n".into(),
@@ -370,9 +370,9 @@ mod tests {
 
     #[tokio::test]
     async fn process_dry_run_finds_duplicates() {
-        // 3 messages: uid 2 and 3 share the same Message-ID
+        // 3 messages: UIDs 2 and 3 share the same Message-ID
         let server = MockServer::start(&[], vec![
-            // EXAMINE → 3 messages (examine is read-only)
+            // EXAMINE returns 3 messages (EXAMINE is read-only)
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 3 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),
@@ -405,9 +405,9 @@ mod tests {
 
     #[tokio::test]
     async fn process_destructive_deletes_duplicates() {
-        // Same as dry_run test but with dry_run=false: expects SELECT + UID STORE + CLOSE
+        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and CLOSE
         let server = MockServer::start(&[], vec![
-            // EXAMINE → 3 messages
+            // EXAMINE returns 3 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
                 "* 3 EXISTS\r\n".into(),
                 "* 0 RECENT\r\n".into(),

@@ -1,6 +1,6 @@
 /// SASL XOAUTH2 authenticator for use with [`async_imap::Client::authenticate`].
 ///
-/// Encodes the bearer-token SASL string; async-imap handles the base64 wrapping.
+/// Encodes the bearer-token SASL string. async-imap does the base64 wrapping.
 pub struct XOAuth2Auth {
     /// IMAP username (typically an email address).
     pub user: String,

@@ -27,7 +27,7 @@ pub struct Generic {
     #[arg(short = 'p', long, help = t!("cli.args.password"))]
     pub password: Option<String>,
 
-    /// The command to use to get the password.
+    /// The command that prints the password.
     #[arg(short = 'P', long, help = t!("cli.args.password_command"))]
     pub password_command: Option<String>,
 
@@ -45,7 +45,7 @@ pub struct Generic {
     #[arg(long, env = "RENDERER", value_enum, help = t!("cli.args.renderer"))]
     pub renderer: Option<RendererArg>,
 
-    /// Do not actually make any changes to the server.
+    /// Do not change anything on the server.
     #[arg(short = 'n', long, help = t!("cli.args.dry_run"))]
     pub dry_run: bool,
 
@@ -53,7 +53,7 @@ pub struct Generic {
     #[arg(long, value_enum, help = t!("cli.args.auth"))]
     pub auth: Option<AuthMethod>,
 
-    /// Command whose stdout is the `OAuth2` access token (required when `--auth xoauth2`).
+    /// Command that prints the `OAuth2` access token on stdout. Required when `--auth xoauth2`.
     #[arg(long, help = t!("cli.args.oauth2_command"))]
     pub oauth2_command: Option<String>,
 }
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn default_config_path() {
-        // No arguments, config should use default value
+        // No arguments. The config uses the default value.
         let generic = get_generic_from_args(["test"]);
         assert_eq!(generic.config, Some(PathBuf::from(".imap-tools.toml")));
     }

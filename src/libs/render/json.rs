@@ -5,8 +5,8 @@ use serde_json::Value;
 
 use crate::libs::render::traits::{Renderer, RendererError, TableSpec};
 
-/// CSV renderer that buffers output to an internal `Vec<u8>`.
-/// Output is flushed to stdout on `Drop` (unless running in test mode).
+/// JSON renderer that buffers the rows in an internal `Vec<Value>`.
+/// The renderer writes the output to stdout on `Drop`, except in test mode.
 #[cfg_attr(feature = "tracing", derive(Debug))]
 pub struct JsonRenderer {
     keys: &'static [&'static str],

@@ -1,4 +1,4 @@
-//! What `imap create` and `imap delete` have in common.
+//! Code that `imap create` and `imap delete` share.
 
 use std::{borrow::Cow, io::Write};
 
@@ -52,8 +52,8 @@ pub async fn connect_and_run(
     imap.close().await.or_raise(|| MailboxCommandError::Close)
 }
 
-/// Print the outcome of a mailbox command: `success` when it worked, or
-/// `tolerated(reason)` when the server answered NO with a `reason` containing
+/// Print the outcome of a mailbox command. Print `success` when the command worked.
+/// Print `tolerated(reason)` when the server answered NO with a `reason` that contains
 /// `tolerated_reason`. Any other error becomes `failure`.
 pub fn report(
     out: &mut (dyn Write + Send),
