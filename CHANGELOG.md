@@ -5,6 +5,113 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.13.2 (2026-10-31)
+
+### Chore
+
+ - <csr-id-d9420dc2b9c1a6d1cd6f6560d0efcc007f1e7393/> update dependency cargo-nextest to v0.9.150
+   | datasource | package       | from    | to      |
+   | ---------- | ------------- | ------- | ------- |
+   | crate      | cargo-nextest | 0.9.149 | 0.9.150 |
+ - <csr-id-52bca69e1093b1a4dfd45f3218e777c320d27d0f/> lock file maintenance
+ - <csr-id-09f81551a0c46281c146ca4936f7f02b843883e8/> update dependency cargo-binstall to v1.26.1
+   | datasource | package        | from   | to     |
+   | ---------- | -------------- | ------ | ------ |
+   | crate      | cargo-binstall | 1.26.0 | 1.26.1 |
+
+### Documentation
+
+ - <csr-id-000050202d3585b90c484d6b36da3783b3af7dd2/> state that the configuration file is trusted
+   `password-command` and `oauth2-command` run as the user, and the default
+   configuration file `.imap-tools.toml` comes from the current directory.
+   Add a Security section to the README that says so, and that tells users
+   to protect the file and to avoid `--password`.
+ - <csr-id-000049404fa1f10dc7b31cbddf385a8d182460d7/> rewrite code comments in Simplified Technical English
+   Fix two wrong comments found on the way (JsonRenderer, archive).
+   Update the English help texts in locales/ that mirror clap doc-comments.
+ - <csr-id-00004930561a8cf69fdca50770aa76234eab5dce/> rewrite README in Simplified Technical English
+
+### Bug Fixes
+
+ - <csr-id-0000503094c6164774d2bdfad35945a32f2ddd9e/> keep the password in a SecretString
+   `BaseConfig` and `Generic` derive `Debug`, and `tracing` is a default
+   feature. With `RUST_LOG=trace`, the plaintext password went to stdout
+   five times: `trace!(?args)`, `apply_args` (`ret`), `password()` (`ret`),
+   `trace!(?config)` and `trace!(?base)`.
+   
+   Store the password in a `secrecy::SecretString`. Its `Debug` output is
+   `SecretBox<str>([REDACTED])`. `password()` and `oauth2_token()` return a
+   `SecretString` too. The code exposes the secret in one place only, when
+   it builds the authentication mechanism in `Imap::connect_base`.
+   
+   The `--password` argument uses a small `value_parser`, because
+   `SecretString` has no `FromStr`.
+   
+   Checked with `RUST_LOG=trace imap-tools list -p hunter2`: the previous
+   commit prints the password at 5 trace sites, this commit at none.
+ - <csr-id-000050103c3d7db867339b692eef2b86636b673a/> stop when UIDVALIDITY changes between EXAMINE and SELECT
+   `clean`, `find_dups` and `archive` find UIDs in a read-only `EXAMINE`,
+   then `SELECT` the mailbox again to change it. If the server gave the
+   mailbox another `UIDVALIDITY` in between (for example, the mailbox was
+   deleted and created again), the UIDs pointed to other messages, and the
+   tool deleted or moved them.
+ - <csr-id-00005000922453823b67ba3fdb57fa0134d04493/> expunge only the selected UIDs instead of using CLOSE
+   `clean`, `find_dups` and `archive` ended with `CLOSE`, which permanently
+   removes every message with the `\Deleted` flag in the mailbox. A message
+   that the user flagged `\Deleted` and meant to undo was lost, whatever its
+   age. `archive` called `CLOSE` even after `UID MOVE`.
+ - <csr-id-0000499017a8d29a7f5d6903e17a06be5cc0d4d3/> honor --dry-run in imap create and imap delete
+   `imap create` and `imap delete` flatten the shared arguments, so they
+   accepted `--dry-run` ("Do not change anything on the server"), but
+   never read it. `imap delete -n <mailbox>` removed the mailbox.
+   
+   `connect_and_run` now passes the merged dry-run setting (command line
+   or configuration file) to the command. In a dry run, the commands
+   connect, print what they would do, and send nothing.
+ - <csr-id-018e091423832f766426005cb6d72d46e5b2ce39/> update rust crate unicode-width to v0.2.3
+   | datasource | package       | from  | to    |
+   | ---------- | ------------- | ----- | ----- |
+   | crate      | unicode-width | 0.2.2 | 0.2.3 |
+ - <csr-id-89aa11411a8782058dbab8d09e1b00792282881f/> update rust crate tokio to v1.54.1
+   | datasource | package | from   | to     |
+   | ---------- | ------- | ------ | ------ |
+   | crate      | tokio   | 1.54.0 | 1.54.1 |
+
+### Test
+
+ - <csr-id-00004980a0aca3059a8b10d92f521ed5078d3861/> remove pending snapshots
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 13 commits contributed to the release.
+ - 10 days passed between releases.
+ - 13 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Keep the password in a SecretString (0000503)
+    - State that the configuration file is trusted (0000502)
+    - Stop when UIDVALIDITY changes between EXAMINE and SELECT (0000501)
+    - Expunge only the selected UIDs instead of using CLOSE (0000500)
+    - Honor --dry-run in imap create and imap delete (0000499)
+    - Remove pending snapshots (0000498)
+    - Update rust crate unicode-width to v0.2.3 (018e091)
+    - Update dependency cargo-nextest to v0.9.150 (d9420dc)
+    - Lock file maintenance (52bca69)
+    - Rewrite code comments in Simplified Technical English (0000494)
+    - Rewrite README in Simplified Technical English (0000493)
+    - Update dependency cargo-binstall to v1.26.1 (09f8155)
+    - Update rust crate tokio to v1.54.1 (89aa114)
+</details>
+
 ## v1.13.1 (2026-10-21)
 
 ### Chore
@@ -85,6 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    | datasource | package       | from    | to      |
    | ---------- | ------------- | ------- | ------- |
    | crate      | cargo-nextest | 0.9.145 | 0.9.146 |
+ - <csr-id-8291e8f49bb2a8293cf94b1fed16f4a33effb204/> Bump imap-tools v1.13.1
 
 ### Bug Fixes
 
@@ -180,9 +288,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 56 commits contributed to the release.
+ - 57 commits contributed to the release.
  - 30 days passed between releases.
- - 56 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 57 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
@@ -192,6 +300,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Bump imap-tools v1.13.1 (8291e8f)
     - Make better-cursive-table optional, it is only used by the cursive renderer (0000489)
     - Small simplifications in scram, find_dups and the test connect helper (0000488)
     - Build the SASL PLAIN response with format! (0000487)
