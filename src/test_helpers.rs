@@ -245,7 +245,7 @@ pub fn test_base() -> crate::libs::base_config::BaseConfig {
     crate::libs::base_config::BaseConfig::new(&crate::libs::args::Generic {
         server: Some("127.0.0.1".to_owned()),
         username: Some("test".to_owned()),
-        password: Some("test".to_owned()),
+        password: Some("test".into()),
         ..Default::default()
     })
     .expect("test base config")

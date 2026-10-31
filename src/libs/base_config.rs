@@ -6,6 +6,7 @@ use std::{
 
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use rust_i18n::t;
+use secrecy::SecretString;
 use serde::Deserialize;
 use shell_words::split;
 
@@ -74,7 +75,8 @@ pub struct BaseConfig {
 
     pub username: Option<String>,
 
-    pub(self) password: Option<String>,
+    /// A `SecretString` prints `[REDACTED]` in `Debug`, so tracing cannot leak it.
+    pub(self) password: Option<SecretString>,
 
     pub(self) password_command: Option<String>,
 
@@ -171,7 +173,7 @@ impl BaseConfig {
     /// Get the password from the literal value or from the command.
     /// # Errors
     /// Many errors can happen
-    pub fn password(&self) -> Result<String, BaseConfigError> {
+    pub fn password(&self) -> Result<SecretString, BaseConfigError> {
         #[expect(clippy::needless_borrowed_reference, reason = "ok")]
         match (&self.password, &self.password_command) {
             (&Some(ref pass), _) => Ok(pass.clone()),
@@ -189,7 +191,7 @@ impl BaseConfig {
     /// # Errors
     /// Returns an error if the command is missing, does not parse or fails to run.
     /// It also returns an error if the output is not UTF-8.
-    pub fn oauth2_token(&self) -> Result<String, BaseConfigError> {
+    pub fn oauth2_token(&self) -> Result<SecretString, BaseConfigError> {
         match self.oauth2_command {
             None => bail!(BaseConfigError::Oauth2NoCommand),
             Some(ref command) => run_command(command, CommandType::Oauth2),
@@ -198,7 +200,7 @@ impl BaseConfig {
 }
 
 /// Run `command` and return its stdout without the trailing newline.
-fn run_command(command: &str, command_type: CommandType) -> Result<String, BaseConfigError> {
+fn run_command(command: &str, command_type: CommandType) -> Result<SecretString, BaseConfigError> {
     let command_vec = split(command).or_raise(|| BaseConfigError::ParsingCommand {
         command_type,
         command: command.to_owned(),
@@ -231,7 +233,7 @@ fn run_command(command: &str, command_type: CommandType) -> Result<String, BaseC
             out.pop();
         }
     }
-    Ok(out)
+    Ok(out.into())
 }
 
 #[cfg_attr(
@@ -261,6 +263,7 @@ mod tests {
     use std::{fs::File, io::Write as _};
 
     use insta::{assert_debug_snapshot, assert_snapshot};
+    use secrecy::ExposeSecret as _;
 
     use super::*;
 
@@ -286,7 +289,7 @@ mod tests {
         let args = Generic {
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: Some("password123".to_owned()),
+            password: Some("password123".into()),
             ..Default::default()
         };
 
@@ -305,7 +308,7 @@ mod tests {
                     "user@example.com",
                 ),
                 password: Some(
-                    "password123",
+                    SecretBox<str>([REDACTED]),
                 ),
                 password_command: None,
                 mode: Some(
@@ -348,7 +351,7 @@ mod tests {
     fn new_with_args_missing_server_error() {
         let args = Generic {
             username: Some("user@example.com".to_owned()),
-            password: Some("password123".to_owned()),
+            password: Some("password123".into()),
             ..Default::default()
         };
 
@@ -356,7 +359,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The server must be set, at src/libs/base_config.rs:142:13,
+            The server must be set, at src/libs/base_config.rs:144:13,
         )
         ");
     }
@@ -365,7 +368,7 @@ mod tests {
     fn new_with_args_missing_username_error() {
         let args = Generic {
             server: Some("imap.example.com".to_owned()),
-            password: Some("password123".to_owned()),
+            password: Some("password123".into()),
             ..Default::default()
         };
 
@@ -373,7 +376,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            The username must be set, at src/libs/base_config.rs:146:13,
+            The username must be set, at src/libs/base_config.rs:148:13,
         )
         ");
     }
@@ -394,7 +397,7 @@ mod tests {
         let password = config
             .password()
             .expect("password-command should execute successfully");
-        assert_snapshot!(password.trim(), @"secret_password");
+        assert_snapshot!(password.expose_secret().trim(), @"secret_password");
     }
 
     #[test]
@@ -414,8 +417,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @r#"
         Err(
-            Parsing password command echo "secret_password, at src/libs/base_config.rs:202:38
-            `-- missing closing quote, at src/libs/base_config.rs:202:38,
+            Parsing password command echo "secret_password, at src/libs/base_config.rs:204:38
+            `-- missing closing quote, at src/libs/base_config.rs:204:38,
         )
         "#);
     }
@@ -437,8 +440,8 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            Executing password command, at src/libs/base_config.rs:212:10
-            `-- No such file or directory (os error 2), at src/libs/base_config.rs:212:10,
+            Executing password command, at src/libs/base_config.rs:214:10
+            `-- No such file or directory (os error 2), at src/libs/base_config.rs:214:10,
         )
         ");
     }
@@ -460,7 +463,7 @@ mod tests {
         assert!(result.is_err());
         assert_debug_snapshot!(result, @"
         Err(
-            password command is empty, at src/libs/base_config.rs:208:10,
+            password command is empty, at src/libs/base_config.rs:210:10,
         )
         ");
     }
@@ -470,7 +473,7 @@ mod tests {
         let args = Generic {
             server: Some("imap.example.com".to_owned()),
             username: Some("user@example.com".to_owned()),
-            password: Some("secret_password".to_owned()),
+            password: Some("secret_password".into()),
             ..Default::default()
         };
 
@@ -481,7 +484,7 @@ mod tests {
         let password = config
             .password()
             .expect("static password should be returned");
-        assert_snapshot!(password.trim(), @"secret_password");
+        assert_snapshot!(password.expose_secret().trim(), @"secret_password");
     }
 
     #[test]
@@ -497,7 +500,7 @@ mod tests {
         assert!(config.is_err());
         assert_debug_snapshot!( config, @"
         Err(
-            The password or password command must be set, at src/libs/base_config.rs:152:17,
+            The password or password command must be set, at src/libs/base_config.rs:154:17,
         )
         ");
     }
@@ -521,8 +524,8 @@ mod tests {
             config,
             @"
         Err(
-            Parsing config file, at src/libs/base_config.rs:115:18
-            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:115:18,
+            Parsing config file, at src/libs/base_config.rs:117:18
+            `-- TOML deserialize error: newline in string found at line 2, at src/libs/base_config.rs:117:18,
         )
         "
         );
@@ -559,7 +562,7 @@ mod tests {
                     "user@example.com",
                 ),
                 password: Some(
-                    "password123",
+                    SecretBox<str>([REDACTED]),
                 ),
                 password_command: None,
                 mode: Some(
@@ -614,7 +617,7 @@ mod tests {
             config: Some(config_path),
             server: Some("override.example.com".to_owned()),
             username: Some("override_user@example.com".to_owned()),
-            password: Some("override_password".to_owned()),
+            password: Some("override_password".into()),
             dry_run: true,
             mode: Some(
                 if cfg!(feature = "__tls") {
@@ -642,7 +645,7 @@ mod tests {
                     "override_user@example.com",
                 ),
                 password: Some(
-                    "override_password",
+                    SecretBox<str>([REDACTED]),
                 ),
                 password_command: None,
                 mode: Some(

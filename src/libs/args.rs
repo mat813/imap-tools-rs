@@ -1,9 +1,15 @@
-use std::path::PathBuf;
+use std::{convert::Infallible, path::PathBuf};
 
 use clap::Args;
 use rust_i18n::t;
+use secrecy::SecretString;
 
 use crate::libs::{auth::AuthMethod, mode::Mode, render::RendererArg};
+
+/// Wrap a command line value in a [`SecretString`], so that `Debug` and tracing never print it.
+fn parse_secret(value: &str) -> Result<SecretString, Infallible> {
+    Ok(value.into())
+}
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct Generic {
@@ -24,8 +30,8 @@ pub struct Generic {
     pub username: Option<String>,
 
     /// The password to use for the connection.
-    #[arg(short = 'p', long, help = t!("cli.args.password"))]
-    pub password: Option<String>,
+    #[arg(short = 'p', long, value_parser = parse_secret, help = t!("cli.args.password"))]
+    pub password: Option<SecretString>,
 
     /// The command that prints the password.
     #[arg(short = 'P', long, help = t!("cli.args.password_command"))]
@@ -61,6 +67,7 @@ pub struct Generic {
 #[cfg(test)]
 mod tests {
     use clap::Parser;
+    use secrecy::ExposeSecret;
 
     use super::*;
 
@@ -128,7 +135,12 @@ mod tests {
         assert_eq!(generic.config, Some(PathBuf::from("custom-config.toml")));
         assert_eq!(generic.server, Some("imap.example.com".to_owned()));
         assert_eq!(generic.username, Some("user@example.com".to_owned()));
-        assert_eq!(generic.password, Some("secret_password".to_owned()));
+        assert_eq!(
+            generic.password.as_ref().map(ExposeSecret::expose_secret),
+            Some("secret_password")
+        );
+        // The password must not show in the Debug output (tracing prints it)
+        assert!(!format!("{:?}", generic.password).contains("secret_password"));
         assert_eq!(
             generic.password_command,
             Some("echo secret_password".to_owned())

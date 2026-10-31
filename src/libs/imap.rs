@@ -11,6 +11,7 @@ use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
 use exn::{OptionExt as _, Result, ResultExt as _, bail};
 use futures::TryStreamExt as _;
 use rust_i18n::t;
+use secrecy::ExposeSecret as _;
 use tokio::net::TcpStream;
 
 use crate::libs::{
@@ -202,7 +203,12 @@ where
             .ok_or_raise(|| ImapError::NoUsername)?;
 
         let method = base.auth.unwrap_or_default();
-        let password = || base.password().or_raise(|| ImapError::Password);
+        // The secret leaves its `SecretString` only here, where the auth mechanisms need a `String`
+        let password = || {
+            base.password()
+                .map(|secret| secret.expose_secret().to_owned())
+                .or_raise(|| ImapError::Password)
+        };
 
         let session = match method {
             AuthMethod::Login => client
@@ -237,7 +243,10 @@ where
             AuthMethod::XOAuth2 => {
                 let auth = XOAuth2Auth {
                     user: username.clone(),
-                    token: base.oauth2_token().or_raise(|| ImapError::OAuth2Token)?,
+                    token: base
+                        .oauth2_token()
+                        .map(|secret| secret.expose_secret().to_owned())
+                        .or_raise(|| ImapError::OAuth2Token)?,
                 };
                 authenticate(client, "XOAUTH2", auth).await?
             },

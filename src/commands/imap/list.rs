@@ -166,7 +166,7 @@ mod tests {
             config: args::Generic {
                 server: Some("127.0.0.1".to_owned()),
                 username: Some("test".to_owned()),
-                password: Some("test".to_owned()),
+                password: Some("test".into()),
                 ..Default::default()
             },
             include_re: vec![],
