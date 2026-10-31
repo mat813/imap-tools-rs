@@ -7,6 +7,7 @@ use secrecy::SecretString;
 use crate::libs::{auth::AuthMethod, mode::Mode, render::RendererArg};
 
 /// Wrap a command line value in a [`SecretString`], so that `Debug` and tracing never print it.
+#[expect(clippy::unnecessary_wraps, reason = "clap wants a Result")]
 fn parse_secret(value: &str) -> Result<SecretString, Infallible> {
     Ok(value.into())
 }
