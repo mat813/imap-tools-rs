@@ -28,6 +28,9 @@ pub enum MailboxCommandError {
 impl std::error::Error for MailboxCommandError {}
 
 /// Connect, let `op` talk to the server, then log out.
+///
+/// `op` gets the `dry_run` setting (command line or configuration file). When
+/// it is `true`, `op` must not change anything on the server.
 #[cfg_attr(
     feature = "tracing",
     tracing::instrument(level = "trace", skip(op), err(level = "info"))
@@ -35,7 +38,11 @@ impl std::error::Error for MailboxCommandError {}
 pub async fn connect_and_run(
     args: &args::Generic,
     command: &'static str,
-    op: impl AsyncFnOnce(&mut Imap<()>, &mut (dyn Write + Send)) -> Result<(), MailboxCommandError>,
+    op: impl AsyncFnOnce(
+        &mut Imap<()>,
+        &mut (dyn Write + Send),
+        bool,
+    ) -> Result<(), MailboxCommandError>,
 ) -> Result<(), MailboxCommandError> {
     let config = BaseConfig::new(args).or_raise(|| MailboxCommandError::Config)?;
     #[cfg(feature = "tracing")]
@@ -45,7 +52,7 @@ pub async fn connect_and_run(
         .await
         .or_raise(|| MailboxCommandError::Connect)?;
 
-    op(&mut imap, &mut std::io::stdout())
+    op(&mut imap, &mut std::io::stdout(), config.dry_run)
         .await
         .or_raise(|| MailboxCommandError::Run { command })?;
 

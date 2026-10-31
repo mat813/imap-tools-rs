@@ -1,5 +1,5 @@
 use clap::Args;
-use exn::Result;
+use exn::{Result, ResultExt as _};
 use rust_i18n::t;
 
 use super::mailbox::{MailboxCommandError, connect_and_run, report};
@@ -21,8 +21,8 @@ pub struct Delete {
 
 impl Delete {
     pub async fn execute(&self) -> Result<(), MailboxCommandError> {
-        connect_and_run(&self.config, "delete", async |imap, out| {
-            self.run(imap, out).await
+        connect_and_run(&self.config, "delete", async |imap, out, dry_run| {
+            self.run(imap, out, dry_run).await
         })
         .await
     }
@@ -35,8 +35,17 @@ impl Delete {
         &self,
         imap: &mut Imap<()>,
         out: &mut (dyn std::io::Write + Send),
+        dry_run: bool,
     ) -> Result<(), MailboxCommandError> {
         let mailbox = &self.mailbox;
+        if dry_run {
+            return writeln!(
+                out,
+                "{}",
+                t!("output.imap_delete.dry_run", mailbox = mailbox)
+            )
+            .or_raise(|| MailboxCommandError::WriteOutput);
+        }
         report(
             out,
             imap.session.delete(mailbox).await,
@@ -70,13 +79,37 @@ mod tests {
             mailbox: "OldFolder".to_owned(),
         };
         let mut output = Vec::<u8>::new();
-        let result = cmd.run(&mut imap, &mut output).await;
+        let result = cmd.run(&mut imap, &mut output, false).await;
         let _ = imap.close().await;
         server.join().await;
         assert!(result.is_ok(), "expected Ok, got: {result:?}");
         let msg = String::from_utf8(output).expect("utf8");
         assert!(
             msg.contains("has been removed"),
+            "unexpected output: {msg:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn delete_mailbox_dry_run_sends_nothing() {
+        // The script is empty: the mock server panics if the command sends DELETE
+        let server = MockServer::start(&[], vec![]).await;
+        let base = test_base();
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
+        let cmd = Delete {
+            config: args::Generic::default(),
+            mailbox: "OldFolder".to_owned(),
+        };
+        let mut output = Vec::<u8>::new();
+        let result = cmd.run(&mut imap, &mut output, true).await;
+        let _ = imap.close().await;
+        server.join().await;
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+        let msg = String::from_utf8(output).expect("utf8");
+        assert!(
+            msg.contains("would be removed"),
             "unexpected output: {msg:?}"
         );
     }
@@ -97,7 +130,7 @@ mod tests {
             mailbox: "Ghost".to_owned(),
         };
         let mut output = Vec::<u8>::new();
-        let result = cmd.run(&mut imap, &mut output).await;
+        let result = cmd.run(&mut imap, &mut output, false).await;
         let _ = imap.close().await;
         server.join().await;
         assert!(

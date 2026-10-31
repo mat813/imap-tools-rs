@@ -348,6 +348,22 @@ output.imap_create.already_exists:
   zh: "无法创建 %{mailbox}，它已存在：%{reason}"
   ko: "%{mailbox}을(를) 생성할 수 없습니다. 이미 존재합니다: %{reason}"
 
+output.imap_create.dry_run:
+  en: "Dry run: the mailbox %{mailbox} would be created"
+  fr: "Simulation : la boîte aux lettres %{mailbox} serait créée"
+  de: "Testlauf: Das Postfach %{mailbox} würde erstellt"
+  ja: "ドライラン: メールボックス %{mailbox} が作成されます"
+  zh: "试运行：将创建邮箱 %{mailbox}"
+  ko: "드라이 런: 메일박스 %{mailbox}이(가) 생성됩니다"
+
+output.imap_delete.dry_run:
+  en: "Dry run: the mailbox %{mailbox} would be removed"
+  fr: "Simulation : la boîte aux lettres %{mailbox} serait supprimée"
+  de: "Testlauf: Das Postfach %{mailbox} würde entfernt"
+  ja: "ドライラン: メールボックス %{mailbox} が削除されます"
+  zh: "试运行：将删除邮箱 %{mailbox}"
+  ko: "드라이 런: 메일박스 %{mailbox}이(가) 삭제됩니다"
+
 output.imap_delete.removed:
   en: The mailbox %{mailbox} has been removed
   fr: La boîte aux lettres %{mailbox} a été supprimée
