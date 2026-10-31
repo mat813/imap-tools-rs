@@ -95,6 +95,15 @@ The result is the same as this configuration:
 $ imap-tools list -c config.toml
 ```
 
+### Security
+
+The program trusts the configuration file. Use only a file that you wrote or that you trust.
+
+- `password-command` and `oauth2-command` run as your user. They can run any program.
+- The default configuration file is `.imap-tools.toml` in the current directory. Do not run the program in a directory that you do not control (for example, a downloaded repository). Use `-c` with the absolute path of your own file.
+- The file can contain a password. Make the file readable only by you (`chmod 600`).
+- The `--password` argument shows the password in the process list. Use `password-command` instead.
+
 ## Tools
 
 ### list
