@@ -356,7 +356,7 @@ mod tests {
         // Two rules: (500 KB, 1 day) and (1 MB, 365 days). BTreeMap iterates in ascending order of size,
         // so the 500 KB rule runs first. The total size is 1.2 MB, so both thresholds are exceeded.
         // The 1-day search returns nothing, so the tool skips the first rule. The 365-day search finds old
-        // messages, so the second rule matches. dry_run=true, so there is no SELECT, STORE or CLOSE.
+        // messages, so the second rule matches. dry_run=true, so there is no SELECT, STORE or EXPUNGE.
         let extra: MyExtra = [
             (Size::from_bytes(500_000_i64), 1_u64),
             (Size::from_bytes(1_000_000_i64), 365_u64),
@@ -416,7 +416,7 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_dry_run_large_old_mailbox() {
-        // exists = 350, total size more than 1 MB, old messages. In dry-run mode there is no SELECT, STORE or CLOSE
+        // exists = 350, total size more than 1 MB, old messages. In dry-run mode there is no SELECT, STORE or EXPUNGE
         let server = MockServer::start(
             &[],
             vec![
@@ -467,7 +467,7 @@ mod tests {
 
     #[tokio::test]
     async fn cleanup_destructive_large_old_mailbox() {
-        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and CLOSE
+        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and UID EXPUNGE
         let server = MockServer::start(
             &[],
             vec![
@@ -493,8 +493,8 @@ mod tests {
                 ]),
                 // UID STORE +FLAGS (\Deleted)
                 MockExchange::ok("UID STORE 1:2 +FLAGS (\\Deleted)", vec![]),
-                // CLOSE (expunge)
-                MockExchange::ok("CLOSE", vec![]),
+                // UID EXPUNGE removes only the flagged messages
+                MockExchange::ok("UID EXPUNGE 1:2", vec![]),
             ],
         )
         .await;

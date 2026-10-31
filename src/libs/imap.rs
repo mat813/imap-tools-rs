@@ -4,6 +4,7 @@ compile_error!("features `native-tls` and `rustls` are mutually exclusive — en
 use std::{
     collections::{BTreeMap, HashMap, HashSet},
     fmt::Debug,
+    pin::pin,
 };
 
 use async_imap::{Session, imap_proto::NameAttribute, types::Uid};
@@ -62,8 +63,8 @@ pub enum ImapError {
     UidStore,
     #[display("{}", t!("error.imap.stream"))]
     Stream,
-    #[display("{}", t!("error.imap.imap_close"))]
-    ImapClose,
+    #[display("{}", t!("error.imap.uid_expunge"))]
+    UidExpunge,
     #[display("{}", t!("error.imap.imap_list", filter = filter))]
     ImapList { filter: String },
     #[display("{}", t!("error.imap.imap_list_empty", filter = filter))]
@@ -318,14 +319,7 @@ where
     }
 
     /// Flag the given UID sequence of the selected mailbox as `\Deleted`.
-    ///
-    /// # Errors
-    /// Imap errors can happen
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(level = "trace", skip(self), err(level = "info"))
-    )]
-    pub async fn flag_deleted(&mut self, sequence: &str) -> Result<(), ImapError> {
+    async fn flag_deleted(&mut self, sequence: &str) -> Result<(), ImapError> {
         let mut stream = self
             .session
             .uid_store(sequence, "+FLAGS (\\Deleted)")
@@ -340,8 +334,38 @@ where
         Ok(())
     }
 
-    /// Select a mailbox, flag the given UID sequence as `\Deleted`, then CLOSE
-    /// (which expunges the flagged messages).
+    /// Flag the given UID sequence of the selected mailbox as `\Deleted`, then
+    /// expunge only these messages with `UID EXPUNGE`.
+    ///
+    /// The function does not use `CLOSE` or `EXPUNGE`. They also remove the
+    /// messages that the user flagged as `\Deleted` and that this tool did not select.
+    ///
+    /// # Errors
+    /// Imap errors can happen
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    pub async fn remove_uids(&mut self, sequence: &str) -> Result<(), ImapError> {
+        self.flag_deleted(sequence).await?;
+
+        // The expunge stream is not `Unpin`, so pin it to call `try_next`
+        let mut stream = pin!(
+            self.session
+                .uid_expunge(sequence)
+                .await
+                .or_raise(|| ImapError::UidExpunge)?
+        );
+        while stream
+            .try_next()
+            .await
+            .or_raise(|| ImapError::Stream)?
+            .is_some()
+        {}
+        Ok(())
+    }
+
+    /// Select a mailbox, then remove the given UID sequence from it.
     ///
     /// # Errors
     /// Imap errors can happen
@@ -357,14 +381,7 @@ where
                 mailbox: mailbox.to_owned(),
             })?;
 
-        self.flag_deleted(sequence).await?;
-
-        self.session
-            .close()
-            .await
-            .or_raise(|| ImapError::ImapClose)?;
-
-        Ok(())
+        self.remove_uids(sequence).await
     }
 
     /// Get a list of mailboxes for the given filters. It returns a `BTreeMap`, so

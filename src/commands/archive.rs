@@ -221,14 +221,6 @@ impl Archive {
                     ])
                     .or_raise(|| ArchiveError::RendererAddRow)?;
             }
-
-            if !dry_run {
-                // CLOSE expunges the moved messages
-                imap.session
-                    .close()
-                    .await
-                    .or_raise(|| ArchiveError::ImapClose)?;
-            }
         }
 
         Ok(())
@@ -295,14 +287,15 @@ impl Archive {
                     mailbox: quoted_mailbox.clone(),
                 })?;
         } else {
-            // Without MOVE, use COPY and flag the messages as \Deleted
+            // Without MOVE, use COPY, then flag only the copied messages as \Deleted
+            // and expunge only them with UID EXPUNGE
             imap.session
                 .uid_copy(sequence, &quoted_mailbox)
                 .await
                 .or_raise(|| ArchiveError::ImapCopy {
                     mailbox: quoted_mailbox.clone(),
                 })?;
-            imap.flag_deleted(sequence)
+            imap.remove_uids(sequence)
                 .await
                 .or_raise(|| ArchiveError::ImapStore)?;
         }
@@ -376,7 +369,9 @@ mod tests {
 
     #[tokio::test]
     async fn archive_non_dry_run_with_move() {
-        // Path without dry-run and with the MOVE capability: SELECT, LIST, UID MV, CLOSE
+        // Path without dry-run and with the MOVE capability: SELECT, LIST, UID MV.
+        // There is no CLOSE or EXPUNGE: MOVE already removes the messages, and CLOSE
+        // would also remove the messages that the user flagged as \Deleted.
         let server = MockServer::start(&["MOVE"], vec![
             // EXAMINE INBOX returns 5 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
@@ -405,8 +400,6 @@ mod tests {
             ]),
             // UID MV
             MockExchange::ok("UID MOVE 1:3 \"Archives/2020/01/INBOX\"", vec![]),
-            // CLOSE
-            MockExchange::ok("CLOSE", vec![]),
         ])
         .await;
         let base = test_base();
@@ -439,7 +432,7 @@ mod tests {
 
     #[tokio::test]
     async fn archive_non_dry_run_copy_delete_fallback() {
-        // Path without dry-run and without the MOVE capability: SELECT, LIST, UID COPY, UID STORE, CLOSE
+        // Path without dry-run and without the MOVE capability: SELECT, LIST, UID COPY, UID STORE, UID EXPUNGE
         let server = MockServer::start(&[], vec![
             // EXAMINE INBOX returns 5 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
@@ -470,8 +463,8 @@ mod tests {
             MockExchange::ok("UID COPY 1:3 \"Archives/2020/01/INBOX\"", vec![]),
             // UID STORE +FLAGS (\Deleted)
             MockExchange::ok("UID STORE 1:3 +FLAGS (\\Deleted)", vec![]),
-            // CLOSE
-            MockExchange::ok("CLOSE", vec![]),
+            // UID EXPUNGE removes only the copied messages
+            MockExchange::ok("UID EXPUNGE 1:3", vec![]),
         ])
         .await;
         let base = test_base();

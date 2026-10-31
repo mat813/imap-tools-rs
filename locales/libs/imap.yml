@@ -47,13 +47,13 @@ error.imap.imap_capabilities:
   zh: 查询 IMAP 能力
   ko: IMAP 기능 조회
 
-error.imap.imap_close:
-  en: Closing mailbox
-  fr: Fermeture de la boîte aux lettres
-  de: Schließen des Postfachs
-  ja: メールボックスを閉じる処理
-  zh: 关闭邮箱
-  ko: 메일박스 닫기
+error.imap.uid_expunge:
+  en: Expunging messages by UID
+  fr: Suppression définitive des messages par UID
+  de: Endgültiges Löschen der Nachrichten per UID
+  ja: UID によるメッセージの完全削除
+  zh: 按 UID 永久删除邮件
+  ko: UID로 메시지 영구 삭제
 
 error.imap.imap_list:
   en: Listing mailboxes with filter %{filter}

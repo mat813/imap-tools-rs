@@ -329,8 +329,8 @@ mod tests {
             ]),
             // UID STORE +FLAGS (\Deleted) for UIDs 3 and 5
             MockExchange::ok("UID STORE 3,5 +FLAGS (\\Deleted)", vec![]),
-            // CLOSE
-            MockExchange::ok("CLOSE", vec![]),
+            // UID EXPUNGE removes only the flagged duplicates
+            MockExchange::ok("UID EXPUNGE 3,5", vec![]),
         ])
         .await;
         let base = test_base();
@@ -405,7 +405,7 @@ mod tests {
 
     #[tokio::test]
     async fn process_destructive_deletes_duplicates() {
-        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and CLOSE
+        // Same as the dry_run test, but with dry_run=false. The test expects SELECT, UID STORE and UID EXPUNGE
         let server = MockServer::start(&[], vec![
             // EXAMINE returns 3 messages
             MockExchange::ok("EXAMINE \"INBOX\"", vec![
@@ -428,8 +428,8 @@ mod tests {
             ]),
             // UID STORE +FLAGS (\Deleted)
             MockExchange::ok("UID STORE 3 +FLAGS (\\Deleted)", vec![]),
-            // CLOSE (expunge)
-            MockExchange::ok("CLOSE", vec![]),
+            // UID EXPUNGE removes only the flagged duplicate
+            MockExchange::ok("UID EXPUNGE 3", vec![]),
         ])
         .await;
         let base = test_base();
