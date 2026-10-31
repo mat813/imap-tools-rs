@@ -59,6 +59,8 @@ pub enum ImapError {
     ImapCapabilities,
     #[display("{}", t!("error.imap.imap_select", mailbox = mailbox : {:?}))]
     ImapSelect { mailbox: String },
+    #[display("{}", t!("error.imap.uid_validity_changed", mailbox = mailbox : {:?}))]
+    UidValidityChanged { mailbox: String },
     #[display("{}", t!("error.imap.uid_store"))]
     UidStore,
     #[display("{}", t!("error.imap.stream"))]
@@ -365,7 +367,46 @@ where
         Ok(())
     }
 
+    /// Select a mailbox for writing, and check that it is still the mailbox that
+    /// the code examined before.
+    ///
+    /// The commands find UIDs in a read-only `EXAMINE`, and change the messages
+    /// after a second `SELECT`. If the server gives the mailbox another
+    /// `UIDVALIDITY` in between (for example, the mailbox was deleted and created
+    /// again), the UIDs now point to other messages. `expected` is the
+    /// `UIDVALIDITY` of the `EXAMINE` response.
+    ///
+    /// # Errors
+    /// Returns [`ImapError::UidValidityChanged`] if the `UIDVALIDITY` is different.
+    /// Other imap errors can happen.
+    #[cfg_attr(
+        feature = "tracing",
+        tracing::instrument(level = "trace", skip(self), err(level = "info"))
+    )]
+    pub async fn select_checked(
+        &mut self,
+        mailbox: &str,
+        expected: Option<u32>,
+    ) -> Result<(), ImapError> {
+        let selected = self
+            .session
+            .select(mailbox)
+            .await
+            .or_raise(|| ImapError::ImapSelect {
+                mailbox: mailbox.to_owned(),
+            })?;
+
+        if selected.uid_validity != expected {
+            bail!(ImapError::UidValidityChanged {
+                mailbox: mailbox.to_owned(),
+            });
+        }
+        Ok(())
+    }
+
     /// Select a mailbox, then remove the given UID sequence from it.
+    /// `uid_validity` is the `UIDVALIDITY` of the earlier `EXAMINE`, see
+    /// [`Self::select_checked`].
     ///
     /// # Errors
     /// Imap errors can happen
@@ -373,13 +414,13 @@ where
         feature = "tracing",
         tracing::instrument(level = "trace", skip(self), err(level = "info"))
     )]
-    pub async fn delete_uids(&mut self, mailbox: &str, sequence: &str) -> Result<(), ImapError> {
-        self.session
-            .select(mailbox)
-            .await
-            .or_raise(|| ImapError::ImapSelect {
-                mailbox: mailbox.to_owned(),
-            })?;
+    pub async fn delete_uids(
+        &mut self,
+        mailbox: &str,
+        uid_validity: Option<u32>,
+        sequence: &str,
+    ) -> Result<(), ImapError> {
+        self.select_checked(mailbox, uid_validity).await?;
 
         self.remove_uids(sequence).await
     }
@@ -647,11 +688,49 @@ pub fn ids_list_to_collapsed_sequence(ids: &HashSet<Uid>) -> String {
 
 #[cfg(test)]
 mod tests {
+    #![expect(clippy::expect_used, reason = "tests")]
+
     use std::collections::HashSet;
 
     use async_imap::types::Uid;
 
-    use super::ids_list_to_collapsed_sequence;
+    use super::{Imap, ImapError, ids_list_to_collapsed_sequence};
+    use crate::test_helpers::{MockExchange, MockServer, test_base};
+
+    /// Run `select_checked` against a mock server whose SELECT answers with `server_validity`.
+    async fn select_checked_with(
+        server_validity: u32,
+        expected: Option<u32>,
+    ) -> exn::Result<(), ImapError> {
+        let server = MockServer::start(&[], vec![MockExchange::ok("SELECT \"INBOX\"", vec![
+            "* 1 EXISTS\r\n".into(),
+            format!("* OK [UIDVALIDITY {server_validity}] UIDs valid\r\n"),
+        ])])
+        .await;
+        let mut imap: Imap<()> = Imap::connect_base_on_port(&test_base(), server.port)
+            .await
+            .expect("connect");
+        let result = imap.select_checked("INBOX", expected).await;
+        let _ = imap.close().await;
+        server.join().await;
+        result
+    }
+
+    #[tokio::test]
+    async fn select_checked_same_uid_validity() {
+        let result = select_checked_with(7, Some(7)).await;
+        assert!(result.is_ok(), "expected Ok, got: {result:?}");
+    }
+
+    #[tokio::test]
+    async fn select_checked_changed_uid_validity() {
+        let result = select_checked_with(8, Some(7)).await;
+        let err = result.expect_err("a changed UIDVALIDITY must be an error");
+        assert!(
+            matches!(*err, ImapError::UidValidityChanged { .. }),
+            "unexpected error: {err:?}"
+        );
+    }
 
     #[cfg_attr(not(debug_assertions), ignore = "testing debug_assert!")]
     #[test]

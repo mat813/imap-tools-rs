@@ -198,8 +198,7 @@ impl Archive {
             .or_raise(|| ArchiveError::ComputeDestinations)?;
 
             if !dry_run {
-                imap.session
-                    .select(mailbox)
+                imap.select_checked(mailbox, mbx.uid_validity)
                     .await
                     .or_raise(|| ArchiveError::ImapSelect {
                         mailbox: mailbox.to_owned(),

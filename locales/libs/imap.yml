@@ -199,6 +199,14 @@ error.imap.tls_setup:
   zh: 设置 TLS 连接
   ko: TLS 연결 설정
 
+error.imap.uid_validity_changed:
+  en: The UIDVALIDITY of mailbox %{mailbox} changed, so the UIDs are no longer valid. Nothing was changed
+  fr: L'UIDVALIDITY de la boîte aux lettres %{mailbox} a changé, donc les UID ne sont plus valides. Rien n'a été modifié
+  de: Die UIDVALIDITY des Postfachs %{mailbox} hat sich geändert, die UIDs sind daher nicht mehr gültig. Es wurde nichts geändert
+  ja: メールボックス %{mailbox} の UIDVALIDITY が変わったため、UID は無効です。何も変更していません
+  zh: 邮箱 %{mailbox} 的 UIDVALIDITY 已改变，因此 UID 不再有效。未做任何更改
+  ko: 메일박스 %{mailbox}의 UIDVALIDITY가 바뀌어 UID가 더 이상 유효하지 않습니다. 변경한 내용이 없습니다
+
 error.imap.uid_store:
   en: Storing message flags by UID
   fr: Enregistrement des indicateurs des messages par UID

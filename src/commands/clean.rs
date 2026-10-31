@@ -218,11 +218,11 @@ impl Clean {
                 let sequence = ids_list_to_collapsed_sequence(&uids_to_delete);
 
                 if !dry_run {
-                    imap.delete_uids(mailbox, &sequence).await.or_raise(|| {
-                        CleanError::ImapDeleteUid {
+                    imap.delete_uids(mailbox, mbx.uid_validity, &sequence)
+                        .await
+                        .or_raise(|| CleanError::ImapDeleteUid {
                             mailbox: mailbox.to_owned(),
-                        }
-                    })?;
+                        })?;
                 }
 
                 renderer
@@ -463,6 +463,48 @@ mod tests {
             out[1]
         );
         assert_eq!(out[2], "");
+    }
+
+    #[tokio::test]
+    async fn cleanup_stops_when_uid_validity_changes() {
+        // EXAMINE says UIDVALIDITY 1, SELECT says 2: the UIDs of the search are no longer
+        // valid. The script ends after SELECT, so the mock server panics if the tool
+        // sends UID STORE or UID EXPUNGE.
+        let server = MockServer::start(
+            &[],
+            vec![
+                MockExchange::ok("EXAMINE \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                    "* OK [UIDVALIDITY 1] UIDs valid\r\n".into(),
+                ]),
+                MockExchange::ok("UID FETCH 1:* (RFC822.SIZE INTERNALDATE)", vec![
+                    "* 1 FETCH (UID 1 RFC822.SIZE 600000 INTERNALDATE \"01-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                    "* 2 FETCH (UID 2 RFC822.SIZE 600000 INTERNALDATE \"02-Jan-2020 10:00:00 +0000\")\r\n".into(),
+                ]),
+                MockExchange::ok(
+                    r"/^UID SEARCH SEEN UNFLAGGED BEFORE \d\d-\w\w\w-\d\d\d\d$/",
+                    vec!["* SEARCH 1 2\r\n".into()],
+                ),
+                MockExchange::ok("SELECT \"INBOX\"", vec![
+                    "* 350 EXISTS\r\n".into(),
+                    "* 0 RECENT\r\n".into(),
+                    "* OK [UIDVALIDITY 2] UIDs valid\r\n".into(),
+                ]),
+            ],
+        )
+        .await;
+        let base = test_base();
+        let mut imap: Imap<MyExtra> = Imap::connect_base_on_port(&base, server.port)
+            .await
+            .expect("connect");
+        let mut renderer = new_renderer(base.renderer, table_spec(false)).expect("renderer");
+        let result =
+            Clean::cleanup_mailbox(&mut imap, &mut renderer, "INBOX", &test_extra(), false).await;
+        let _ = imap.close().await;
+        server.join().await;
+        assert!(result.is_err(), "expected an error, got: {result:?}");
+        assert_snapshot!(renderer.output(), @"Mailbox,Msgs,Size,Del,First date,Cutoff date,Days,Sequence");
     }
 
     #[tokio::test]

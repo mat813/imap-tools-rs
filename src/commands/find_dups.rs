@@ -184,7 +184,7 @@ impl FindDups {
             let duplicate_set = ids_list_to_collapsed_sequence(&duplicates);
 
             if !dry_run {
-                imap.delete_uids(mailbox, &duplicate_set)
+                imap.delete_uids(mailbox, mbx.uid_validity, &duplicate_set)
                     .await
                     .or_raise(|| DuError::DeleteUids {
                         mailbox: mailbox.to_owned(),
